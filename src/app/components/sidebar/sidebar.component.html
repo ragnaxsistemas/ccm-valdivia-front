@@ -1,0 +1,19 @@
+<div class="sidebar-container">
+  <p class="sidebar-title">MÓDULOS DEL SISTEMA</p>
+  
+  <nav class="sidebar-nav">
+    <ul>
+      @for (menu of menuItems(); track menu.id) {
+        <li class="nav-item">
+          <a [routerLink]="menu.value2" 
+             class="nav-link" 
+             routerLinkActive="active-link"
+             [routerLinkActiveOptions]="{exact: false}">
+            <i [class]="getIcon(menu.id)"></i> 
+            <span>{{ menu.value1 }}</span>
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+</div>

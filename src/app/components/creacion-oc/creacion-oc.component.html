@@ -1,0 +1,290 @@
+<div class="oc-main-container">
+  @if (!ocFinalizada) {
+    
+    @if (!ocData) {
+      <div class="action-header no-print">
+        <button class="btn-cyan-new" (click)="iniciarNuevaOC()" [disabled]="loading">
+          <i class="bi bi-file-earmark-plus"></i> {{ loading ? 'GENERANDO...' : 'CREAR ORDEN DE COMPRA' }}
+        </button>
+
+        <div class="draft-search-container">
+          <div class="input-group-search">
+            <i class="bi bi-search"></i>
+            <input type="text" class="form-control-search" placeholder="BUSCAR CÓDIGO DE OC..." [(ngModel)]="filtroBorrador" (input)="buscarBorradores()">
+          </div>
+
+          @if (borradoresFiltrados.length > 0) {
+            <ul class="draft-results-list">
+              @for (b of borradoresFiltrados; track b.codOrdenCompra || $index) {
+                <li (click)="cargarBorrador(b)">
+                  <div class="draft-info">
+                    <span class="draft-code">{{ b.codOrdenCompra }}</span>
+                    <small class="draft-name">{{ b.nombreOrdenCompra | uppercase }}</small>
+                  </div>
+                  <i class="bi bi-chevron-right"></i>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </div>
+
+      <div class="empty-state-card">
+        <div class="empty-state-content">
+          <i class="bi bi-file-earmark-text"></i>
+          <p>PRESIONE EL BOTÓN SUPERIOR PARA INICIAR UNA NUEVA GESTIÓN DE COMPRA</p>
+        </div>
+      </div>
+    } 
+
+    @if (ocData) {
+      <div class="oc-header-titles">
+        <h1 class="oc-main-title">ORDEN DE COMPRA</h1>
+        <div class="oc-folio-container">
+          FOLIO OC: <span class="folio-badge">{{ ocData.codOrdenCompra }}</span>
+        </div>
+      </div>
+
+      <div class="top-controls-bar no-print">
+        <div class="control-item">
+          <label class="control-label">TIPO DOCUMENTO TRIBUTARIO (DTE)</label>
+          <div class="select-wrapper">
+            <select class="form-select-custom" [(ngModel)]="dteIdSeleccionado" (change)="onSeleccionarDte($event)">
+              <option [value]="null" disabled>SELECCIONAR TIPO...</option>
+              @for (dte of listaDte; track dte.idDocumentoTributario || dte.codigoDocumentoTributario) {
+                <option [value]="dte.codigoDocumentoTributario">
+                  {{ dte.impuesto }}% {{ dte.nombreDocumentoTributario | uppercase }}
+                </option>
+              }
+            </select>
+            
+          </div>
+        </div>
+
+        <div class="control-item">
+          <label class="control-label">ESTADO DE LA ORDEN</label>
+          <div class="status-badge-magenta">
+            {{ ocData.estadoOc || 'BORRADOR' }}
+          </div>
+        </div>
+      </div>
+
+      <div class="paper-layout">
+        <div class="oc-details-section">
+          <div class="details-column provider-info">
+            <div class="detail-row">
+              <span class="detail-label">PROVEEDOR:</span>
+              <div class="detail-value">
+                @if (modoEdicionProveedor) {
+                  <div class="search-provider-box">
+                    <div class="input-with-icon">
+                      <input type="text" placeholder="INGRESE RUT PROVEEDOR..." [(ngModel)]="filtroProveedor">
+                      <i class="bi bi-search"></i>
+                    </div>
+                    @if (filtroProveedor.trim().length > 0) {
+                      <ul class="provider-dropdown">
+                        @for (p of proveedoresFiltrados; track $index) {
+                          <li (click)="onSeleccionarProveedorManual(p)">
+                            {{ p.nombreProveedor | uppercase }} - {{ p.rutProveedor }}
+                          </li>
+                        }
+                      </ul>
+                    }
+                  </div>
+                } @else {
+                  <div class="selected-display">
+                    <span class="val-highlight">{{ proveedorSeleccionado?.nombreProveedor | uppercase }} </span>
+                    <button class="btn-icon-reset no-print" (click)="resetProveedor()">
+                      <i class="bi bi-pencil-square"> </i>
+                    </button>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <div class="detail-row"><span class="detail-label">RUT:</span> <span class="val-black">{{ proveedorSeleccionado?.rutProveedor || '—' }}</span></div>
+            <div class="detail-row"><span class="detail-label">DIRECCIÓN:</span> <span class="val-black">{{ (proveedorSeleccionado?.direccion || '—') | uppercase }}</span></div>
+            <div class="detail-row"><span class="detail-label">COMUNA:</span> <span class="val-black">{{ (proveedorSeleccionado?.nombreComuna || '—') | uppercase }}</span></div>
+            <div class="detail-row"><span class="detail-label">REGIÓN:</span> <span class="val-black">{{ (proveedorSeleccionado?.nombreRegion || '—') | uppercase }}</span></div>
+
+            <div class="detail-row">
+              <span class="detail-label">GIRO:</span>
+              <div class="detail-value">
+                @if (proveedorSeleccionado && !modoEdicionProveedor) {
+                  <select class="select-giro-custom" [(ngModel)]="codGiroSeleccionado">
+                    <option value="">SELECCIONE GIRO...</option>
+                    @for (giro of proveedorSeleccionado.listaGiros; track giro.codigoGiroSii) {
+                      <option [value]="giro.codigoGiroSii">
+                        {{ giro.codigoGiroSii }} - {{ giro.nombreGiroSii | uppercase }}
+                      </option>
+                    }
+                  </select>
+                } @else {
+                  <span class="val-black">—</span> 
+                }
+              </div>
+            </div>
+
+            <div class="detail-row"><span class="detail-label">TELÉFONO:</span> <span class="val-black">{{ (proveedorSeleccionado?.telefonoContactoProveedor || '—') | uppercase }}</span></div>
+            <div class="detail-row"><span class="detail-label">CORREO:</span> <span class="val-black">{{ (proveedorSeleccionado?.emailProveedor || '—') | uppercase }}</span></div>
+          </div>
+
+          <div class="right-info-block">
+            <div class="info-item">
+              <span class="info-label">FECHA:</span>
+              <span class="info-content">{{ ocData.fechaOrdenCompra }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">UNIDAD COMPRADORA:</span>
+              <span class="info-content">{{ ocData.unidadCompradora | uppercase }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">REALIZADO POR:</span>
+              <span class="info-content">{{ ocData?.nombreusuario | uppercase }} 
+              {{ ocData?.apellidousuario  | uppercase }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="name-section mt-4">
+          <label class="form-label-thin">NOMBRE DE LA ORDEN DE COMPRA</label>
+          <input type="text" class="form-control-thin" [(ngModel)]="nombreOrdenCompra" [disabled]="!puedeEditarItems"
+                 [placeholder]="!puedeEditarItems ? 'SELECCIONE DTE PARA EMPEZAR...' : 'EJ: ADQUISICIÓN DE MATERIALES...'">
+        </div>
+
+        <div class="section-header-divider">
+          <h2 class="section-title">PRODUCTOS O SERVICIOS</h2>
+        </div>
+
+        <div class="oc-products-section mt-4">
+          <table class="table table-bordered custom-table-thin">
+            <thead>
+              <tr>
+                <th class="text-center" style="width: 50px;">Nº</th>
+                <th>DESCRIPCIÓN PRODUCTO / SERVICIO</th>
+                <th class="text-end" style="width: 140px;">VALOR UNIT.</th>
+                <th class="text-center" style="width: 100px;">CANTIDAD</th>
+                <th class="text-end" style="width: 140px;">{{ labelNeto }}</th>
+                <th class="text-center no-print" style="width: 50px;"> <i class="bi bi-trash"></i> </th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of items; track $index) { 
+                <tr [class.row-disabled]="!puedeEditarItems">
+                  <td class="index-column">{{ $index + 1 }}</td>
+                  
+                  <td class="position-relative">
+                    <input type="text" 
+                           class="input-table-cell" 
+                           [(ngModel)]="item.descripcionProducto" 
+                           [disabled]="!puedeEditarItems" 
+                           (focus)="filaActiva = $index"
+                           (click)="filaActiva = $index"
+                           placeholder="DESCRIPCIÓN...">
+                    
+                    @if (filaActiva === $index && item.descripcionProducto?.length > 0) {
+                      <ul class="product-dropdown no-print">
+                        @for (p of getProductosFiltrados(item.descripcionProducto); track p.codigoProducto || $index) {
+                          <li (mousedown)="seleccionarProducto(p, item)">
+                            {{ p.nombreProducto | uppercase }}
+                          </li>
+                        }
+                      </ul>
+                    }
+                  </td>
+                  <td>
+                    <div class="currency-input-container">
+                      <span class="currency-symbol">$</span>
+                      <input type="number" class="input-table-cell text-end font-mono" 
+                             [(ngModel)]="item.valorProducto" (input)="actualizarLinea($index)" [disabled]="!puedeEditarItems">
+                    </div>
+                  </td>
+                  <td>
+                    <input type="number" class="input-table-cell text-center" 
+                           [(ngModel)]="item.cantidad" (input)="actualizarLinea($index)" [disabled]="!puedeEditarItems">
+                  </td>
+                  <td class="bg-light-readonly">
+                    <div class="currency-input-container">
+                      <span class="currency-symbol">$</span>
+                      <input type="text" class="input-table-cell text-end font-mono readonly-input" 
+                             [value]="item.total | number:'1.0-0'" readonly>
+                    </div>
+                  </td>
+                  <td class="text-center no-print">
+                    <button class="btn-remove-item" (click)="eliminarFila($index)" [disabled]="!puedeEditarItems">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          <button class="btn-add-row no-print" (click)="agregarFila()" *ngIf="puedeAgregarFila">
+            <i class="bi bi-plus-circle-fill"></i> AGREGAR ÍTEM
+          </button>
+        </div>
+        
+        <div class="footer-document-section">
+          <div class="observations-section">
+            <label class="form-label-thin">OBSERVACIONES</label>
+            <textarea class="form-control-thin-full" rows="3" 
+                      [(ngModel)]="observaciones" 
+                      [disabled]="!puedeEditarItems" 
+                      placeholder="DETALLES ADICIONALES..."></textarea>
+          </div>
+
+
+        <!-- SECCIÓN DE TOTALES -->
+          <div class="totals-container">
+            <div class="total-row-thin">
+              <span>{{ labelNeto }}</span> 
+              <strong>{{ (ocData?.neto || 0) | currency:'CLP':'symbol-narrow':'1.0-0' }}</strong>
+            </div>
+            <div class="total-row-thin">
+              <span>{{ labelImpuesto }} ({{ dteSeleccionado?.impuesto || 0 }}%)</span> 
+              <strong>{{ (ocData?.impuestoCalculado || 0) | currency:'CLP':'symbol-narrow':'1.0-0' }}</strong>
+            </div>
+            <div class="total-row-thin highlight-black">
+              <span>{{ labelTotal }}</span> 
+              <strong class="magenta-text">{{ (ocData?.totalFinal || 0) | currency:'CLP':'symbol-narrow':'1.0-0' }}</strong>
+            </div>
+          </div>
+        </div>
+         <!-- SECCIÓN DE TOTALES -->
+
+      </div>  <!-- FIN <div class="paper-layout"> -->
+
+      <div class="system-actions-separator no-print"></div>
+      <div class="external-actions-bar no-print">
+        <button class="btn-action-oc btn-save" (click)="guardarOrden()">
+          <i class="bi bi-save"></i> GUARDAR BORRADOR
+        </button>
+        <button class="btn-action-oc btn-preview" (click)="previsualizar()">
+          <i class="bi bi-printer"></i> PREVISUALIZAR
+        </button>
+        @if (isFormularioCompleto) {
+          <button class="btn-action-oc btn-authorize" (click)="solicitarAutorizacion()">
+            <i class="bi bi-send-check"></i> SOLICITAR AUTORIZACIÓN
+          </button>
+        }
+      </div>
+
+
+    } <!-- FIN IF @if (ocData) { -->
+
+   } @else {
+    <div class="success-container">
+      <div class="success-card">
+        <div class="icon-circle"><i class="bi bi-check-lg"></i></div>
+        <h2>¡Solicitud Enviada!</h2>
+        <p class="message">
+          Se ha creado la orden de compra número:
+          <span class="oc-number">{{ codOrdenCompra }}</span>
+        </p>
+        <button class="btn-new-oc-success" (click)="nuevaOrdenDesdeExito()">
+          <i class="bi bi-plus-circle"></i> CREAR NUEVA ORDEN DE COMPRA
+        </button>
+      </div>
+    </div>
+  }
+</div>

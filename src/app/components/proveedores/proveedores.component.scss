@@ -1,0 +1,85 @@
+$magenta: #d81b60;
+$cyan: #45b1c1;
+
+.admin-wrapper {
+  /* Ajusta el 120px según el alto de tu cabecera negra */
+  height: calc(100vh - 120px); 
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Evita el scroll doble afuera */
+
+  .admin-content-scroll {
+    flex: 1;
+    overflow-y: auto; /* El scroll ahora vive solo aquí adentro */
+    padding: 20px;
+    padding-bottom: 80px;
+
+    /* Scrollbar estilizado para que no se vea tosco */
+    &::-webkit-scrollbar { width: 8px; }
+    &::-webkit-scrollbar-thumb { 
+      background: #ccc; 
+      border-radius: 4px; 
+    }
+  }
+}
+
+.admin-card {
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  .card-header-custom {
+    background: #f4f4f4;
+    padding: 8px 15px;
+    border-bottom: 1px solid #ccc;
+    .label-bold { font-weight: 800; font-size: 0.65rem; color: #666; text-transform: uppercase; }
+  }
+  .card-body { padding: 15px; }
+}
+
+.form-label-thin { font-weight: 700; font-size: 0.65rem; color: #888; text-transform: uppercase; margin-bottom: 3px; display: block; }
+
+.form-control-custom {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 6px 10px;
+  width: 100%;
+  font-size: 0.85rem;
+  &:focus { border-color: $magenta; outline: none; }
+}
+
+.selected-giros-box {
+  border: 1px solid #eee;
+  background: #fafafa;
+  padding: 10px;
+  min-height: 120px;
+  max-height: 120px;
+  overflow-y: auto;
+  border-radius: 4px;
+}
+
+.giro-tag {
+  background: white;
+  border: 1px solid $magenta;
+  border-radius: 20px;
+  padding: 1px 10px;
+  font-size: 0.65rem;
+  .badge-code { color: $magenta; font-weight: 800; margin-right: 4px; }
+}
+
+.btn-save-custom {
+  background: $cyan; color: white; border: none; padding: 10px 20px;
+  border-radius: 4px; font-weight: 700; font-size: 0.75rem;
+}
+
+.custom-table-admin {
+  width: 100%;
+  th { background: #f8f9fa; font-size: 0.7rem; color: #999; padding: 10px; text-transform: uppercase; }
+  td { padding: 10px; border-bottom: 1px solid #eee; vertical-align: middle; font-size: 0.85rem; }
+  .text-magenta { color: $magenta; }
+}
+
+.btn-modify-action {
+  border: 1px solid $cyan; color: $cyan; background: transparent;
+  padding: 2px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: 700;
+  &:hover { background: $cyan; color: white; }
+}

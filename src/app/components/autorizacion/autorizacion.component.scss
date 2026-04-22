@@ -1,0 +1,246 @@
+// --- 1. VARIABLES ---
+$magenta-ccm: #e2007a;
+$magenta-hover: #b1005f;
+$cyan-ccm: #00bcd4;
+$teal-header: #43a0af;
+$gray-light: #f8f9fa;
+$gray-border: #dee2e6;
+$paper-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+
+// --- 2. MIXINS (REUTILIZACIÓN) ---
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// --- 3. COMPONENTES GENERALES ---
+.magenta-text { color: $magenta-ccm; font-weight: bold; }
+.font-mono { font-family: 'Courier New', Courier, monospace; }
+.italic { font-style: italic; color: #555; }
+
+// --- 4. TABLA PRINCIPAL DE AUTORIZACIÓN ---
+.custom-table-auth {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background-color: white;
+
+  thead tr {
+    background-color: $teal-header;
+    color: white;
+    th {
+      padding: 13px 15px;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+    }
+  }
+
+  tbody tr {
+    transition: background-color 0.2s;
+    &:hover { background-color: $gray-light; }
+    td {
+      padding: 11px 15px;
+      vertical-align: middle;
+      border-bottom: 1px solid #eee;
+      font-size: 0.9rem;
+    }
+  }
+}
+
+// --- 5. BOTONES Y ACCIONES ---
+.btn-group-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.btn-cyan {
+  @include flex-center;
+  background-color: $cyan-ccm;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  width: 34px;
+  height: 34px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+
+  &:hover {
+    background-color: darken($cyan-ccm, 10%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+}
+
+.btn-action-oc {
+  padding: 9px 20px;
+  border: none;
+  border-radius: 4px;
+  font-weight: bold;
+  color: white;
+  transition: opacity 0.2s, background-color 0.2s;
+
+  &.btn-authorize-auth { background-color: $teal-header; }
+  &.btn-return-auth { background-color: #6c757d; }
+  &:hover { opacity: 0.9; }
+}
+
+// --- 6. MODAL SYSTEM ---
+.modal-backdrop-custom {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  @include flex-center;
+  z-index: 1050;
+}
+
+.modal-content-auth {
+  background: white;
+  width: 90%;
+  max-width: 1000px;
+  max-height: 90vh;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.auth-header {
+  border-bottom: 2px solid lighten($magenta-ccm, 45%);
+  padding: 1rem 1.5rem;
+}
+
+.custom-scroll {
+  overflow-y: auto;
+  flex-grow: 1;
+  padding: 30px !important;
+  background-color: $gray-light;
+
+  &::-webkit-scrollbar { width: 8px; }
+  &::-webkit-scrollbar-track { background: #f1f1f1; }
+  &::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 4px;
+    &:hover { background: $magenta-ccm; }
+  }
+}
+
+// --- 7. DISEÑO DE "PAPEL" (ORDEN DE COMPRA) ---
+.paper-layout {
+  background-color: white;
+  width: 100%;
+  max-width: 850px;
+  min-height: 600px;
+  padding: 40px;
+  margin: 0 auto 20px;
+  border: 1px solid $gray-border;
+  box-shadow: $paper-shadow;
+  font-family: 'Arial', sans-serif;
+  position: relative;
+
+  &.view-only-mode {
+    pointer-events: none;
+    user-select: text;
+  }
+}
+
+.oc-document-title {
+  font-size: 22px;
+  font-weight: bold;
+  text-align: center;
+  border-bottom: 2px solid $magenta-ccm;
+  padding-bottom: 5px;
+  margin-bottom: 1.5rem;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  border: 1px solid #eee;
+  padding: 11px;
+  align-items: start;
+
+  .label { font-weight: bold; font-size: 0.8rem; color: #666; }
+  .val-black { color: #000; font-size: 0.85rem; }
+}
+
+.value-box-readonly, .observation-box-readonly {
+  background: $gray-light;
+  border-bottom: 1px solid $gray-border;
+  padding: 11px;
+  font-size: 0.9rem;
+}
+
+// --- 8. TOTALES Y BADGES ---
+.totals-container-auth {
+  width: 250px;
+  float: right;
+  margin-bottom: 15px;
+
+  .total-row-thin {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: 1px solid #f0f0f0;
+
+    &.highlight-magenta {
+      color: $magenta-ccm;
+      border-top: 1px solid $magenta-ccm;
+      margin-top: 6px;
+      font-weight: bold;
+    }
+  }
+}
+
+.observations-section { clear: both; }
+
+.badge-unidad, .badge-estado {
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.badge-unidad { background: #e9ecef; color: #495057; }
+.badge-estado {
+  background-color: #fce4ec;
+  color: $magenta-ccm;
+  border: 1px solid #f8bbd0;
+}
+
+// --- 9. BOTONES DE CIERRE ---
+.btn-close-custom {
+  @include flex-center;
+  background: none;
+  border: none;
+  color: $magenta-ccm;
+  font-size: 1.5rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+
+  &:hover {
+    color: darken($magenta-ccm, 20%);
+    transform: scale(1.2) rotate(90deg);
+  }
+}
+
+.btn-close-outline {
+  @include flex-center;
+  background: transparent;
+  border: 1px solid $magenta-ccm;
+  color: $magenta-ccm;
+  padding: 8px 20px;
+  border-radius: 4px;
+  font-weight: bold;
+  gap: 8px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: $magenta-ccm;
+    color: white;
+  }
+}

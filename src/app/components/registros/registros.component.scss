@@ -1,0 +1,258 @@
+// Paleta CCM Refinada
+$ccm-cyan: #00bacf; // El Cyan característico de la marca
+$ccm-primary: #0088cc; 
+$ccm-bg-light: #f8f9fa;
+$ccm-border: #e0e0e0;
+
+.gestion-container {
+  padding: 20px;
+  background-color: white;
+
+  h2 {
+    color: #333;
+    font-weight: 700;
+    margin-bottom: 25px;
+    border-bottom: 3px solid $ccm-cyan;
+    display: inline-block;
+    padding-bottom: 5px;
+  }
+}
+
+.card-filtros {
+  background: #fdfdfd;
+  /* CAMBIO: Borde color cyan para el panel del buscador */
+  border: 1px solid #26c2d1;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(38, 194, 209, 0.1);
+
+  .row-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    /* Mantiene la misma distancia exacta entre CADA elemento (incluyendo los botones) */
+    gap: 16px; 
+    width: 100%;
+    /* Asegura que los elementos no se peguen al borde derecho si no es necesario */
+    justify-content: flex-start; 
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      /* Importante: Permitimos que crezcan un poco pero con un límite para no apretar a los demás */
+      flex: 1;
+      
+      label {
+        font-size: 11px;
+        font-weight: 800;
+        color: #444;
+        margin-bottom: 6px;
+        white-space: nowrap;
+      }
+
+      input, select {
+        width: 100%;       /* El input llena su celda flex */
+        height: 38px;
+        padding: 0 10px;
+        border: 1px solid #dcdcdc;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+
+      /* Proporciones específicas para que no todos midan lo mismo */
+      &:nth-child(1) { flex: 0.8; } // RUT más pequeño
+      &:nth-child(2) { flex: 1; } // UNIDAD más grande (nombres largos)
+      &:nth-child(3) { flex: 1.2; } // RANGO FOLIO
+      &:nth-child(4) { flex: 1; }   // ESTADO
+    
+      .range-inputs {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        input { text-align: center; }
+      }
+    }
+
+    .actions-group {
+      display: flex;
+      gap: 8px;
+      /* ELIMINADO: margin-left: auto (esto evitara que se alejen) */
+      flex: 0 0 auto; 
+
+      .btn-search {
+        background-color: #26c2d1;
+        color: white;
+        padding: 0 18px;
+        height: 38px;
+        border: none;
+        border-radius: 4px;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        
+      }
+
+      .btn-clear {
+        background-color: #eeeeee;
+        color: #666;
+        width: 38px;
+        height: 38px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+    }
+  }
+}
+
+.actions-group {
+  display: flex;
+  gap: 8px;
+
+  button {
+    height: 32px; // Match con los inputs
+    padding: 0 15px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 12px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+
+  .btn-search {
+    background-color: $ccm-cyan;
+    color: white;
+    &:hover { background-color: darken($ccm-cyan, 10%); }
+  }
+
+  .btn-clear {
+    background-color: #eee;
+    color: #666;
+    &:hover { background-color: #ddd; }
+  }
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 10px; /* Mantiene el efecto de "tarjetas" separadas */
+
+  thead {
+    tr {
+      th {
+        text-align: center;       /* Alinea el título al centro horizontal */
+        vertical-align: middle;   /* Alinea el título al centro vertical */
+        padding: 12px 15px;
+        font-size: 0.75rem;
+        color: #888;
+        text-transform: uppercase;
+        border: none;
+      }
+    }
+  }
+
+  tbody {
+    tr {
+      background-color: #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Efecto de la captura */
+      
+      td {
+        text-align: center;       /* Alinea el dato al centro horizontal */
+        vertical-align: middle;   /* Alinea el dato al centro vertical */
+        padding: 15px;
+        border: none;
+        font-size: 0.9rem;
+        color: #333;
+
+        /* Estilo específico para el Folio (la primera columna) */
+        &:first-child {
+          border-left: 4px solid #26c2d1; /* La barrita cyan de tu imagen */
+          font-weight: 700;
+        }
+
+        /* Estilo para el Monto (alineación derecha suele ser mejor para números, 
+           pero si quieres todo al centro, ignora esto o déjalo en center) */
+        &.monto-total {
+          font-weight: 600;
+        }
+      }
+    }
+  }
+}
+// Tabla alineada
+.table-responsive {
+  width: 100%;
+  // Eliminamos márgenes laterales para que coincida con el ancho de la card superior
+  margin: 0; 
+}
+
+.custom-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+
+  thead th {
+    padding: 12px 15px;
+    color: #999;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    border: none;
+  }
+
+  tbody tr {
+    background-color: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+
+    td {
+      padding: 14px 15px;
+      border-top: 1px solid #f2f2f2;
+      border-bottom: 1px solid #f2f2f2;
+
+      &:first-child {
+        border-left: 5px solid $ccm-cyan;
+        border-top-left-radius: 6px;
+        border-bottom-left-radius: 6px;
+      }
+      &:last-child {
+        border-right: 1px solid #f2f2f2;
+        border-top-right-radius: 6px;
+        border-bottom-right-radius: 6px;
+      }
+    }
+  }
+}
+
+/* Forzar colores de badges si Bootstrap no los toma */
+/* registros.component.scss */
+
+.badge {
+  display: inline-flex !important;      /* Cambiado a flex para centrado total */
+  align-items: center;                  /* Centrado vertical */
+  justify-content: center;              /* Centrado horizontal */
+  
+  width: 180px;                         /* Ancho fijo para que todos sean iguales */
+  min-height: 35px;                     /* Altura mínima uniforme */
+  
+  padding: 8px 12px !important;         /* Espaciado interno */
+  font-size: 0.75rem !important;        /* Tamaño de fuente legible */
+  line-height: 1.1;                     /* Ajuste de línea para textos largos */
+  text-align: center;                   /* Respaldo para navegadores antiguos */
+  white-space: normal;                  /* Permite que "PENDIENTE DE..." baje a otra línea si es necesario */
+  border-radius: 4px;                   /* Opcional: bordes menos redondeados para un look más moderno */
+  
+  // Forzar colores si Bootstrap no los toma
+  &.bg-warning { background-color: #ffc107 !important; color: #000 !important; }
+  &.bg-info    { background-color: #45b1c1 !important; color: #fff !important; }
+  &.bg-success { background-color: #198754 !important; color: #fff !important; }
+  &.bg-danger  { background-color: #dc3545 !important; color: #fff !important; }
+  &.bg-primary { background-color: #0d6efd !important; color: #fff !important; }
+  &.bg-secondary { background-color: #6c757d !important; color: #fff !important; }
+}

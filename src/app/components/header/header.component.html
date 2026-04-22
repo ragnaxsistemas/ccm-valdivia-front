@@ -1,0 +1,20 @@
+<header class="main-header">
+  <div class="brand">
+    <span class="logo-c">C</span>
+    <span class="logo-c2">C</span>
+    <span class="logo-m">M</span>
+    <h1 class="system-name">Sistema de Gestión Ordenes de Compra</h1>
+  </div>
+
+  <div class="user-info">
+  @if (authService.user(); as user) {
+    <div class="session-details">
+      <span class="label">Sesión:</span>
+      <span class="user-name">{{ user.nombre }} {{ user.apellidoPaterno }}</span>
+    </div>
+    <div class="user-avatar">
+      <i class="pi pi-user"></i>
+    </div>
+  }
+</div>
+</header>

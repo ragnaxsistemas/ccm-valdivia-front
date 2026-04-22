@@ -1,0 +1,136 @@
+<div class="admin-wrapper">
+  <div class="admin-header">
+    <h1 class="title-thin"><i class="bi bi-person-badge me-2"></i>Gestión de Proveedores</h1>
+  </div>
+
+  <div class="admin-content-scroll">
+    <div class="admin-card mb-4">
+      <div class="card-header-custom">
+        <span class="label-bold">{{ editMode ? 'Modificar Proveedor' : 'Crear Nuevo Proveedor' }}</span>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label-thin">RUT (Identificador)</label>
+            <input type="text" class="form-control-custom" [(ngModel)]="proveedorForm.rutProveedor" [readonly]="editMode" placeholder="12.345.678-9">
+          </div>
+          <div class="col-md-5">
+            <label class="form-label-thin">Razón Social</label>
+            <input type="text" class="form-control-custom" [(ngModel)]="proveedorForm.razonSocialProveedor">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label-thin">Nombre Fantasía</label>
+            <input type="text" class="form-control-custom" [(ngModel)]="proveedorForm.nombreProveedor">
+          </div>
+
+          <div class="col-md-12">
+            <label class="form-label-thin">Dirección</label>
+            <input type="text" class="form-control-custom" [(ngModel)]="proveedorForm.direccion">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label-thin">Giros Comerciales (Ctrl + Click)</label>
+            <select class="form-control-custom" multiple [(ngModel)]="idsGirosSeleccionados" (change)="onGiroChange()" style="height: 120px;">
+              @for (g of giros; track g.codigoGiroSii) {
+                <option [value]="g.codigoGiroSii">{{ g.codigoGiroSii }} - {{ g.nombreGiroSii }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label-thin text-magenta">Giros Seleccionados ({{ proveedorForm.listaGiros?.length || 0 }})</label>
+            <div class="selected-giros-box">
+              <div class="d-flex flex-wrap gap-2">
+                @for (item of proveedorForm.listaGiros; track item.codigoGiroSii) {
+                  <div class="giro-tag">
+                    <span class="badge-code">{{ item.codigoGiroSii }}</span>
+                    <span class="badge-name">{{ item.nombreGiroSii }}</span>
+                    <i class="bi bi-x-circle-fill ms-1" (click)="quitarGiro(item.codigoGiroSii)" style="cursor:pointer; color: #ccc;"></i>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label-thin">Correo Electrónico</label>
+            <input type="email" class="form-control-custom" [(ngModel)]="proveedorForm.emailProveedor">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label-thin">Teléfono de Contacto</label>
+            <input type="text" class="form-control-custom" [(ngModel)]="proveedorForm.telefonoContactoProveedor">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label-thin">Región</label>
+            <select class="form-control-custom" [(ngModel)]="proveedorForm.codigoRegion" (change)="onRegionChange()">
+              <option [value]="null">Seleccione...</option>
+              @for (reg of regiones; track reg.codigoRegion) {
+                <option [value]="reg.codigoRegion">{{ reg.nombreRegion }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label-thin">Comuna</label>
+            <select class="form-control-custom" [(ngModel)]="proveedorForm.codComuna" [disabled]="loadingComunas">
+              @for (com of comunas; track com.codComuna) {
+                <option [value]="com.codComuna">{{ com.nombreComuna }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="col-12 d-flex justify-content-end mt-2">
+            <button class="btn-save-custom px-5" (click)="submitForm()">
+              {{ editMode ? 'ACTUALIZAR PROVEEDOR' : 'GUARDAR PROVEEDOR' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-card">
+      <div class="card-header-custom d-flex justify-content-between align-items-center">
+        <span class="label-bold">LISTADO DE PROVEEDORES</span>
+        <div class="search-box">
+          <i class="bi bi-search"></i>
+          <input type="text" placeholder="Buscar..." class="search-input" [(ngModel)]="filtroBusqueda">
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table custom-table-admin mb-0">
+          <thead>
+            <tr>
+              <th width="150">RUT</th>
+              <th>PROVEEDOR</th>
+              <th>GIRO PRINCIPAL</th>
+              <th width="100" class="text-center">ACCIÓN</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of proveedoresFiltrados; track p.rutProveedor) {
+              <tr>
+                <td class="text-magenta fw-bold">{{ p.rutProveedor }}</td>
+                <td>
+                  <div class="val-black">{{ p.nombreProveedor }}</div>
+                  <div class="text-muted small">{{ p.emailProveedor }}</div>
+                </td>
+                <td class="small">
+                    <div class="giros-list-cell">
+                        @for (giro of p.listaGiros; track giro.codigoGiroSii) {
+                        <div class="giro-item-text">
+                            <span class="fw-bold text-magenta">•</span> {{ giro.nombreGiroSii }}
+                        </div>
+                        } @empty {
+                        <span class="text-muted italic">Sin giros registrados</span>
+                        }
+                    </div>
+                </td>
+                <td class="text-center">
+                  <button class="btn-modify-action" (click)="seleccionarParaModificar(p)">Modificar</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

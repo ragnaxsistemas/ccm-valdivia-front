@@ -1,0 +1,14 @@
+<div class="oc-wrapper">
+  <div class="action-header no-print">
+    <button class="btn-new-oc" (click)="generarReporte()" [disabled]="loading">
+      <i class="bi bi-file-earmark-bar-graph"></i>
+      {{ loading ? 'PROCESANDO...' : 'GENERACIÓN DE REPORTES' }}
+    </button>
+  </div>
+  
+  <div class="admin-card mt-4">
+    <div class="card-body text-center p-5">
+      <p class="text-muted">Seleccione los filtros para generar el reporte consolidado.</p>
+    </div>
+  </div>
+</div>

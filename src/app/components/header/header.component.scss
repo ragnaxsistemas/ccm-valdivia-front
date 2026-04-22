@@ -1,0 +1,60 @@
+.main-header {
+  background-color: #1a1a1a;
+  color: white;
+  width: 100%;
+
+  .top-info-bar {
+    background-color: #262626;
+    font-size: 0.75rem;
+    padding: 8px 25px; // Más padding para que no choque arriba
+    color: #aaaaaa;
+    display: flex;
+    justify-content: flex-end;
+    gap: 20px; // Separa el teléfono del email
+  }
+
+  .navbar-content {
+    height: 80px; // Altura fija para que no se apriete
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 25px;
+    border-bottom: 4px solid;
+    border-image: linear-gradient(to right, #f39c12, #e74c3c, #9b59b6, #3498db) 1;
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+
+      .logo-text {
+        font-size: 1.8rem;
+        margin: 0;
+      }
+
+      .brand-divider {
+        width: 1px;
+        height: 40px;
+        background-color: #444;
+        margin: 0 15px;
+      }
+
+      .system-title {
+        line-height: 1.2;
+        span { font-size: 0.8rem; color: #ccc; }
+        strong { font-size: 1rem; color: white; display: block; }
+      }
+    }
+
+    .user-section {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+
+      .user-info {
+        line-height: 1.3;
+        .session-label { font-size: 0.9rem; }
+        .user-details { color: #4eb9cc; font-size: 0.8rem; }
+      }
+    }
+  }
+}

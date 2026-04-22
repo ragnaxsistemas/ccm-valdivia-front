@@ -1,0 +1,96 @@
+<div class="admin-wrapper" id="admin-top">
+
+  <div class="admin-card mb-4">
+    <div class="card-header-custom">
+      <span class="label-bold">{{ editMode ? 'Modificar Producto' : 'Nuevo Producto o Servicio' }}</span>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-3">
+  <label class="form-label-thin">Código Automatico</label>
+  <input type="text" class="form-control-custom readonly-input" 
+         [value]="productoForm.codigoProducto || 'SISTEMA'" readonly>
+</div>
+<div class="col-md-4">
+  <label class="form-label-thin">Nombre Producto o Servicio</label>
+  <input type="text" class="form-control-custom" 
+         [(ngModel)]="productoForm.nombreProducto"> </div>
+<div class="col-md-3">
+  <label class="form-label-thin">Presupuesto</label>
+  <input type="number" class="form-control-custom" 
+         [(ngModel)]="productoForm.valorProducto"> </div>
+
+<div class="col-md-12">
+  <label class="form-label-thin">Descripción del Producto o Servicio</label>
+  <textarea class="form-control-custom" rows="2" 
+            [(ngModel)]="productoForm.descripcionProducto"></textarea> </div>
+        <div class="col-md-2 d-flex align-items-end gap-2">
+          <button class="btn-save-custom w-100" (click)="submitForm()">
+            <i class="bi" [ngClass]="editMode ? 'bi-arrow-repeat' : 'bi-check-lg'"></i> 
+            {{ editMode ? 'Actualizar' : 'Guardar' }}
+          </button>
+          @if (editMode) {
+            <button class="btn-cancel-custom" (click)="cancelarEdicion()" title="Cancelar">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-wrapper">
+  <div class="admin-card">
+    <div class="card-header-custom d-flex justify-content-between align-items-center">
+      <span class="label-bold">Listado de Productos y Servicios ({{ productos.length }})</span>
+      <div class="search-box">
+        <i class="bi bi-search"></i>
+        <input type="text" 
+               placeholder="Buscar por nombre o código..." 
+               class="search-input" 
+               [(ngModel)]="filtroBusqueda">
+      </div>
+    </div>
+
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover custom-table-admin">
+          <thead>
+            <tr>
+              <th width="180">Código</th>
+              <th>Nombre del Producto o Servicio</th>
+              <th>Descripción o Servicio</th>
+              <th width="140">Presupuesto</th>
+              <th width="100" class="text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (loading) {
+              <tr><td colspan="5" class="text-center p-4">Cargando productos...</td></tr>
+            }
+            
+            @for (prod of productosFiltrados; track prod.codigoProducto) {
+              <tr>
+                <td class="text-magenta font-mono" style="text-align: center;"> {{ prod.codigoProducto }}</td>
+                <td class="val-black">{{ prod.nombreProducto }}</td>
+                <td class="text-muted small">{{ prod.descripcionProducto }}</td>
+                <td class="val-black" style="text-align: center;">$ {{ prod.valorProducto | number:'1.0-0' }}</td>
+                <td class="text-center">
+                  
+                <button class="btn-modify-action" (click)="seleccionarParaModificar(prod)">
+                    Modificar
+                </button>
+                </td>
+              </tr>
+            } @empty {
+              @if (!loading) {
+                <tr><td colspan="5" class="text-center p-4 text-muted">No se encontraron productos registrados.</td></tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+</div>

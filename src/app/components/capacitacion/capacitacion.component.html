@@ -1,0 +1,19 @@
+<div class="oc-wrapper">
+  <div class="action-header no-print">
+    <button class="btn-new-oc" (click)="descargarDoc()" [disabled]="loading">
+      <i class="bi bi-mortarboard"></i>
+      {{ loading ? 'DESCARGANDO...' : 'DESCARGA DOCUMENTACIÓN' }}
+    </button>
+  </div>
+
+  <div class="admin-card mt-4">
+    <div class="card-body p-4">
+      <h5 class="text-magenta">Manuales de Usuario</h5>
+      <hr>
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item"><i class="bi bi-file-pdf text-danger"></i> Manual de Operador OC.pdf</li>
+        <li class="list-group-item"><i class="bi bi-file-pdf text-danger"></i> Guía de Autorización para Supervisores.pdf</li>
+      </ul>
+    </div>
+  </div>
+</div>

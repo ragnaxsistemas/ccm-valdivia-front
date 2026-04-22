@@ -1,0 +1,46 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="top-bar"></div>
+
+    <header class="login-header">
+      <div class="brand-logo">
+        <span class="c-yellow">C</span><span class="c-magenta">C</span><span class="c-cyan">M</span>
+      </div>
+      <h2>SISTEMA DE GESTIÓN</h2>
+      <h1>ORDENES DE COMPRA</h1>
+      <p>Corporación Cultural Municipal Valdivia</p>
+    </header>
+
+    <form (ngSubmit)="onLogin()" #loginForm="ngForm" class="login-form">
+      <div class="input-group">
+        <span class="input-icon"><i class="pi pi-user"></i></span>
+        <input 
+          type="text" 
+          name="username" 
+          [(ngModel)]="loginData.username" 
+          placeholder="RUT Usuario (Ej: 12.345.678-9)"
+          required>
+      </div>
+
+      <div class="input-group">
+        <span class="input-icon"><i class="pi pi-lock"></i></span>
+        <input 
+          type="password" 
+          name="password" 
+          [(ngModel)]="loginData.password" 
+          placeholder="Contraseña"
+          required>
+      </div>
+
+      <button type="submit" class="btn-ingresar">INGRESAR</button>
+
+      <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+    </form>
+
+    <div class="bottom-bars">
+      <div class="bar yellow"></div>
+      <div class="bar magenta"></div>
+      <div class="bar cyan"></div>
+    </div>
+  </div>
+</div>

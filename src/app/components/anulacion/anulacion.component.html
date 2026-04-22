@@ -1,0 +1,173 @@
+<div class="container-fluid mt-3">
+  <h3 class="magenta-text mb-4">
+    <i class="bi bi-x-circle-fill"></i> ANULACIÓN DE ÓRDENES AUTORIZADAS
+  </h3>
+
+  <div class="table-container shadow-sm bg-white p-3 rounded">
+    <table class="table custom-table-auth">
+      <thead>
+        <tr>
+          <th>CÓDIGO</th>
+          <th>FECHA</th>
+          <th>USUARIO CREADOR</th>
+          <th>UNIDAD</th>
+          <th class="text-end">TOTAL</th>
+          <th class="text-center">ACCIONES</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (oc of listaAutorizadas; track oc.codOrdenCompra) {
+          <tr>
+            <td class="font-bold text-primary">{{ oc.codOrdenCompra }}</td>
+            <td>{{ oc.fechaOrdenCompra }}</td>
+            <td><i class="bi bi-person-circle"></i> {{ oc.nombreUsuario }} {{ oc.apellidoUsuario }}</td>
+            <td><span class="badge-unidad">{{ oc.nombreUnidad | uppercase }}</span></td>
+            <td class="text-end font-mono fw-bold">$ {{ oc.total | number:'1.0-0' }}</td>
+            <td class="text-center">
+              <div class="btn-group-actions">
+                <button class="btn-cyan" (click)="verDetalle(oc)" title="Ver detalle para anular"> 
+                  <i class="bi bi-eye"></i> 
+                </button>
+
+                @if (esSupervisor()) {
+                  <button class="btn-cyan bg-danger border-danger" (click)="abrirConfirmar(oc, 'anular')" title="Anular Orden"> 
+                    <i class="bi bi-trash"></i> 
+                  </button>
+                }
+              </div>
+            </td>
+          </tr>
+        }
+        @if (listaAutorizadas.length === 0) {
+          <tr>
+            <td colspan="6" class="text-center py-4 text-muted italic">
+              No hay órdenes autorizadas disponibles para anular.
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+@if (ocSeleccionada) {
+  <div class="modal-backdrop-custom">
+    <div class="modal-content-auth shadow-lg border-top border-danger border-4">
+      
+      <div class="modal-header auth-header d-flex justify-content-between align-items-center">
+        <button type="button" class="btn-close-custom" (click)="ocSeleccionada = null" title="Cerrar">
+          <i class="bi bi-x-lg"></i>
+        </button>
+        <h5 class="mb-0 text-danger fw-bold">
+          <i class="bi bi-exclamation-triangle"></i> ANULACIÓN DE ORDEN: {{ ocSeleccionada.codOrdenCompra }}
+        </h5>
+      </div>
+
+      <div class="modal-body bg-light p-4 custom-scroll">
+        <div class="paper-layout shadow-sm mx-auto">
+          
+          <div class="oc-document-title text-center mb-4">
+            ORDEN DE COMPRA
+          </div>
+
+          <div class="info-grid">
+            <div class="info-column">
+              <div class="field">
+                <span class="label">PROVEEDOR:</span>
+                <span class="val-black font-bold">{{ ocSeleccionada.nombreProveedor | uppercase }}</span>
+              </div>
+              
+              <div class="field"><span class="label">RUT:</span> <span class="val-black">{{ ocSeleccionada.rutProveedor || '—' }}</span></div>
+              <div class="field"><span class="label">DIRECCIÓN:</span> <span class="val-black">{{ (ocSeleccionada.direccionProveedor || '—') | uppercase }}</span></div>
+              <div class="field"><span class="label">COMUNA:</span> <span class="val-black">{{ (ocSeleccionada.comunaProveedor || '—') | uppercase }}</span></div>
+              <div class="field"><span class="label">REGIÓN:</span> <span class="val-black">{{ (ocSeleccionada.regionProveedor || '—') | uppercase }}</span></div>
+              <div class="field"><span class="label">GIRO:</span> <span class="val-black">{{ (ocSeleccionada.giroProveedor || '—') | uppercase }}</span></div>
+              <div class="field"><span class="label">TELÉFONO:</span> <span class="val-black">{{ (ocSeleccionada.telefonoContactoProveedor || '—') | uppercase }}</span></div>
+              <div class="field"><span class="label">CORREO ELECTRÓNICO:</span> <span class="val-black">{{ (ocSeleccionada.emailProveedor || '—') | uppercase }}</span></div>
+            </div>
+
+            <div class="info-column">
+              <div class="field"><span class="label">FECHA:</span> <span class="val-black">{{ ocSeleccionada.fechaOrdenCompra | date:'dd/MM/yyyy HH:mm' }}</span></div>
+              <div class="field"><span class="label">CÓDIGO OC:</span> <span class="val-black font-bold">{{ ocSeleccionada.codigoOrdenCompra }}</span></div>
+              <div class="field"><span class="label">UNIDAD COMPRADORA:</span> <span class="val-black">{{ (ocSeleccionada.nombreUnidad || '—') | uppercase }}</span></div>
+              <div class="field"><span class="label">REALIZADO POR:</span> <span class="val-black">{{ (ocSeleccionada.nombreUsuario + ' ' + ocSeleccionada.apellidoUsuario) | uppercase }}</span></div>
+              <div class="field mt-2">
+                <span class="label">ESTADO ACTUAL: </span> 
+                <span class="badge-estado">{{ ocSeleccionada.estadoActualOc | uppercase }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="name-section mt-3">
+            <label class="form-label-thin">NOMBRE DE LA ORDEN DE COMPRA</label>
+            <div class="value-box-readonly">{{ ocSeleccionada.nombreOrdenCompra }}</div>
+          </div>
+
+          <div class="table-container mt-3">
+            <table class="table table-bordered custom-table-thin mb-0">
+              <thead>
+                <tr>
+                  <th style="width: 40px;">Nº</th>
+                  <th style="width: 120px;">CÓDIGO</th>
+                  <th>DESCRIPCIÓN DE PRODUCTO O SERVICIO</th>
+                  <th class="text-end" style="width: 110px;">VALOR U.</th>
+                  <th class="text-center" style="width: 70px;">CANT.</th>
+                  <th class="text-end" style="width: 110px;">TOTAL</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of parsearProductos(ocSeleccionada.listProductosOrden); track $index) {
+                  <tr>
+                    <td class="text-center">{{ $index + 1 }}</td>
+                    <td class="val-black font-mono">
+                      {{ item.codigoProducto && item.codigoProducto !== '' ? item.codigoProducto : '—' }}
+                    </td>
+                    <td>{{ item.descripcionProducto | uppercase }}</td>
+                    <td class="text-end font-mono">
+                      $ {{ item.valorProducto | number:'1.0-0' }}
+                    </td>
+                    <td class="text-center">{{ item.cantidad }}</td>
+                    <td class="text-end font-mono bg-light-readonly">
+                      $ {{ (item.valorProducto * item.cantidad) | number:'1.0-0' }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="footer-layout mt-3">
+            <div class="totals-container-auth">
+              <div class="total-row-thin"><span>TOTAL NETO</span> <strong>$ {{ ocSeleccionada.totalNeto | number:'1.0-0' }}</strong></div>
+              <div class="total-row-thin"><span>IVA ({{ ocSeleccionada.impuestoDocumentoElectronico }}%)</span> <strong>$ {{ ocSeleccionada.impuesto | number:'1.0-0' }}</strong></div>
+              <div class="total-row-thin highlight-magenta">
+                <span>TOTAL</span> <strong class="magenta-text">$ {{ ocSeleccionada.total | number:'1.0-0' }}</strong>
+              </div>
+            </div>
+
+            <div class="observations-section mt-2">
+              <label class="form-label-thin">OBSERVACIONES</label>
+              <div class="observation-box-readonly">{{ ocSeleccionada.observaciones || 'SIN OBSERVACIONES' }}</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      
+      <div class="modal-footer bg-white shadow-top">
+        @if (esSupervisor()) {
+          <button type="button" class="btn-action-oc btn-return-auth" (click)="ocSeleccionada = null">
+            <i class="bi bi-arrow-left-right"></i> VOLVER
+          </button>
+          <button type="button" class="btn-action-oc btn-authorize-auth" (click)="abrirConfirmar(ocSeleccionada, 'anular')">
+            <i class="bi bi-check-all"></i> ANULAR ORDEN DE COMPRA
+          </button>
+        } @else {
+          <div class="alert alert-warning m-0 py-2 small">
+            <i class="bi bi-info-circle"></i> Solo usuarios con perfil <b>Supervisor</b> pueden anular órdenes.
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}

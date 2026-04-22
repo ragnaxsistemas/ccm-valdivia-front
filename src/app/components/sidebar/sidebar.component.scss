@@ -1,0 +1,62 @@
+.sidebar-container {
+  width: 260px;
+  height: 100vh;
+  background-color: #ffffff;
+  border-right: 1px solid #e9ecef;
+
+  .sidebar-title {
+    padding: 20px 25px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #adb5bd;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 0;
+  }
+}
+
+.sidebar-nav {
+  ul {
+    list-style: none; // Quita los puntos negros definitivamente
+    padding: 0;
+    margin: 0;
+  }
+
+  .nav-item {
+    width: 100%;
+    
+    .nav-link {
+      display: flex;
+      align-items: center;
+      padding: 12px 25px;
+      text-decoration: none;
+      color: #555;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+      
+      i {
+        margin-right: 12px;
+        width: 20px;
+        text-align: center;
+        font-size: 1.1rem;
+      }
+
+      &:hover {
+        background-color: #f8f9fa;
+        color: #45b1c1;
+      }
+    }
+
+    // Estilo cuando la ruta está activa
+    .active-link {
+      background-color: rgba(69, 177, 193, 0.08);
+      color: #45b1c1 !important;
+      border-right: 4px solid #45b1c1;
+      font-weight: 600;
+
+      i {
+        color: #45b1c1;
+      }
+    }
+  }
+}

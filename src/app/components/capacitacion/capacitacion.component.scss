@@ -1,0 +1,53 @@
+.oc-wrapper {
+  padding: 20px;
+
+  .action-header {
+    margin-bottom: 30px;
+
+    .btn-new-oc {
+      background-color: #00bcd4 !important; // Color Cyan
+      color: white !important;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-transform: uppercase;
+
+      &:hover {
+        background-color: #26c6da !important;
+        box-shadow: 0 5px 15px rgba(0, 188, 212, 0.3);
+      }
+    }
+  }
+
+  .text-magenta {
+    color: #e2007a;
+    font-weight: bold;
+  }
+
+  .admin-card {
+    border-radius: 12px;
+    border-left: 6px solid #00bcd4; // Detalle Cyan lateral
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+
+  .list-group-item {
+    border: none;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    transition: background 0.2s;
+
+    &:hover {
+      background-color: #f0fdfd;
+    }
+
+    i.bi-file-pdf {
+      font-size: 1.4rem;
+      margin-right: 12px;
+    }
+  }
+}

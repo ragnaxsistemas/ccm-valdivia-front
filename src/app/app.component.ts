@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
+import { AuthService } from './services/auth.service';
 import { RouterOutlet } from '@angular/router';
 
 @Component({
@@ -8,6 +9,10 @@ import { RouterOutlet } from '@angular/router';
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
-export class AppComponent {
-  title = 'ccm-valdivia-front';
+export class AppComponent implements OnInit {
+  authService = inject(AuthService);
+
+  ngOnInit() {
+    this.authService.checkSession();
+  }
 }

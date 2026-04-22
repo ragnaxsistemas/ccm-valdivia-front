@@ -1,0 +1,46 @@
+.oc-wrapper {
+  padding: 20px;
+
+  .action-header {
+    display: flex;
+    align-items: center;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e0f7fa; // Línea cyan suave
+    margin-bottom: 25px;
+
+    .btn-new-oc {
+      // Forzamos el color Cyan
+      background-color: #00bcd4 !important; 
+      color: white !important;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0, 188, 212, 0.2);
+
+      i { font-size: 1.3rem; }
+
+      &:hover {
+        background-color: #00acc1 !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 188, 212, 0.3);
+      }
+
+      &:disabled {
+        background-color: #b2ebf2 !important;
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  .admin-card {
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    border: none;
+    background: white;
+  }
+}

@@ -1,0 +1,56 @@
+<div class="layout-wrapper">
+  <header class="main-header">
+    <div class="top-info-bar">
+      <span><i class="bi bi-telephone"></i> +56 63 2 236906</span>
+      <span><i class="bi bi-envelope"></i> contacto&#64;ccm-valdivia.cl</span>
+    </div>
+
+    <div class="navbar-content">
+      <div class="brand-section">
+        <div class="brand-logo">
+          <span class="c-yellow">C</span><span class="c-magenta">C</span><span class="c-cyan">M</span>
+        </div>
+        <div class="brand-divider"></div>
+        <div class="system-title">
+          <span>SISTEMA DE GESTIÓN</span>
+          <strong>ORDENES DE COMPRA</strong>
+        </div>
+      </div>
+
+      <div class="user-section">
+        <div class="user-info">
+          <div class="session-row">
+            <span class="label">Sesión:</span>
+            <strong class="user-name">{{ userName }}</strong>
+          </div>
+          <div class="details-row">
+            <span class="badge-outline">{{ userRole }}</span>
+            <span class="badge-outline">{{ userUnidad }}</span>
+          </div>
+        </div>
+        <div class="action-container">
+          <button class="btn-logout" (click)="logout()">
+            <i class="bi bi-box-arrow-right"></i>
+            <span>Cerrar Sesión</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="bottom-bars">
+        <div class="bar yellow"></div>
+        <div class="bar magenta"></div>
+        <div class="bar cyan"></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="main-body-container" style="display: flex;">
+    
+    <app-sidebar></app-sidebar>
+
+    <main class="content-render-area" style="flex: 1; padding: 20px; overflow-y: auto;">
+      <router-outlet></router-outlet>
+    </main>
+
+  </div>
+</div>
