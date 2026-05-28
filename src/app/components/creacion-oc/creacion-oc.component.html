@@ -162,8 +162,8 @@
               <tr>
                 <th class="text-center" style="width: 50px;">Nº</th>
                 <th>DESCRIPCIÓN PRODUCTO / SERVICIO</th>
-                <th class="text-end" style="width: 140px;">VALOR UNIT.</th>
-                <th class="text-center" style="width: 100px;">CANTIDAD</th>
+                <th class="text-end" style="width: 100px;">CANTIDAD</th>
+                <th class="text-center" style="width: 140px;">VALOR UNIT.</th>
                 <th class="text-end" style="width: 140px;">{{ labelNeto }}</th>
                 <th class="text-center no-print" style="width: 50px;"> <i class="bi bi-trash"></i> </th>
               </tr>
@@ -174,23 +174,15 @@
                   <td class="index-column">{{ $index + 1 }}</td>
                   
                   <td class="position-relative">
-                    <input type="text" 
-                           class="input-table-cell" 
-                           [(ngModel)]="item.descripcionProducto" 
-                           [disabled]="!puedeEditarItems" 
-                           (focus)="filaActiva = $index"
-                           (click)="filaActiva = $index"
-                           placeholder="DESCRIPCIÓN...">
-                    
-                    @if (filaActiva === $index && item.descripcionProducto?.length > 0) {
-                      <ul class="product-dropdown no-print">
-                        @for (p of getProductosFiltrados(item.descripcionProducto); track p.codigoProducto || $index) {
-                          <li (mousedown)="seleccionarProducto(p, item)">
-                            {{ p.nombreProducto | uppercase }}
-                          </li>
-                        }
-                      </ul>
-                    }
+                  <input type="text" 
+                        class="input-table-cell" 
+                        [(ngModel)]="item.descripcionProducto" 
+                        [disabled]="!puedeEditarItems" 
+                        placeholder="DESCRIPCIÓN...">
+                </td>
+                  <td>
+                    <input type="number" class="input-table-cell text-center" 
+                           [(ngModel)]="item.cantidad" (input)="actualizarLinea($index)" [disabled]="!puedeEditarItems">
                   </td>
                   <td>
                     <div class="currency-input-container">
@@ -198,10 +190,6 @@
                       <input type="number" class="input-table-cell text-end font-mono" 
                              [(ngModel)]="item.valorProducto" (input)="actualizarLinea($index)" [disabled]="!puedeEditarItems">
                     </div>
-                  </td>
-                  <td>
-                    <input type="number" class="input-table-cell text-center" 
-                           [(ngModel)]="item.cantidad" (input)="actualizarLinea($index)" [disabled]="!puedeEditarItems">
                   </td>
                   <td class="bg-light-readonly">
                     <div class="currency-input-container">
@@ -230,10 +218,14 @@
             <textarea class="form-control-thin-full" rows="3" 
                       [(ngModel)]="observaciones" 
                       [disabled]="!puedeEditarItems" 
+                      maxlength="500" 
                       placeholder="DETALLES ADICIONALES..."></textarea>
+            
+            <div class="char-counter">
+              <span>{{ (observaciones || '').length }}</span> / 500
+            </div>         
           </div>
-
-
+          
         <!-- SECCIÓN DE TOTALES -->
           <div class="totals-container">
             <div class="total-row-thin">

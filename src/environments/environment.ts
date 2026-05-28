@@ -1,4 +1,4 @@
 export const environment = {
-  production: false,
-  apiUrl: 'http://localhost:8888'
+  production: true,
+  apiUrl: 'https://apiordenescompra.ccm-valdivia.cl/ccmvaldivia'
 };

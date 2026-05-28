@@ -1,15 +1,28 @@
-// Paleta CCM Refinada
-$ccm-cyan: #00bacf; // El Cyan característico de la marca
+// 1. VARIABLES DE MARCA Y COLORES
+// VARIABLES DE MARCA
+$ccm-cyan: #26c2d1;
+$ccm-cyan-dark: darken($ccm-cyan, 10%);
 $ccm-primary: #0088cc; 
-$ccm-bg-light: #f8f9fa;
-$ccm-border: #e0e0e0;
+$ccm-text-dark: #333;
+$ccm-text-muted: #888;
+$ccm-bg-light: #f9f9f9;
+$ccm-border: #dcdcdc;
 
+// COLORES DE ESTADOS (Ahora usados para el fondo del botón)
+$color-amarillo: #f1c40f;      // Borrador
+$color-cyan-light: #7de2ed;    // Pendiente Autorización
+$color-cyan-pure: #26c2d1;     // Autorizado
+$color-magenta-dark: #c026d1;  // Anulado
+$color-magenta-pure: #e026d1;  // Confirmada
+$color-magenta-light: #f07bed; // Pendiente Anulación
+
+// 3. CONTENEDOR PRINCIPAL
 .gestion-container {
   padding: 20px;
   background-color: white;
 
   h2 {
-    color: #333;
+    color: $ccm-text-dark;
     font-weight: 700;
     margin-bottom: 25px;
     border-bottom: 3px solid $ccm-cyan;
@@ -18,103 +31,86 @@ $ccm-border: #e0e0e0;
   }
 }
 
+// 4. PANEL DE FILTROS
 .card-filtros {
   background: #fdfdfd;
-  /* CAMBIO: Borde color cyan para el panel del buscador */
-  border: 1px solid #26c2d1;
+  border: 1px solid $ccm-cyan;
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 20px;
   box-shadow: 0 2px 8px rgba(38, 194, 209, 0.1);
 
+  .filtros-main-container {
+    border: 1.5px solid rgba($ccm-cyan, 0.2);
+    border-radius: 8px;
+    padding: 20px;
+    background-color: $ccm-bg-light;
+  }
+
   .row-filtros {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-end;
-    /* Mantiene la misma distancia exacta entre CADA elemento (incluyendo los botones) */
-    gap: 16px; 
-    width: 100%;
-    /* Asegura que los elementos no se peguen al borde derecho si no es necesario */
-    justify-content: flex-start; 
+    gap: 20px;
+    margin-bottom: 15px;
 
-    .filter-group {
-      display: flex;
-      flex-direction: column;
-      /* Importante: Permitimos que crezcan un poco pero con un límite para no apretar a los demás */
-      flex: 1;
-      
-      label {
-        font-size: 11px;
-        font-weight: 800;
-        color: #444;
-        margin-bottom: 6px;
-        white-space: nowrap;
-      }
-
-      input, select {
-        width: 100%;       /* El input llena su celda flex */
-        height: 38px;
-        padding: 0 10px;
-        border: 1px solid #dcdcdc;
-        border-radius: 4px;
-        box-sizing: border-box;
-      }
-
-      /* Proporciones específicas para que no todos midan lo mismo */
-      &:nth-child(1) { flex: 0.8; } // RUT más pequeño
-      &:nth-child(2) { flex: 1; } // UNIDAD más grande (nombres largos)
-      &:nth-child(3) { flex: 1.2; } // RANGO FOLIO
-      &:nth-child(4) { flex: 1; }   // ESTADO
-    
-      .range-inputs {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        input { text-align: center; }
-      }
-    }
-
-    .actions-group {
-      display: flex;
-      gap: 8px;
-      /* ELIMINADO: margin-left: auto (esto evitara que se alejen) */
-      flex: 0 0 auto; 
-
-      .btn-search {
-        background-color: #26c2d1;
-        color: white;
-        padding: 0 18px;
-        height: 38px;
-        border: none;
-        border-radius: 4px;
-        font-weight: 700;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        
-      }
-
-      .btn-clear {
-        background-color: #eeeeee;
-        color: #666;
-        width: 38px;
-        height: 38px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-      }
-    }
+    &:last-child { margin-bottom: 0; }
   }
 }
 
+// 5. GRUPOS DE ENTRADA (INPUTS Y LABELS)
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+
+  label {
+    font-size: 11px;
+    font-weight: 800;
+    color: #444;
+    text-transform: uppercase;
+  }
+
+  input, select {
+    height: 38px;
+    padding: 0 10px;
+    border: 1px solid $ccm-border;
+    border-radius: 4px;
+    font-size: 13px;
+    color: $ccm-text-dark;
+
+    &:focus {
+      outline: none;
+      border-color: $ccm-cyan;
+    }
+  }
+
+  .range-inputs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    input { 
+      width: 100%;
+      text-align: center;
+      &[type="date"] { flex: 1.2; } // Un poco más de espacio para la fecha
+    }
+
+    span { font-weight: bold; color: #999; }
+  }
+}
+
+// 6. BOTONES DE ACCIÓN
 .actions-group {
   display: flex;
   gap: 8px;
+  margin-left: auto; // Empuja a la derecha en la fila superior
+  flex: 0 0 auto;
 
   button {
-    height: 32px; // Match con los inputs
-    padding: 0 15px;
+    height: 38px;
+    padding: 0 18px;
     border-radius: 4px;
     font-weight: 700;
     font-size: 12px;
@@ -122,137 +118,174 @@ $ccm-border: #e0e0e0;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     transition: all 0.2s;
   }
 
   .btn-search {
     background-color: $ccm-cyan;
     color: white;
-    &:hover { background-color: darken($ccm-cyan, 10%); }
+    &:hover { background-color: $ccm-cyan-dark; }
   }
 
   .btn-clear {
     background-color: #eee;
     color: #666;
+    width: 38px; // Cuadrado para el borrador
+    justify-content: center;
     &:hover { background-color: #ddd; }
   }
 }
 
+// 7. TABLA DE REGISTROS
 .table {
   width: 100%;
   border-collapse: separate;
-  border-spacing: 0 10px; /* Mantiene el efecto de "tarjetas" separadas */
-
-  thead {
-    tr {
-      th {
-        text-align: center;       /* Alinea el título al centro horizontal */
-        vertical-align: middle;   /* Alinea el título al centro vertical */
-        padding: 12px 15px;
-        font-size: 0.75rem;
-        color: #888;
-        text-transform: uppercase;
-        border: none;
-      }
-    }
-  }
-
-  tbody {
-    tr {
-      background-color: #fff;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Efecto de la captura */
-      
-      td {
-        text-align: center;       /* Alinea el dato al centro horizontal */
-        vertical-align: middle;   /* Alinea el dato al centro vertical */
-        padding: 15px;
-        border: none;
-        font-size: 0.9rem;
-        color: #333;
-
-        /* Estilo específico para el Folio (la primera columna) */
-        &:first-child {
-          border-left: 4px solid #26c2d1; /* La barrita cyan de tu imagen */
-          font-weight: 700;
-        }
-
-        /* Estilo para el Monto (alineación derecha suele ser mejor para números, 
-           pero si quieres todo al centro, ignora esto o déjalo en center) */
-        &.monto-total {
-          font-weight: 600;
-        }
-      }
-    }
-  }
-}
-// Tabla alineada
-.table-responsive {
-  width: 100%;
-  // Eliminamos márgenes laterales para que coincida con el ancho de la card superior
-  margin: 0; 
-}
-
-.custom-table {
-  width: 100%;
-  border-collapse: separate;
   border-spacing: 0 10px;
+  margin-top: 1rem;
 
   thead th {
-    padding: 12px 15px;
-    color: #999;
+    text-align: center;
+    padding: 12px;
     font-size: 0.75rem;
-    font-weight: 700;
+    color: $ccm-text-muted;
     text-transform: uppercase;
     border: none;
   }
 
   tbody tr {
     background-color: white;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 
     td {
-      padding: 14px 15px;
-      border-top: 1px solid #f2f2f2;
-      border-bottom: 1px solid #f2f2f2;
+      text-align: center;
+      vertical-align: middle;
+      padding: 15px;
+      border: none;
+      font-size: 0.9rem;
 
       &:first-child {
         border-left: 5px solid $ccm-cyan;
-        border-top-left-radius: 6px;
-        border-bottom-left-radius: 6px;
+        border-radius: 6px 0 0 6px;
+        font-weight: 700;
+        color: $ccm-primary;
       }
-      &:last-child {
-        border-right: 1px solid #f2f2f2;
-        border-top-right-radius: 6px;
-        border-bottom-right-radius: 6px;
-      }
+      &:last-child { border-radius: 0 6px 6px 0; }
+      &.monto-total { font-weight: 600; }
     }
   }
 }
 
-/* Forzar colores de badges si Bootstrap no los toma */
-/* registros.component.scss */
+// 8. COMPONENTE DE ESTADO (Badges)
+// Estilo para los estados que NO tienen link
+.status-text-only {
+  font-weight: 800; // Fuente pesada de registros
+  font-size: 0.75rem;
+  color: #000;      // Letra negra
+  text-transform: uppercase;
+  display: inline-block;
+  min-width: 120px;
+  text-align: center;
+}
 
-.badge {
-  display: inline-flex !important;      /* Cambiado a flex para centrado total */
-  align-items: center;                  /* Centrado vertical */
-  justify-content: center;              /* Centrado horizontal */
+// Estilo para el LINK (Confirmada/Anulada)
+.status-link-pdf {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 120px;
   
-  width: 180px;                         /* Ancho fijo para que todos sean iguales */
-  min-height: 35px;                     /* Altura mínima uniforme */
-  
-  padding: 8px 12px !important;         /* Espaciado interno */
-  font-size: 0.75rem !important;        /* Tamaño de fuente legible */
-  line-height: 1.1;                     /* Ajuste de línea para textos largos */
-  text-align: center;                   /* Respaldo para navegadores antiguos */
-  white-space: normal;                  /* Permite que "PENDIENTE DE..." baje a otra línea si es necesario */
-  border-radius: 4px;                   /* Opcional: bordes menos redondeados para un look más moderno */
-  
-  // Forzar colores si Bootstrap no los toma
-  &.bg-warning { background-color: #ffc107 !important; color: #000 !important; }
-  &.bg-info    { background-color: #45b1c1 !important; color: #fff !important; }
-  &.bg-success { background-color: #198754 !important; color: #fff !important; }
-  &.bg-danger  { background-color: #dc3545 !important; color: #fff !important; }
-  &.bg-primary { background-color: #0d6efd !important; color: #fff !important; }
-  &.bg-secondary { background-color: #6c757d !important; color: #fff !important; }
+  // Fuente y Color
+  font-weight: 800;
+  font-size: 0.75rem;
+  color: #000 !important; // Letra negra
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+
+  i {
+    color: #e74c3c; // El icono de PDF sigue siendo rojo para destacar
+    font-size: 1.1rem;
+  }
+
+  &:hover {
+    color: $ccm-cyan !important; // Cambia a cyan al pasar el mouse para feedback
+    text-decoration: underline;
+    
+    i {
+      transform: scale(1.1);
+    }
+  }
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;   // Forma de píldora/botón
+  font-weight: 800;
+  font-size: 0.75rem;
+  color: #000 !important; // LETRAS NEGRAS
+  text-align: center;
+  min-width: 120px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+  &.bg-borrador { background-color: $color-amarillo; }
+  &.bg-pendiente-auth { background-color: $color-cyan-light; }
+  &.bg-autorizado { background-color: $color-cyan-pure; }
+  &.bg-anulado { background-color: $color-magenta-dark; }
+  &.bg-confirmada { background-color: $color-magenta-pure; }
+  &.bg-pendiente-anul { background-color: $color-magenta-light; }
+}
+
+.pdf-link {
+  color: $ccm-primary !important;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  i {
+    color: #e74c3c; // Rojo PDF
+    font-size: 1.2rem;
+    display: inline-block;
+  }
+
+  span {
+    color: $ccm-primary;
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+    span {
+      text-decoration: underline;
+    }
+  }
+}
+
+loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.7); /* Fondo semitransparente */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; /* Asegura que esté por encima de todo */
+  cursor: wait; /* Cambia el cursor para indicar espera */
+}
+
+.loading-content {
+  text-align: center;
+  font-weight: bold;
+  color: #d32f2f; /* Color institucional o rojo según el estado */
+}
+
+.loading-content p {
+  margin-top: 15px;
+  font-size: 1.2rem;
 }

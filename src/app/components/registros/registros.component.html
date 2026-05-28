@@ -2,52 +2,69 @@
   <h2>Gestión de Órdenes de Compra</h2>
 
   <div class="card-filtros">
-    <div class="row-filtros">
+    <div class="filtros-main-container">
+      <div class="row-filtros">
+        <div class="filter-group">
+          <label>RUT PROVEEDOR</label>
+          <input type="text" [(ngModel)]="filtros.rutProveedor" placeholder="12.345.678-9">
+        </div>
+
+        <div class="filter-group">
+          <label>UNIDAD</label>
+          <select [(ngModel)]="filtros.unidad">
+            <option value="">TODAS LAS UNIDADES</option>
+            @for (u of unidades; track u.codigoUnidad || $index) {
+              <option [value]="u.codigoUnidad">{{ u.nombreUnidad }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>RANGO FOLIO (Desde - Hasta)</label>
+          <div class="range-inputs">
+            <input type="text" [(ngModel)]="filtros.folioDesde" placeholder="0001">
+            <span>-</span>
+            <input type="text" [(ngModel)]="filtros.folioHasta" placeholder="0016">
+          </div>
+        </div>
+
+        
+
+        <div class="actions-group">
+          <button class="btn-search" (click)="buscar()">
+            <i class="bi bi-search"></i> BUSCAR
+          </button>
+          <button class="btn-clear" (click)="limpiarFiltros()">
+            <i class="bi bi-eraser"></i>
+          </button>
+        </div>
+      </div>
       
-      <div class="filter-group">
-        <label>RUT PROVEEDOR</label>
-        <input type="text" [(ngModel)]="filtros.rutProveedor" placeholder="12.345.678-9">
-      </div>
+      <div class="row-filtros">
+
+        <div class="filter-group">
+          <label>ESTADO</label>
+          <select [(ngModel)]="filtros.estado">
+            <option value="">TODOS LOS ESTADOS</option>
+            @for (est of estados; track est.codigoEstadoOc) {
+              <option [value]="est.codigoEstadoOc">{{ est.nombreEstadoOc }}</option>
+            }
+          </select>
+        </div>
 
       <div class="filter-group">
-        <label>UNIDAD</label>
-        <select [(ngModel)]="filtros.unidad">
-          <option value="">TODAS LAS UNIDADES</option>
-          @for (u of unidades; track u.codigoUnidad || $index) {
-            <option [value]="u.codigoUnidad">{{ u.nombreUnidad }}</option>
-          }
-        </select>
-      </div>
-
-      <div class="filter-group">
-        <label>RANGO FOLIO (Desde - Hasta)</label>
-        <div class="range-inputs">
-          <input type="text" [(ngModel)]="filtros.folioDesde" placeholder="0001">
+        <label>RANGO FECHAS</label> <div class="range-inputs">
+          <input type="date" [(ngModel)]="filtros.fechaInicio">
           <span>-</span>
-          <input type="text" [(ngModel)]="filtros.folioHasta" placeholder="0016">
+          <input type="date" [(ngModel)]="filtros.fechaFin">
         </div>
       </div>
 
-      <div class="filter-group">
-        <label>ESTADO</label>
-        <select [(ngModel)]="filtros.estado">
-          <option value="">TODOS LOS ESTADOS</option>
-           @for (est of estados; track est.codigoEstadoOc) {
-            <option [value]="est.codigoEstadoOc">{{ est.nombreEstadoOc }}</option>
-          }
-        </select>
-      </div>
-
-      <div class="actions-group">
-        <button class="btn-search" (click)="buscar()">
-          <i class="bi bi-search"></i> BUSCAR
-        </button>
-        <button class="btn-clear" (click)="limpiarFiltros()">
-          <i class="bi bi-eraser"></i>
-        </button>
       </div>
     </div>
-  </div>
+    
+
+    
 
   <div class="table-responsive mt-4">
   <table class="table">
@@ -65,14 +82,23 @@
     @for (oc of ordenes; track $index) {
       <tr>
         <td class="fw-bold text-primary">{{ oc.codOrdenCompra }}</td>
+        
         <td>{{ formatFecha(oc.fechaOrdenCompra) }}</td>
         <td>{{ oc.nombreProveedor }}</td>
         <td>{{ oc.nombreUnidad }}</td>
         <td class="monto-total">$ {{ oc.total | number:'1.0-0' }}</td>
+        
         <td>
-          <span class="badge" [ngClass]="getEstadoClass(oc.codEstadoActualOc)">
-            {{ oc.estadoActualOc | uppercase }}
-          </span>
+          @if (oc.codEstadoActualOc === 'confirmada' || oc.codEstadoActualOc === 'anulado') {
+            <a href="javascript:void(0)" (click)="descargarDocumento(oc)" class="status-link-pdf">
+              {{ oc.estadoActualOc | uppercase }}
+              <i class="bi bi-file-earmark-pdf-fill"></i>
+            </a>
+          } @else {
+            <span class="status-text-only">
+              {{ oc.estadoActualOc | uppercase }}
+            </span>
+          }
         </td>
       </tr>
     }
@@ -80,3 +106,13 @@
 </table>
 </div>
 </div>
+</div>
+
+@if (loading) {
+  <div class="loading-overlay">
+    <div class="loading-content">
+      <div class="spinner-border text-danger" role="status"></div>
+      <p>Generando documento, por favor espere...</p>
+    </div>
+  </div>
+}

@@ -477,16 +477,19 @@ export class CreacionOcComponent implements OnInit {
     this.ocData.neto = sumaItems;
     this.ocData.impuestoCalculado = valorRetencion;
 
-    if (this.dteSeleccionado?.codigoDocumentoTributario === '38') {
+    if (this.dteSeleccionado?.codigoDocumentoTributario === '38' || this.dteSeleccionado?.codigoDocumentoTributario === '38-c') {
       this.ocData.totalFinal = sumaItems - valorRetencion;
     } else {
       this.ocData.totalFinal = sumaItems + valorRetencion;
     }
   }
 
-  get labelNeto(): string { return this.dteSeleccionado?.codigoDocumentoTributario === '38' ? 'MONTO TOTAL' : 'TOTAL NETO'; }
-  get labelImpuesto(): string { return this.dteSeleccionado?.codigoDocumentoTributario === '38' ? 'RETENCIÓN' : 'IMPUESTO'; }
-  get labelTotal(): string { return this.dteSeleccionado?.codigoDocumentoTributario === '38' ? 'VALOR LÍQUIDO' : 'TOTAL'; }
+  get labelNeto(): string { 
+    return this.dteSeleccionado?.codigoDocumentoTributario === '38' || this.dteSeleccionado?.codigoDocumentoTributario === '38-c' ? 'MONTO TOTAL' : 'TOTAL NETO'; }
+  get labelImpuesto(): string { 
+    return this.dteSeleccionado?.codigoDocumentoTributario === '38' || this.dteSeleccionado?.codigoDocumentoTributario === '38-c' ? 'RETENCIÓN' : 'IMPUESTO'; }
+  get labelTotal(): string { 
+    return this.dteSeleccionado?.codigoDocumentoTributario === '38' || this.dteSeleccionado?.codigoDocumentoTributario === '38-c' ? 'VALOR LÍQUIDO' : 'TOTAL'; }
 
   get isFormularioCompleto(): boolean {
     const validaciones = {
