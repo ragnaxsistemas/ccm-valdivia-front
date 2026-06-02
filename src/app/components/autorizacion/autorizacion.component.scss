@@ -1,55 +1,174 @@
-// --- 1. VARIABLES ---
-$magenta-ccm: #e2007a;
-$magenta-hover: #b1005f;
-$cyan-ccm: #00bcd4;
-$teal-header: #43a0af;
-$gray-light: #f8f9fa;
-$gray-border: #dee2e6;
-$paper-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+// --- 1. VARIABLES REDEFINIDAS ---
+$bg-white-global: #ffffff;      // Fondo general blanco
+$cyan-ccm: #4cb0c0;             // Color Cyan principal (Para títulos e íconos)
+$cyan-dark-border: #2c8a9a;     // Borde Cyan más marcado y nítido para los paneles
+$text-dark-table: #0f172a;      // Letras negras/oscuras para el contenido de las filas
+$text-white-gray: #f1f5f9;      // Letras claras auxiliares
 
-// --- 2. MIXINS (REUTILIZACIÓN) ---
+// --- 2. MIXINS ---
 @mixin flex-center {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-// --- 3. COMPONENTES GENERALES ---
-.magenta-text { color: $magenta-ccm; font-weight: bold; }
+:host {
+  display: block;
+  background-color: $bg-white-global;
+  min-height: 100vh;
+  padding-bottom: 60px;
+  color: $text-dark-table;
+}
+
+// --- 3. COMPONENTES GENERALES Y TEXTOS ---
 .font-mono { font-family: 'Courier New', Courier, monospace; }
-.italic { font-style: italic; color: #555; }
+.italic { font-style: italic; color: #64748b; }
 
-// --- 4. TABLA PRINCIPAL DE AUTORIZACIÓN ---
-.custom-table-auth {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  background-color: white;
-
-  thead tr {
-    background-color: $teal-header;
-    color: white;
-    th {
-      padding: 13px 15px;
-      font-weight: 600;
-      text-transform: uppercase;
-      font-size: 0.85rem;
-    }
+// Título Principal de la Sección (Forzado a Cyan)
+h3 {
+  color: $cyan-ccm !important; 
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  text-transform: uppercase;
+  
+  i {
+    color: $cyan-ccm !important;
   }
+}
 
-  tbody tr {
-    transition: background-color 0.2s;
-    &:hover { background-color: $gray-light; }
-    td {
-      padding: 11px 15px;
-      vertical-align: middle;
-      border-bottom: 1px solid #eee;
-      font-size: 0.9rem;
+// --- 4. FILTRO DE UNIDAD COMPRADORA ---
+.card-filtro-auth {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 14px 18px;
+  border: 2px solid $cyan-dark-border;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  max-width: 380px;
+  margin-bottom: 20px;
+
+  .filter-group-auth {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    .filter-label-auth {
+      font-size: 0.68rem;
+      font-weight: 800;
+      color: $text-dark-table;
+      letter-spacing: 0.5px;
     }
   }
 }
 
-// --- 5. BOTONES Y ACCIONES ---
+.select-wrapper-auth {
+  position: relative;
+  width: 100%;
+
+  &::after {
+    content: '\F285';
+    font-family: 'bootstrap-icons';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.7rem;
+    color: $cyan-ccm;
+    pointer-events: none;
+  }
+}
+
+.select-unidad-auth {
+  width: 100%;
+  appearance: none;
+  background-color: #ffffff;
+  color: $text-dark-table;
+  border: 1px solid $cyan-dark-border;
+  padding: 8px 30px 8px 12px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  outline: none;
+  cursor: pointer;
+
+  &:focus {
+    border-color: $cyan-ccm;
+  }
+}
+
+// --- 5. TABLA PRINCIPAL DE AUTORIZACIÓN (IGUALACIÓN A TEXTO NEGRO) ---
+.table-container {
+  background-color: #ffffff !important;
+  border: 2px solid $cyan-dark-border;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+}
+
+.custom-table-auth {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background-color: #ffffff;
+
+  thead {
+    background-color: #ffffff !important;
+    
+    tr th {
+      background-color: #ffffff !important;
+      color: $cyan-ccm !important; // Títulos en cyan
+      padding: 14px 15px;
+      font-weight: 800;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      border-bottom: 3px solid $cyan-dark-border !important;
+    }
+  }
+
+  tbody tr {
+    background-color: rgba($cyan-ccm, 0.08) !important; // Fondo leve cyan
+    transition: background-color 0.2s ease;
+
+    &:nth-child(even) {
+      background-color: rgba($cyan-ccm, 0.02) !important; // Fondo más leve cyan
+    }
+
+    &:hover {
+      background-color: rgba($cyan-ccm, 0.15) !important;
+    }
+
+    td {
+      padding: 12px 15px;
+      font-size: 0.85rem;
+      font-weight: 600;                     // Peso de fuente unificado para todas las filas
+      vertical-align: middle;
+      color: #000000 !important;            // FORZAR TODAS LAS LETRAS A NEGRO ESTRICTO
+      border-bottom: 1px solid rgba($cyan-dark-border, 0.2);
+      text-align: center;
+      // Sobreescribimos cualquier clase heredada (como .text-primary o .font-bold) para que se iguale
+      &.font-bold, 
+      &.text-primary, 
+      span, 
+      strong {
+        color: #000000 !important;          // El código de la OC ya no será azul/cyan, ahora es negro igual que el resto
+        font-weight: 600 !important;        // Misma densidad que los demás campos
+      }
+    }
+  }
+}
+
+// Badge de Unidad Compradora
+.badge-unidad {
+  background-color: #ffffff;
+  color: $text-dark-table;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border: 1px solid $cyan-dark-border;
+}
+
+// --- 6. BOTONES DE ACCIÓN (Fondo Blanco, Icono Cyan) ---
 .btn-group-actions {
   display: flex;
   gap: 8px;
@@ -57,190 +176,296 @@ $paper-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .btn-cyan {
-  @include flex-center;
-  background-color: $cyan-ccm;
-  color: white;
-  border: none;
+  background-color: #ffffff !important; // Fondo íconos en blanco
+  color: $cyan-ccm !important;          // Colores íconos cyan
+  border: 1px solid $cyan-dark-border !important;
+  padding: 6px 12px;
   border-radius: 4px;
-  width: 34px;
-  height: 34px;
+  font-size: 0.9rem;
   transition: all 0.2s ease;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  i {
+    color: $cyan-ccm !important;        // Dibujo interno cyan
+  }
 
   &:hover {
-    background-color: darken($cyan-ccm, 10%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    background-color: rgba($cyan-ccm, 0.08) !important;
+    transform: scale(1.05);
   }
 }
 
-.btn-action-oc {
-  padding: 9px 20px;
-  border: none;
-  border-radius: 4px;
-  font-weight: bold;
-  color: white;
-  transition: opacity 0.2s, background-color 0.2s;
-
-  &.btn-authorize-auth { background-color: $teal-header; }
-  &.btn-return-auth { background-color: #6c757d; }
-  &:hover { opacity: 0.9; }
-}
-
-// --- 6. MODAL SYSTEM ---
-.modal-backdrop-custom {
+// --- 7. MODAL DETALLE DE ORDEN ---
+.modal-overlay-auth {
   position: fixed;
-  top: 0; left: 0;
-  width: 100vw; height: 100vh;
-  background: rgba(0, 0, 0, 0.5);
+  top: 0; left: 0; width: 100%; height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
   @include flex-center;
   z-index: 1050;
+  padding: 20px;
 }
 
-.modal-content-auth {
-  background: white;
-  width: 90%;
-  max-width: 1000px;
+.modal-window-auth {
+  background-color: #ffffff;
+  border: 2px solid $cyan-dark-border;
+  color: $text-dark-table;
+  width: 100%;
+  max-width: 900px;
   max-height: 90vh;
   border-radius: 8px;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
 }
 
-.auth-header {
-  border-bottom: 2px solid lighten($magenta-ccm, 45%);
-  padding: 1rem 1.5rem;
+.modal-header-auth {
+  background-color: #ffffff;
+  border-bottom: 2px solid $cyan-dark-border;
+  padding: 14px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .modal-title-text {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: $cyan-ccm !important; // Título del modal en Cyan también
+  }
 }
 
-.custom-scroll {
+.modal-body-scroll {
+  padding: 24px;
   overflow-y: auto;
   flex-grow: 1;
-  padding: 30px !important;
-  background-color: $gray-light;
-
-  &::-webkit-scrollbar { width: 8px; }
-  &::-webkit-scrollbar-track { background: #f1f1f1; }
-  &::-webkit-scrollbar-thumb {
-    background: #ccc;
-    border-radius: 4px;
-    &:hover { background: $magenta-ccm; }
-  }
+  background-color: #f8fafc;
 }
 
-// --- 7. DISEÑO DE "PAPEL" (ORDEN DE COMPRA) ---
-.paper-layout {
-  background-color: white;
-  width: 100%;
-  max-width: 850px;
-  min-height: 600px;
-  padding: 40px;
-  margin: 0 auto 20px;
-  border: 1px solid $gray-border;
-  box-shadow: $paper-shadow;
-  font-family: 'Arial', sans-serif;
-  position: relative;
-
-  &.view-only-mode {
-    pointer-events: none;
-    user-select: text;
-  }
+.paper-view-container {
+  background: #ffffff;
+  border: 2px solid $cyan-dark-border;
+  padding: 25px;
+  border-radius: 6px;
 }
 
-.oc-document-title {
-  font-size: 22px;
-  font-weight: bold;
-  text-align: center;
-  border-bottom: 2px solid $magenta-ccm;
-  padding-bottom: 5px;
-  margin-bottom: 1.5rem;
+.section-title-auth {
+  background: rgba($cyan-ccm, 0.08);
+  color: $cyan-dark-border;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 6px 10px;
+  border-left: 4px solid $cyan-dark-border;
+  margin-bottom: 12px;
 }
 
-.info-grid {
+.grid-info-auth {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  border: 1px solid #eee;
-  padding: 11px;
-  align-items: start;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
 
-  .label { font-weight: bold; font-size: 0.8rem; color: #666; }
-  .val-black { color: #000; font-size: 0.85rem; }
+  .info-block {
+    display: flex;
+    border-bottom: 1px solid rgba($cyan-dark-border, 0.2);
+    padding-bottom: 6px;
+    font-size: 0.8rem;
+
+    .lbl { width: 130px; font-weight: 700; color: #64748b; }
+    .val { color: $text-dark-table; font-weight: 600; }
+  }
 }
 
-.value-box-readonly, .observation-box-readonly {
-  background: $gray-light;
-  border-bottom: 1px solid $gray-border;
-  padding: 11px;
-  font-size: 0.9rem;
+// Tabla interna del Modal con Títulos Cyan
+.table-inner-paper {
+  width: 100%;
+  margin-bottom: 20px;
+  border-collapse: collapse;
+  
+  thead tr th {
+    background-color: #ffffff !important;
+    color: $cyan-ccm !important; // Títulos cyan en la tabla interna
+    font-size: 0.68rem;
+    padding: 8px 10px;
+    border: 1px solid $cyan-dark-border;
+    font-weight: 800;
+  }
+  td {
+    padding: 8px 10px;
+    font-size: 0.75rem;
+    border: 1px solid rgba($cyan-dark-border, 0.2);
+    color: $text-dark-table;
+    background-color: rgba($cyan-ccm, 0.08); // fondo leve cyan
+  }
+  tr:nth-child(even) td {
+    background-color: rgba($cyan-ccm, 0.02); // fondo mas leve cyan
+  }
 }
 
-// --- 8. TOTALES Y BADGES ---
-.totals-container-auth {
-  width: 250px;
-  float: right;
-  margin-bottom: 15px;
+// Caja de adjuntos
+.attachment-item-box {
+  background: #ffffff;
+  border: 1px solid $cyan-dark-border;
+  color: $text-dark-table;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
 
-  .total-row-thin {
+  &:hover { background: rgba($cyan-ccm, 0.05); }
+  .file-icon-container i { color: $cyan-ccm; font-size: 1.3rem; }
+  .file-name-text { font-size: 0.78rem; color: $text-dark-table; }
+  .file-download-action { color: $cyan-dark-border; font-size: 0.7rem; }
+}
+
+.style-obs {
+  background-color: rgba($cyan-ccm, 0.02) !important;
+  border: 1px solid $cyan-dark-border;
+  color: $text-dark-table;
+}
+
+// Totales
+.totals-paper-box {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 2px solid $cyan-dark-border;
+  padding-top: 10px;
+
+  .t-row {
     display: flex;
     justify-content: space-between;
-    padding: 5px 0;
-    border-bottom: 1px solid #f0f0f0;
+    width: 240px;
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-bottom: 4px;
 
-    &.highlight-magenta {
-      color: $magenta-ccm;
-      border-top: 1px solid $magenta-ccm;
-      margin-top: 6px;
-      font-weight: bold;
+    &.t-master {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: $cyan-dark-border;
+      border-top: 1px solid $cyan-dark-border;
+      padding-top: 4px;
     }
   }
 }
 
-.observations-section { clear: both; }
+// --- 8. FOOTER MODAL REESTRUCTURADO (FILA ÚNICA Y MARGEN INFERIOR) ---
+// --- 8. FOOTER MODAL REESTRUCTURADO (FILA ÚNICA Y MARGEN INFERIOR) ---
+.modal-footer {
+  background-color: #ffffff !important;
+  border-top: 2px solid $cyan-dark-border;
+  padding: 16px 20px 24px 20px; // Aumentamos padding inferior (24px) para dar margen abajo
+}
 
-.badge-unidad, .badge-estado {
-  padding: 5px 8px;
-  border-radius: 4px;
+// Layout contenedor flex para obligar la fila única sin desbordes de Bootstrap
+.footer-actions-layout {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100%;
+
+  .left-box {
+    display: flex;
+    align-items: center;
+  }
+
+  .right-box {
+    display: flex !important;
+    flex-direction: row !important; // Garantiza estrictamente que queden uno al lado del otro
+    gap: 12px !important;           // Separación horizontal elegante entre Devolver y Autorizar
+    align-items: center;
+  }
+}
+
+// Botones de acción internos del modal alineados
+.btn-action-oc {
   font-size: 0.75rem;
-  font-weight: bold;
-}
-
-.badge-unidad { background: #e9ecef; color: #495057; }
-.badge-estado {
-  background-color: #fce4ec;
-  color: $magenta-ccm;
-  border: 1px solid #f8bbd0;
-}
-
-// --- 9. BOTONES DE CIERRE ---
-.btn-close-custom {
-  @include flex-center;
-  background: none;
-  border: none;
-  color: $magenta-ccm;
-  font-size: 1.5rem;
-  transition: all 0.2s ease;
-  cursor: pointer;
-
-  &:hover {
-    color: darken($magenta-ccm, 20%);
-    transform: scale(1.2) rotate(90deg);
-  }
-}
-
-.btn-close-outline {
-  @include flex-center;
-  background: transparent;
-  border: 1px solid $magenta-ccm;
-  color: $magenta-ccm;
-  padding: 8px 20px;
+  font-weight: 700;
+  padding: 10px 20px;               // Un poco más de altura para mejor ergonomía
   border-radius: 4px;
-  font-weight: bold;
+  cursor: pointer;
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
   gap: 8px;
+  border: none;
+  white-space: nowrap;              // Previene que el texto se parta en dos renglones
   transition: all 0.2s ease;
 
-  &:hover {
-    background-color: $magenta-ccm;
+  &.btn-return-auth {
+    background-color: #ef4444; 
     color: white;
+    &:hover { background-color: darken(#ef4444, 8%); }
   }
+
+  &.btn-authorize-auth {
+    background-color: #22c55e; 
+    color: white;
+    &:hover { background-color: darken(#22c55e, 8%); }
+  }
+}
+
+// --- BOTÓN CERRAR VISTA (Restaurado con Borde Cyan y Fondo Blanco) ---
+.btn-close-outline {
+  background-color: #ffffff !important;
+  border: 1px solid $cyan-dark-border !important;
+  color: $cyan-dark-border !important;
+  padding: 10px 20px !important;    // Mismo alto equilibrado que los botones de la derecha
+  border-radius: 4px !important;
+  font-weight: 700 !important;
+  font-size: 0.75rem !important;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: none !important;
+
+  &:hover {
+    background-color: rgba($cyan-ccm, 0.08) !important;
+    color: darken($cyan-dark-border, 10%) !important;
+    border-color: darken($cyan-dark-border, 10%) !important;
+  }
+}
+
+// --- BOTÓN DE LA "X" EN LA CABECERA (Blindado contra cajas grises de Bootstrap) ---
+.btn-close-x {
+  background: transparent !important;
+  border: none !important;
+  color: $cyan-ccm !important;
+  font-size: 1.3rem !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  line-height: 1 !important;
+  cursor: pointer;
+  box-shadow: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: transform 0.2s ease, color 0.2s ease;
+
+  // Eliminamos cualquier pseudo-elemento que meta Bootstrap nativamente
+  &::before, &::after {
+    display: none !important;
+  }
+
+  i {
+    color: $cyan-ccm !important;
+    font-style: normal !important;
+  }
+
+  &:hover {
+    transform: scale(1.15);
+    color: $cyan-dark-border !important;
+    background: transparent !important;
+  }
+}
+
+@media print {
+  .no-print { display: none !important; }
 }

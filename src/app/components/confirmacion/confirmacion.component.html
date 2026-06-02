@@ -1,9 +1,25 @@
 <div class="container-fluid mt-3">
-  <h3 class="text-primary mb-4">
+  <h3 class="cyan-text mb-4">
     <i class="bi bi-check2-all"></i> CONFIRMACIÓN DE ÓRDENES AUTORIZADAS
   </h3>
 
-  <div class="table-container shadow-sm bg-white p-3 rounded">
+  <div class="card-filtro-auth no-print mb-4">
+    <div class="filter-group-auth">
+      <label class="filter-label-auth">FILTRAR POR UNIDAD COMPRADORA</label>
+      <div class="select-wrapper-auth">
+        <select [(ngModel)]="unidadSeleccionada" (change)="cargarOrdenesAutorizadas()" class="select-unidad-auth">
+          <option value="">TODAS LAS UNIDADES COMPRADORAS</option>
+          @for (u of unidades; track u.codigoUnidad) {
+            <option [value]="u.codigoUnidad">
+              {{ u.nombreUnidad | uppercase }}
+            </option>
+          }
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-container shadow-sm p-3 rounded">
     <table class="table custom-table-auth">
       <thead>
         <tr>
@@ -19,29 +35,22 @@
         @for (oc of listaAutorizadas; track oc.codOrdenCompra) {
           <tr>
             <td class="font-bold text-primary">{{ oc.codOrdenCompra }}</td>
-            <td>{{ oc.fechaOrdenCompra | date:'dd/MM/yyyy' }}</td>
+            <td>{{ oc.fechaOrdenCompra | date:'dd/MM/yyyy HH:mm' }}</td>
             <td><i class="bi bi-person-circle"></i> {{ oc.nombreUsuario }} {{ oc.apellidoUsuario }}</td>
             <td><span class="badge-unidad">{{ oc.nombreUnidad | uppercase }}</span></td>
-            <td class="text-end font-mono fw-bold">$ {{ oc.total | number:'1.0-0' }}</td>
+            <td class="font-bold text-primary">$ {{ oc.total | number:'1.0-0' }}</td>
             <td class="text-center">
               <div class="btn-group-actions">
-                <button class="btn-cyan" (click)="verDetalle(oc)" title="Ver detalle para confirmar"> 
-                  <i class="bi bi-eye"></i> 
+                <button class="btn-cyan" (click)="verDetalle(oc)" title="Ver Detalle para Confirmar"> 
+                  <i class="bi bi-eye-fill"></i> 
                 </button>
-
-                @if (esSupervisor()) {
-                  <button class="btn-cyan bg-success border-success" (click)="abrirConfirmar(oc)" title="Confirmar Orden"> 
-                    <i class="bi bi-check-circle"></i> 
-                  </button>
-                }
               </div>
             </td>
           </tr>
-        }
-        @if (listaAutorizadas.length === 0 && !loading) {
+        } @empty {
           <tr>
-            <td colspan="6" class="text-center py-4 text-muted italic">
-              No hay órdenes autorizadas pendientes de confirmación.
+            <td colspan="6" class="text-center text-muted py-4">
+              <i class="bi bi-inbox"></i> No hay órdenes autorizadas pendientes de confirmación.
             </td>
           </tr>
         }
@@ -51,71 +60,99 @@
 </div>
 
 @if (ocSeleccionada) {
-  <div class="modal-backdrop-custom">
-    <div class="modal-content-auth shadow-lg border-top border-primary border-4">
+  <div class="modal-overlay-auth no-print">
+    <div class="modal-window-auth">
       
-      <div class="modal-header auth-header d-flex justify-content-between align-items-center">
-        <button type="button" class="btn-close-custom" (click)="ocSeleccionada = null" title="Cerrar">
+      <div class="modal-header-auth">
+        <span class="modal-title-text">
+          <i class="bi bi-file-earmark-text"></i> CONTROL Y CONFIRMACIÓN DE ORDEN: {{ ocSeleccionada.codOrdenCompra }}
+        </span>
+        <button type="button" class="btn-close-x" (click)="ocSeleccionada = null">
           <i class="bi bi-x-lg"></i>
         </button>
-        <h5 class="mb-0 text-primary fw-bold">
-          <i class="bi bi-info-circle"></i> CONFIRMACIÓN DE ORDEN: {{ ocSeleccionada.codOrdenCompra }}
-        </h5>
       </div>
 
-      <div class="modal-body bg-light p-4 custom-scroll">
-        <div class="paper-layout shadow-sm mx-auto">
-          <div class="oc-document-title text-center mb-4">ORDEN DE COMPRA</div>
+      <div class="modal-body-scroll">
+        <div class="paper-view-container">
+          
+          <div class="section-title-auth">I. ANTECEDENTES GENERALES</div>
+          <div class="grid-info-auth">
+            <div class="info-block"><span class="lbl">Nombre OC:</span><span class="val">{{ ocSeleccionada.nombreOrdenCompra | uppercase }}</span></div>
+            <div class="info-block"><span class="lbl">Unidad:</span><span class="val">{{ ocSeleccionada.nombreUnidad | uppercase }}</span></div>
+            <div class="info-block"><span class="lbl">Creado por:</span><span class="val">{{ ocSeleccionada.nombreUsuario }} {{ ocSeleccionada.apellidoUsuario }}</span></div>
+            <div class="info-block"><span class="lbl">Fecha Emisión:</span><span class="val">{{ ocSeleccionada.fechaOrdenCompra | date:'dd/MM/yyyy HH:mm' }}</span></div>
+          </div>
 
-          <div class="info-grid">
-            <div class="info-column">
-              <div class="field">
-                <span class="label">PROVEEDOR:</span>
-                <span class="val-black font-bold">{{ ocSeleccionada.nombreProveedor | uppercase }}</span>
+          <div class="section-title-auth">II. DATOS DEL PROVEEDOR Y GIRO</div>
+          <div class="grid-info-auth">
+            <div class="info-block"><span class="lbl">Razón Social:</span><span class="val">{{ ocSeleccionada.nombreProveedor | uppercase }}</span></div>
+            <div class="info-block"><span class="lbl">RUT Proveedor:</span><span class="val">{{ ocSeleccionada.rutProveedor || '—' }}</span></div>
+            <div class="info-block col-span-2"><span class="lbl">Giro Seleccionado:</span><span class="val text-warning">{{ (ocSeleccionada.giroProveedor || '—') | uppercase }}</span></div>
+          </div>
+
+          <div class="section-title-auth">III. DESGLOSE DE PRODUCTOS / SERVICIOS</div>
+          <table class="table-inner-paper">
+            <thead>
+              <tr>
+                <th class="text-center">N°</th>
+                <th class="text-center">Descripción Artículo</th>
+                <th class="text-center">Valor Unit.</th>
+                <th class="text-center">Cant.</th>
+                <th class="text-center">Total línea</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of parsearProductos(ocSeleccionada.listProductosOrden); track $index) {
+                <tr>
+                  <td>{{ $index + 1 }}</td>
+                  <td>{{ item.descripcionProducto | uppercase }}</td>
+                  <td class="text-center fw-bold">$ {{ item.valorProducto | number:'1.0-0' }}</td>
+                  <td class="text-center fw-bold">{{ item.cantidad }}</td>
+                  <td class="text-center fw-bold">$ {{ (item.valorProducto * item.cantidad) | number:'1.0-0' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+
+          <div class="totals-paper-box">
+            <div>
+              <div class="t-row"><span>NETO</span> <strong>$ {{ ocSeleccionada.totalNeto | number:'1.0-0' }}</strong></div>
+              <div class="t-row"><span>IVA ({{ ocSeleccionada.impuestoDocumentoElectronico || 19 }}%)</span> <strong>$ {{ ocSeleccionada.impuesto | number:'1.0-0' }}</strong></div>
+              <div class="t-row t-master">
+                <span>TOTAL</span> <strong>$ {{ ocSeleccionada.total | number:'1.0-0' }}</strong>
               </div>
-              <div class="field"><span class="label">RUT:</span> <span class="val-black">{{ ocSeleccionada.rutProveedor || '—' }}</span></div>
-              <div class="field"><span class="label">GIRO:</span> <span class="val-black">{{ (ocSeleccionada.giroProveedor || '—') | uppercase }}</span></div>
-            </div>
-            <div class="info-column">
-              <div class="field"><span class="label">FECHA:</span> <span class="val-black">{{ ocSeleccionada.fechaOrdenCompra | date:'dd/MM/yyyy HH:mm' }}</span></div>
-              <div class="field"><span class="label">UNIDAD:</span> <span class="val-black">{{ (ocSeleccionada.nombreUnidad || '—') | uppercase }}</span></div>
             </div>
           </div>
 
-          <div class="table-container mt-3">
-             <table class="table table-bordered custom-table-thin mb-0">
-               <thead>...</thead>
-               <tbody>
-                @for (item of parsearProductos(ocSeleccionada.listProductosOrden); track $index) {
-                  <tr>
-                    <td>{{ $index + 1 }}</td>
-                    <td>{{ item.descripcionProducto | uppercase }}</td>
-                    <td class="text-center">{{ item.cantidad }}</td>
-                    <td class="text-end">$ {{ item.valorProducto * item.cantidad | number:'1.0-0' }}</td>
-                  </tr>
-                }
-               </tbody>
-             </table>
-          </div>
-
-          <div class="footer-layout mt-3">
-            <div class="total-row-thin highlight-magenta">
-              <span>TOTAL</span> <strong class="magenta-text">$ {{ ocSeleccionada.total | number:'1.0-0' }}</strong>
+          @if (ocSeleccionada.observaciones) {
+            <div class="section-title-auth">IV. OBSERVACIONES DE LA PROPUESTA</div>
+            <div class="p-2 mb-3 rounded small italic style-obs">
+              {{ ocSeleccionada.observaciones }}
             </div>
-          </div>
+          }
         </div>
       </div>
       
-      <div class="modal-footer bg-white shadow-top">
-        <button type="button" class="btn-action-oc btn-return-auth" (click)="ocSeleccionada = null">
-          <i class="bi bi-arrow-left"></i> VOLVER
-        </button>
-        @if (esSupervisor()) {
-          <button type="button" class="btn-action-oc btn-authorize-auth bg-success border-success" (click)="abrirConfirmar(ocSeleccionada)">
-            <i class="bi bi-check-circle"></i> CONFIRMAR RECEPCIÓN
-          </button>
-        }
+      <div class="modal-footer">
+        <div class="footer-actions-layout">
+          <div class="left-box">
+            <button type="button" class="btn-close-outline" (click)="ocSeleccionada = null">VOLVER</button>
+          </div>
+          
+          <div class="right-box">
+            @if (esSupervisor()) {
+              <button type="button" class="btn-action-oc btn-return-auth" (click)="abrirConfirmar(ocSeleccionada, 'devolver')">
+                <i class="bi bi-arrow-left-right"></i> DEVOLVER
+              </button>
+
+              <button type="button" class="btn-action-oc btn-authorize-auth" (click)="abrirConfirmar(ocSeleccionada)">
+                <i class="bi bi-check-circle"></i> CONFIRMAR RECEPCIÓN
+              </button>
+            }
+          </div>
+        </div>
       </div>
+
     </div>
   </div>
 }

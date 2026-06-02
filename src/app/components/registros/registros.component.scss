@@ -1,291 +1,302 @@
-// 1. VARIABLES DE MARCA Y COLORES
-// VARIABLES DE MARCA
-$ccm-cyan: #26c2d1;
-$ccm-cyan-dark: darken($ccm-cyan, 10%);
-$ccm-primary: #0088cc; 
-$ccm-text-dark: #333;
-$ccm-text-muted: #888;
-$ccm-bg-light: #f9f9f9;
-$ccm-border: #dcdcdc;
+// --- VARIABLES COMPARTIDAS INSTITUCIONALES ---
+$bg-white-global: #ffffff;
+$cyan-ccm: #4cb0c0;             
+$cyan-dark-border: #2c8a9a;     
+$text-dark-table: #0f172a;      
 
-// COLORES DE ESTADOS (Ahora usados para el fondo del botón)
-$color-amarillo: #f1c40f;      // Borrador
-$color-cyan-light: #7de2ed;    // Pendiente Autorización
-$color-cyan-pure: #26c2d1;     // Autorizado
-$color-magenta-dark: #c026d1;  // Anulado
-$color-magenta-pure: #e026d1;  // Confirmada
-$color-magenta-light: #f07bed; // Pendiente Anulación
-
-// 3. CONTENEDOR PRINCIPAL
-.gestion-container {
-  padding: 20px;
-  background-color: white;
-
-  h2 {
-    color: $ccm-text-dark;
-    font-weight: 700;
-    margin-bottom: 25px;
-    border-bottom: 3px solid $ccm-cyan;
-    display: inline-block;
-    padding-bottom: 5px;
-  }
+:host {
+  display: block;
+  background-color: $bg-white-global;
+  min-height: 100vh;
+  padding-bottom: 60px;
+  color: $text-dark-table;
 }
 
-// 4. PANEL DE FILTROS
-.card-filtros {
-  background: #fdfdfd;
-  border: 1px solid $ccm-cyan;
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(38, 194, 209, 0.1);
-
-  .filtros-main-container {
-    border: 1.5px solid rgba($ccm-cyan, 0.2);
-    border-radius: 8px;
-    padding: 20px;
-    background-color: $ccm-bg-light;
-  }
-
-  .row-filtros {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: 20px;
-    margin-bottom: 15px;
-
-    &:last-child { margin-bottom: 0; }
-  }
+h3 {
+  color: $cyan-ccm !important; 
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  text-transform: uppercase;
+  i { color: $cyan-ccm !important; }
 }
 
-// 5. GRUPOS DE ENTRADA (INPUTS Y LABELS)
-.filter-group {
+// --- CONTENEDOR DE FILTROS OPTIMIZADO EN ANCHO ---
+.card-filtro-reg {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 14px 18px;
+  border: 2px solid $cyan-dark-border;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+  width: 100%;
+  max-width: 90%; /* Reducción del contenedor general en un 18-20% para evitar estiramiento tosco */
+}
+
+/* Fila Superior: Distribución lateral precisa */
+.row-filtros-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px; 
+}
+
+/* Fila Inferior: Separación vertical exacta */
+.row-filtros-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;         
+  margin-top: 12px;  
+}
+
+// Estructura interna y acotación del 20% en anchos máximos
+.filter-group-reg {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px; 
   flex: 1;
+  padding: 0 5px;
 
-  label {
-    font-size: 11px;
+  // Clases específicas por columna para controlar anchos angostos exactos
+  &.group-rut { max-width: 180px; }
+  &.group-unidad { max-width: 300px; padding: 0 32px; }
+  &.group-folio { max-width: 220px; padding: 0 -15px; }
+  &.group-estado { max-width: 203px; }
+  &.group-fechas { max-width: 280px; }
+
+  .filter-label-reg {
+    font-size: 0.65rem;
     font-weight: 800;
-    color: #444;
+    color: $text-dark-table;
+    letter-spacing: 0.3px;
     text-transform: uppercase;
-  }
-
-  input, select {
-    height: 38px;
-    padding: 0 10px;
-    border: 1px solid $ccm-border;
-    border-radius: 4px;
-    font-size: 13px;
-    color: $ccm-text-dark;
-
-    &:focus {
-      outline: none;
-      border-color: $ccm-cyan;
-    }
-  }
-
-  .range-inputs {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    
-    input { 
-      width: 100%;
-      text-align: center;
-      &[type="date"] { flex: 1.2; } // Un poco más de espacio para la fecha
-    }
-
-    span { font-weight: bold; color: #999; }
+    white-space: nowrap;
+    padding-right: 4px;
   }
 }
 
-// 6. BOTONES DE ACCIÓN
-.actions-group {
+// Inputs y Selects Estilizados y Angostos
+.input-reg, .select-reg {
+  width: 100%;
+  height: 32px; 
+  background-color: #ffffff;
+  color: $text-dark-table;
+  border: 1px solid $cyan-dark-border;
+  padding: 0 10px;
+  border-radius: 5px;
+  font-size: 0.72rem; 
+  font-weight: 700;
+  outline: none;
+  transition: border-color 0.15s ease;
+
+  &:focus {
+    border-color: $cyan-ccm;
+  }
+}
+
+.select-wrapper-reg {
+  position: relative;
+  width: 100%;
+
+  &::after {
+    content: '\F285';
+    font-family: 'bootstrap-icons';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.65rem;
+    color: $cyan-ccm;
+    pointer-events: none;
+  }
+
+  .select-reg {
+    appearance: none;
+    padding-right: 26px;
+  }
+}
+
+.range-inputs-reg {
   display: flex;
-  gap: 8px;
-  margin-left: auto; // Empuja a la derecha en la fila superior
-  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  
+  .input-reg { text-align: center; }
+  .range-separator { font-weight: bold; color: $cyan-ccm; font-size: 0.75rem; }
+}
+
+// Botones de acción alineados
+.actions-group-reg {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  width: 140px; /* Ancho fijo controlado para que no flote de más */
 
   button {
-    height: 38px;
-    padding: 0 18px;
-    border-radius: 4px;
+    height: 32px; 
+    border-radius: 5px;
     font-weight: 700;
-    font-size: 12px;
+    font-size: 0.7rem;
     border: none;
     cursor: pointer;
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
-    transition: all 0.2s;
-  }
-
-  .btn-search {
-    background-color: $ccm-cyan;
-    color: white;
-    &:hover { background-color: $ccm-cyan-dark; }
-  }
-
-  .btn-clear {
-    background-color: #eee;
-    color: #666;
-    width: 38px; // Cuadrado para el borrador
     justify-content: center;
-    &:hover { background-color: #ddd; }
+    gap: 6px;
+    transition: all 0.15s ease;
+    text-transform: uppercase;
+  }
+
+  .btn-search-reg {
+    background-color: $cyan-ccm;
+    color: white;
+    padding: 0 14px;
+    border: 1px solid $cyan-dark-border;
+    flex: 1;
+    
+    &:hover { 
+      background-color: darken($cyan-ccm, 6%); 
+      transform: translateY(-0.5px);
+    }
+  }
+
+  .btn-clear-reg {
+    background-color: #ffffff;
+    color: $cyan-ccm;
+    width: 32px;
+    border: 1px solid $cyan-dark-border;
+    padding: 0;
+
+    &:hover { 
+      background-color: rgba($cyan-ccm, 0.06);
+      transform: scale(1.02);
+    }
   }
 }
 
-// 7. TABLA DE REGISTROS
-.table {
+// --- TABLA PRINCIPAL DE REGISTROS MIGRADA ---
+.table-container {
+  background-color: #ffffff !important;
+  border: 2px solid $cyan-dark-border;
+  margin-top: 20px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+}
+
+.custom-table-reg {
   width: 100%;
   border-collapse: separate;
-  border-spacing: 0 10px;
-  margin-top: 1rem;
+  border-spacing: 0;
+  background-color: #ffffff;
 
-  thead th {
-    text-align: center;
-    padding: 12px;
-    font-size: 0.75rem;
-    color: $ccm-text-muted;
-    text-transform: uppercase;
-    border: none;
+  thead {
+    background-color: #ffffff !important;
+    tr th {
+      background-color: #ffffff !important;
+      color: $cyan-ccm !important; 
+      padding: 12px 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+      font-size: 0.78rem;
+      border-bottom: 3px solid $cyan-dark-border !important;
+      text-align: center;
+      &.text-end { text-align: right; }
+    }
   }
 
   tbody tr {
-    background-color: white;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    background-color: rgba($cyan-ccm, 0.06) !important; 
+    transition: background-color 0.15s ease;
+
+    &:nth-child(even) {
+      background-color: rgba($cyan-ccm, 0.01) !important; 
+    }
+
+    &:hover {
+      background-color: rgba($cyan-ccm, 0.12) !important;
+    }
 
     td {
-      text-align: center;
+      padding: 10px 14px;
+      font-size: 0.8rem;
+      font-weight: 600;                     
       vertical-align: middle;
-      padding: 15px;
-      border: none;
-      font-size: 0.9rem;
+      color: #000000 !important;            
+      border-bottom: 1px solid rgba($cyan-dark-border, 0.15);
+      text-align: center;
+      &.text-end { text-align: right; }
 
-      &:first-child {
-        border-left: 5px solid $ccm-cyan;
-        border-radius: 6px 0 0 6px;
-        font-weight: 700;
-        color: $ccm-primary;
+      &.font-bold, 
+      &.text-primary, 
+      span, 
+      strong {
+        color: #000000 !important;          
+        font-weight: 600 !important;        
       }
-      &:last-child { border-radius: 0 6px 6px 0; }
-      &.monto-total { font-weight: 600; }
     }
   }
 }
 
-// 8. COMPONENTE DE ESTADO (Badges)
-// Estilo para los estados que NO tienen link
-.status-text-only {
-  font-weight: 800; // Fuente pesada de registros
-  font-size: 0.75rem;
-  color: #000;      // Letra negra
+.badge-unidad-reg {
+  background-color: #ffffff;
+  color: $text-dark-table;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  border: 1px solid $cyan-dark-border;
+  display: inline-block;
+}
+
+.status-text-only-reg {
+  font-weight: 800;
+  font-size: 0.72rem;
+  color: #000000 !important;
   text-transform: uppercase;
   display: inline-block;
   min-width: 120px;
   text-align: center;
 }
 
-// Estilo para el LINK (Confirmada/Anulada)
-.status-link-pdf {
+.status-link-pdf-reg {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   min-width: 120px;
-  
-  // Fuente y Color
   font-weight: 800;
-  font-size: 0.75rem;
-  color: #000 !important; // Letra negra
+  font-size: 0.72rem;
+  color: #000000 !important;
   text-decoration: none;
   text-transform: uppercase;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 
   i {
-    color: #e74c3c; // El icono de PDF sigue siendo rojo para destacar
-    font-size: 1.1rem;
+    color: #e74c3c; 
+    font-size: 1rem;
+    transition: transform 0.15s ease;
   }
 
   &:hover {
-    color: $ccm-cyan !important; // Cambia a cyan al pasar el mouse para feedback
+    color: $cyan-ccm !important; 
     text-decoration: underline;
-    
-    i {
-      transform: scale(1.1);
-    }
+    i { transform: scale(1.1); }
   }
 }
 
-.status-badge {
-  display: inline-block;
-  padding: 6px 12px;
-  border-radius: 20px;   // Forma de píldora/botón
-  font-weight: 800;
-  font-size: 0.75rem;
-  color: #000 !important; // LETRAS NEGRAS
-  text-align: center;
-  min-width: 120px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-
-  &.bg-borrador { background-color: $color-amarillo; }
-  &.bg-pendiente-auth { background-color: $color-cyan-light; }
-  &.bg-autorizado { background-color: $color-cyan-pure; }
-  &.bg-anulado { background-color: $color-magenta-dark; }
-  &.bg-confirmada { background-color: $color-magenta-pure; }
-  &.bg-pendiente-anul { background-color: $color-magenta-light; }
-}
-
-.pdf-link {
-  color: $ccm-primary !important;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  i {
-    color: #e74c3c; // Rojo PDF
-    font-size: 1.2rem;
-    display: inline-block;
-  }
-
-  span {
-    color: $ccm-primary;
-  }
-
-  &:hover {
-    transform: translateY(-1px);
-    span {
-      text-decoration: underline;
-    }
-  }
-}
-
-loading-overlay {
+.loading-overlay-reg {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(255, 255, 255, 0.7); /* Fondo semitransparente */
+  top: 0; left: 0; width: 100%; height: 100%;
+  background-color: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(1px);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999; /* Asegura que esté por encima de todo */
-  cursor: wait; /* Cambia el cursor para indicar espera */
+  z-index: 9999;
 }
 
-.loading-content {
-  text-align: center;
-  font-weight: bold;
-  color: #d32f2f; /* Color institucional o rojo según el estado */
-}
-
-.loading-content p {
-  margin-top: 15px;
-  font-size: 1.2rem;
+@media print {
+  .no-print { display: none !important; }
 }

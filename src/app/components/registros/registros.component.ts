@@ -18,7 +18,7 @@ export class GestionOcComponent implements OnInit { // <-- Revisa este nombre pa
 
   private readonly API_BASE = environment.apiUrl;
   private readonly API_BUSQUEDA_AVANZADA = `${this.API_BASE}/api/v1/oc/ordenes-compra/busqueda-avanzada`;
-  private readonly API_UNIDADES = `${this.API_BASE}/api/v1/unidad`;
+  private readonly API_UNIDADES = `${this.API_BASE}/api/v1/unidad-compradora/vld_ccm`;
   private readonly API_ESTADOS = `${this.API_BASE}/api/v1/oc/status-oc/all`;
   private readonly API_GENERAR_DOC_OC = `${this.API_BASE}/api/v1/oc/ordenes-compra/generar-documento-oc`;
   /***unidades = [
@@ -71,7 +71,7 @@ export class GestionOcComponent implements OnInit { // <-- Revisa este nombre pa
       return;
     }
 
-    this.http.get<any[]>(`${this.API_UNIDADES}/${codigoEmpresa}`).subscribe({
+    this.http.get<any[]>(`${this.API_UNIDADES}`).subscribe({
       next: (res) => {
         this.unidades = res || [];
       },
@@ -185,11 +185,11 @@ descargarDocumento(oc: any) {
           
           // 2. Intentar obtener el nombre del archivo desde el header del backend
           const contentDisposition = response.headers.get('content-disposition');
-          let fileName = `OC_${oc.codOrdenCompra}.pdf`;
-          
+          let fileName = `documento_oc_${oc.codOrdenCompra}.pdf`; // Nombre por defecto razonable
+
           if (contentDisposition) {
-              const fileNameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-              const matches = fileNameRegex.exec(contentDisposition);
+              // Busca específicamente el valor después de 'filename='
+              const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition);
               if (matches != null && matches[1]) { 
                   fileName = matches[1].replace(/['"]/g, '');
               }

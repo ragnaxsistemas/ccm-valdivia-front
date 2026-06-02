@@ -1,14 +1,15 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DataService } from '../../services/data.service';
 import { AuthService } from '../../services/auth.service';
 import { AuthStateService } from '../../services/auth-state.service';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, MatSnackBarModule],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })
@@ -17,17 +18,29 @@ export class LoginComponent {
   private authService = inject(AuthService);
   private authState = inject(AuthStateService);
   private router = inject(Router);
+  private snackBar = inject(MatSnackBar);
 
-  loginData = { username: '', password: '' };
+  loginData = { username: '', password: '', codEmpresa: 'vld_ccm' };
+  errorMessage = signal<string | null>(null);
+  loading = signal(false);
 
   onLogin() {
-  this.dataService.post<any>('api/v1/login', this.loginData).subscribe({
+    
+    if (!this.loginData.username || !this.loginData.password) {
+      this.mostrarError('Por favor, complete todos los campos');
+      return;
+    }
+
+    this.loading.set(true);
+    this.errorMessage.set(null);
+
+    this.dataService.post<any>('api/v1/login', this.loginData).subscribe({
     next: (res) => {
       // 1. Extraemos los datos decodificados (UserToken)
       const user = this.authService.saveToken(res.accessToken);
        // Aquí puedes ver toda la información decodificada del token 
       if (user) {
-        console.group('--- Auditoría de Login ---');
+        console.group('--- Auditoría de Login CCM---');
         console.log('Datos extraídos:', user);
         console.groupEnd();
 
@@ -55,10 +68,18 @@ export class LoginComponent {
       }
     },
     error: (err) => {
-      console.error('Error en login:', err);
-      // Aquí podrías usar un SweetAlert o un Toast en lugar de un alert simple
-      alert('Error: Credenciales no válidas');
-    }
+        console.error('Error en login:', err);
+        this.loading.set(false);
+        this.mostrarError('Usuario o contraseña incorrectos');
+      }
   });
 }
+
+  private mostrarError(mensaje: string) {
+    this.errorMessage.set(mensaje);
+    this.snackBar.open(mensaje, 'Cerrar', {
+      duration: 4000,
+      panelClass: ['error-snackbar']
+    });
+  }
 }

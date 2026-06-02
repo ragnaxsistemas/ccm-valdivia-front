@@ -57,7 +57,6 @@
                 </option>
               }
             </select>
-            
           </div>
         </div>
 
@@ -71,6 +70,8 @@
 
       <div class="paper-layout">
         <div class="oc-details-section">
+          
+          <!-- COLUMNA IZQUIERDA: PROVEEDOR (Corregida) -->
           <div class="details-column provider-info">
             <div class="detail-row">
               <span class="detail-label">PROVEEDOR:</span>
@@ -111,14 +112,16 @@
               <span class="detail-label">GIRO:</span>
               <div class="detail-value">
                 @if (proveedorSeleccionado && !modoEdicionProveedor) {
-                  <select class="select-giro-custom" [(ngModel)]="codGiroSeleccionado">
-                    <option value="">SELECCIONE GIRO...</option>
-                    @for (giro of proveedorSeleccionado.listaGiros; track giro.codigoGiroSii) {
-                      <option [value]="giro.codigoGiroSii">
-                        {{ giro.codigoGiroSii }} - {{ giro.nombreGiroSii | uppercase }}
-                      </option>
-                    }
-                  </select>
+                  <div class="select-wrapper-paper">
+                    <select class="select-giro-custom" [(ngModel)]="codGiroSeleccionado">
+                      <option value="">SELECCIONE GIRO...</option>
+                      @for (giro of proveedorSeleccionado.listaGiros; track giro.codigoGiroSii) {
+                        <option [value]="giro.codigoGiroSii">
+                          {{ giro.codigoGiroSii }} - {{ giro.nombreGiroSii | uppercase }}
+                        </option>
+                      }
+                    </select>
+                  </div>
                 } @else {
                   <span class="val-black">—</span> 
                 }
@@ -129,6 +132,7 @@
             <div class="detail-row"><span class="detail-label">CORREO:</span> <span class="val-black">{{ (proveedorSeleccionado?.emailProveedor || '—') | uppercase }}</span></div>
           </div>
 
+          <!-- COLUMNA DERECHA: METADATOS Y UNIDAD COMPRADORA -->
           <div class="right-info-block">
             <div class="info-item">
               <span class="info-label">FECHA:</span>
@@ -136,15 +140,33 @@
             </div>
             <div class="info-item">
               <span class="info-label">UNIDAD COMPRADORA:</span>
-              <span class="info-content">{{ ocData.unidadCompradora | uppercase }}</span>
+              <div class="info-content">
+                <div class="select-wrapper-paper">
+                  <select class="select-unidad-custom" 
+                          [(ngModel)]="ocData.unidad" 
+                          [disabled]="!dteIdSeleccionado"
+                          (change)="onSeleccionarUnidad($event)">
+                    
+                    <option [value]="null" disabled hidden>SELECCIONE UNIDAD...</option>
+                    
+                    @for (u of unidades; track u.codigoUnidad) {
+                      <option [value]="u.codigoUnidad">
+                        {{ u.nombreUnidad | uppercase }}
+                      </option>
+                    }
+                  </select>
+                </div>
+              </div>
             </div>
             <div class="info-item">
               <span class="info-label">REALIZADO POR:</span>
-              <span class="info-content">{{ ocData?.nombreusuario | uppercase }} 
-              {{ ocData?.apellidousuario  | uppercase }}</span>
+              <span class="info-content">
+                {{ ocData?.nombreusuario | uppercase }} {{ ocData?.apellidousuario | uppercase }}
+              </span>
             </div>
           </div>
-        </div>
+          
+        </div> <!-- FIN <div class="oc-details-section"> -->
 
         <div class="name-section mt-4">
           <label class="form-label-thin">NOMBRE DE LA ORDEN DE COMPRA</label>
@@ -174,12 +196,9 @@
                   <td class="index-column">{{ $index + 1 }}</td>
                   
                   <td class="position-relative">
-                  <input type="text" 
-                        class="input-table-cell" 
-                        [(ngModel)]="item.descripcionProducto" 
-                        [disabled]="!puedeEditarItems" 
-                        placeholder="DESCRIPCIÓN...">
-                </td>
+                    <input type="text" class="input-table-cell" [(ngModel)]="item.descripcionProducto" 
+                           [disabled]="!puedeEditarItems" placeholder="DESCRIPCIÓN...">
+                  </td>
                   <td>
                     <input type="number" class="input-table-cell text-center" 
                            [(ngModel)]="item.cantidad" (input)="actualizarLinea($index)" [disabled]="!puedeEditarItems">
@@ -213,21 +232,59 @@
         </div>
         
         <div class="footer-document-section">
-          <div class="observations-section">
-            <label class="form-label-thin">OBSERVACIONES</label>
-            <textarea class="form-control-thin-full" rows="3" 
-                      [(ngModel)]="observaciones" 
-                      [disabled]="!puedeEditarItems" 
-                      maxlength="500" 
-                      placeholder="DETALLES ADICIONALES..."></textarea>
-            
-            <div class="char-counter">
-              <span>{{ (observaciones || '').length }}</span> / 500
-            </div>         
-          </div>
           
-        <!-- SECCIÓN DE TOTALES -->
-          <div class="totals-container">
+          <div class="left-footer-block">
+            
+            <div class="observations-section">
+              <label class="form-label-thin">OBSERVACIONES</label>
+              <textarea class="form-control-thin-full" rows="3" 
+                        [(ngModel)]="observaciones" 
+                        [disabled]="!puedeEditarItems" 
+                        maxlength="500" 
+                        placeholder="DETALLES ADICIONALES..."></textarea>
+              <div class="char-counter">
+                <span>{{ (observaciones || '').length }}</span> / 500
+              </div>         
+            </div>
+
+            <div class="attachments-section no-print">
+              <label class="form-label-thin">DOCUMENTOS ADJUNTOS (MÁX. 5)</label>
+              
+              <div class="drag-drop-zone" 
+                   [class.dragging]="isDragging"
+                   [class.disabled]="!puedeEditarItems"
+                   (dragover)="onDragOver($event)"
+                   (dragleave)="onDragLeave()"
+                   (drop)="onDrop($event)"
+                   (click)="fileInput.click()">
+                
+                <input type="file" #fileInput multiple style="display: none" 
+                       (change)="onFileSelected($event)" [disabled]="!puedeEditarItems">
+                
+                <i class="bi bi-cloud-arrow-up-fill"></i>
+                <p *ngIf="puedeEditarItems">ARRUSTRE ARCHIVOS AQUÍ O <span class="browse-text">EXAMINE</span></p>
+                <p *ngIf="!puedeEditarItems" class="text-muted">SELECCIONE UN DTE PARA HABILITAR ADJUNTOS</p>
+              </div>
+
+              @if (listaAdjuntos.length > 0) {
+                <ul class="attachments-list">
+                  @for (file of listaAdjuntos; track $index) {
+                    <li>
+                      <div class="file-details">
+                        <i class="bi bi-paperclip text-cyan"></i>
+                        <span class="file-name" [title]="file.name">{{ file.name }}</span>
+                        <small class="file-size">({{ file.size | number }} bytes)</small>
+                      </div>
+                      <button class="btn-delete-file" (click)="eliminarAdjunto($index); $event.stopPropagation()">
+                        <i class="bi bi-x-circle-fill"></i>
+                      </button>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+
+          </div> <div class="totals-container">
             <div class="total-row-thin">
               <span>{{ labelNeto }}</span> 
               <strong>{{ (ocData?.neto || 0) | currency:'CLP':'symbol-narrow':'1.0-0' }}</strong>
@@ -241,9 +298,8 @@
               <strong class="magenta-text">{{ (ocData?.totalFinal || 0) | currency:'CLP':'symbol-narrow':'1.0-0' }}</strong>
             </div>
           </div>
-        </div>
-         <!-- SECCIÓN DE TOTALES -->
 
+        </div>
       </div>  <!-- FIN <div class="paper-layout"> -->
 
       <div class="system-actions-separator no-print"></div>
@@ -260,7 +316,6 @@
           </button>
         }
       </div>
-
 
     } <!-- FIN IF @if (ocData) { -->
 

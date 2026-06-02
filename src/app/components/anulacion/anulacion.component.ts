@@ -1,14 +1,16 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
-import Swal from 'sweetalert2'; // Añadido para consistencia visual con autorización
+import { HttpClient, HttpParams } from '@angular/common/http'; 
+import { FormsModule } from '@angular/forms'; 
+import Swal from 'sweetalert2';
 import { AuthService } from '../../services/auth.service';
 import { environment } from "../../../environments/environment";
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-anulacion',
   standalone: true,
-  imports: [CommonModule], // HttpClient se provee usualmente en app.config.ts
+  imports: [CommonModule, FormsModule, MatIconModule], 
   templateUrl: './anulacion.component.html',
   styleUrls: ['./anulacion.component.scss']
 })
@@ -17,137 +19,167 @@ export class AnulacionComponent implements OnInit {
   private authService = inject(AuthService);
   
   private readonly API_BASE = environment.apiUrl;
-  private readonly API_OC_NEW = `${this.API_BASE}/api/v1/oc/ordenes-compra/new`;
   private readonly API_OC = `${this.API_BASE}/api/v1/oc/ordenes-compra`;
   private readonly API_BUSQUEDA_AVANZADA = `${this.API_BASE}/api/v1/oc/ordenes-compra/busqueda-avanzada`;
-  private readonly API_PROV = `${this.API_BASE}/api/v1/oc/proveedor`;
-  private readonly API_DTE = `${this.API_BASE}/api/v1/oc/dte`;
-  private readonly API_PRODUCTO = `${this.API_BASE}/api/v1/oc/producto/all`;
+  private readonly API_UNIDADES = `${this.API_BASE}/api/v1/unidad-compradora/vld_ccm`;
 
   listaAutorizadas: any[] = [];
   ocSeleccionada: any = null;
   loading: boolean = false;
 
-  // --- Lógica de Permisos Traspasada ---
-  public esSupervisorGlobal: boolean = false;
-  private usuarioInfo: any = null;
+  unidades: any[] = [];
+  unidadSeleccionada: string = '';
+  usuarioInfo: any = null;
+  
+  // Variable unificada para match de rol con el Layout
+  userRole: string = '';
 
   ngOnInit(): void {
-    this.verificarPermisos();
+    this.usuarioInfo = this.authService.user();
+    this.obtenerRolDesdeStorage(); // <-- Captura infalible del Rol de Sesión
+    this.cargarUnidades();
     this.cargarOrdenesAutorizadas();
   }
 
-  verificarPermisos() {
-    // 1. Intentar obtener del Signal del servicio (igual que en autorización)
-    const user = this.authService.user();
-    
-    if (user) {
-      this.usuarioInfo = user;
+  /**
+   * Obtiene el rol del usuario desde el localStorage tal como lo hace MainLayout
+   */
+  obtenerRolDesdeStorage(): void {
+    const userJson = localStorage.getItem('usuario');
+    if (userJson) {
+      try {
+        const user = JSON.parse(userJson);
+        this.userRole = user.role?.nombre?.toUpperCase() || 'SIN ROL';
+        console.log("Rol unificado detectado en Anulación:", this.userRole);
+      } catch (e) {
+        console.error("Error al parsear el usuario en localStorage desde Anulación", e);
+        this.userRole = 'SIN ROL';
+      }
     } else {
-      // Fallback por si refresca la pantalla
-      const savedUser = localStorage.getItem('usuario');
-      this.usuarioInfo = savedUser ? JSON.parse(savedUser) : null;
-    }
-
-    if (this.usuarioInfo) {
-      // Normalizamos el rol a mayúsculas para evitar errores de tipeo
-      const rol = (this.usuarioInfo.role.nombre || '').toUpperCase();
-      // Unificamos criterios: SUPERVISOR o ADMIN
-      this.esSupervisorGlobal = rol === 'SUPERVISOR' || rol === 'ADMIN';
-      console.log("Modo Supervisor activo:", this.esSupervisorGlobal);
+      this.userRole = 'SIN ROL';
     }
   }
 
-  // Método usado por el HTML y botones
+  /**
+   * Evalúa si el usuario logueado tiene los permisos requeridos
+   */
   esSupervisor(): boolean {
-    return this.esSupervisorGlobal;
+    return this.userRole.includes('SUPERVISOR') || 
+           this.userRole.includes('ADMINISTRACION') || 
+           this.userRole.includes('ADMIN');
   }
 
-  getUsuarioLogueado(): string {
-    // Usamos el 'sub' del token/usuarioInfo que es lo que espera el backend
-    return this.usuarioInfo?.sub || 'usuario_anonimo';
+  cargarUnidades() {
+    this.http.get<any[]>(this.API_UNIDADES).subscribe({
+      next: (res) => this.unidades = res,
+      error: (err) => console.error('Error unidades:', err)
+    });
   }
 
-  // --- Lógica de Carga ---
-    cargarOrdenesAutorizadas() {
+  cargarOrdenesAutorizadas() {
+    this.loading = true;
 
-      const unidadRaw = localStorage.getItem('unidadNegocio');
-      let codigoUnidad = '';
+    // Estado 3: Corresponde al ID de estado 'AUTORIZADA' en tu consulta avanzada del Backend
+    let params = new HttpParams()
+      .set('codEstadoOc', 'autorizado') // Requerido por tu lógica de negocio
+      .set('page', '0')                             // Spring Data es base 0
+      .set('size', '10')
+      .set('sort', 'idOrdenCompra,desc');
 
-      if (unidadRaw) {
-          try {
-              const unidadObj = JSON.parse(unidadRaw);
-              codigoUnidad = unidadObj.codigoUnidad;
-          } catch (e) {
-              codigoUnidad = unidadRaw;
-          }
+    // Si hay una unidad específica seleccionada, filtramos por su código/ID
+    if (this.unidadSeleccionada) {
+      params = params.set('unidad', this.unidadSeleccionada);
+    }
+
+    console.log('🔍 [anulacion] Buscando Autorizadas con parámetros:', params.toString());
+
+    this.http.get<any>(this.API_BUSQUEDA_AVANZADA, { params }).subscribe({
+      next: (res) => {
+        // Adaptado por si el backend responde con Page (Spring Data) o lista directa
+        this.listaAutorizadas = res.content || res || [];
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('❌ Error al obtener órdenes autorizadas:', err);
+        this.listaAutorizadas = [];
+        this.loading = false;
       }
-
-      if (!codigoUnidad) {
-          console.warn('No se encontró código de unidad para listar autorizadas.');
-          return;
-      }
-
-      this.loading = true;
-      const params: any = {
-          codEstadoOc: 'autorizado', // Estado fijo según tu requerimiento
-          unidad: codigoUnidad,    // Filtramos por la unidad del usuario
-          page: 0,                 // Pageable empieza en 0 en Spring Data
-          size: 10,
-          sort: 'idOrdenCompra,desc'
-      };
-      
-      return this.http.get<any>(`${this.API_BUSQUEDA_AVANZADA}`, { params })
-            .subscribe({
-              next: (res) => {
-                this.listaAutorizadas = res.content || [];
-                console.log('Autorizadas cargadas:', this.listaAutorizadas);
-              },
-            error: () => Swal.fire('Error', 'No se pudo cargar la lista de autorizadas', 'error')
-            });
+    });
   }
 
-  // --- Acciones e Interfaz ---
-  verDetalle(oc: any) {
-    this.ocSeleccionada = { ...oc };
+  parseProductos(listProductosStr: any): any[] {
+    if (!listProductosStr) return [];
+    if (typeof listProductosStr === 'object') return listProductosStr;
+    try {
+      return JSON.parse(listProductosStr);
+    } catch (e) {
+      console.error("Error parseando productos:", e);
+      return [];
+    }
   }
 
   abrirConfirmar(oc: any, accion: string) {
     if (!this.esSupervisor()) {
-      Swal.fire('No autorizado', 'Acceso restringido a Supervisores o Administradores', 'warning');
+      Swal.fire('No autorizado', 'Acceso restringido a Supervisores o Administración', 'warning');
       return;
     }
 
-    if (accion === 'anular') {
-      Swal.fire({
-        title: '¿Anular Orden de Compra?',
-        text: 'Esta acción es irreversible y la orden quedará anulada permanentemente.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'SÍ, ANULAR',
-        cancelButtonText: 'CANCELAR'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          this.ejecutarAnulacion(oc);
-        }
-      });
-    }
+    Swal.fire({
+      title: '¿Anular Orden de Compra?',
+      text: 'Esta acción es irreversible y la orden quedará anulada permanentemente.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'SÍ, ANULAR',
+      cancelButtonText: 'CANCELAR'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.ejecutarAnulacion(oc);
+      }
+    });
   }
 
+  descargarAdjunto(arch: any) {
+        if (!arch || !arch.idAdjunto) {
+          Swal.fire('Error', 'Información de archivo adjunto no válida.', 'error');
+          return;
+        }
+  
+        console.log("Iniciando descarga del adjunto ID:", arch.idAdjunto);
+        
+        // Ajusta esta URL si tu endpoint de descarga de archivos adjuntos es diferente
+        const urlDescarga = `${this.API_OC}/adjunto/${arch.idAdjunto}`;
+  
+        this.http.get(urlDescarga, { responseType: 'blob' }).subscribe({
+          next: (blob: Blob) => {
+            // Crear un link temporal en el DOM para forzar la descarga nativa
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = arch.nombreArchivo || 'archivo_adjunto';
+            document.body.appendChild(a);
+            a.click();
+            
+            // Limpieza del DOM
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+          },
+          error: (err) => {
+            console.error('❌ Error al descargar el archivo:', err);
+            Swal.fire('Error', 'No se pudo descargar el archivo adjunto desde el servidor.', 'error');
+          }
+        });
+      }
+      
   ejecutarAnulacion(oc: any) {
-    // Usamos el id de la orden (id o idOc según tu objeto)
-    console.log("Ejecutando anulación para OC:", oc);
-    //const codParaUrl = oc.codOrdenCompra || oc.codOrdenCompra;
-   // const url = `http://localhost:8888/api/v1/ordenes-compra/${codParaUrl}/anular`;
-    
     const body = {
-      codOc:  oc.codOrdenCompra,
-      plantillaDTO: this.mapearAPlantilla(oc),
-      usuarioSup: this.usuarioInfo.sub // Usuario de la sesión actual
+      codOc: oc.codOrdenCompra,
+      plantillaDTO: { codOrdenCompra: oc.codOrdenCompra,
+        usernameUsuario: oc.usernameUsuario
+       },
+      usuarioSup: this.usuarioInfo.sub
     };
-
 
     this.http.post(`${this.API_OC}/anular`, body).subscribe({
       next: () => {
@@ -162,33 +194,15 @@ export class AnulacionComponent implements OnInit {
     });
   }
 
-  // Mantenemos consistencia con el mapeo de autorización
-  private mapearAPlantilla(oc: any) {
-    console.log("Mapeando OC a plantilla:", oc);
-    return {
-      codOrdenCompra: oc.codOrdenCompra
-      //fechaOrdenCompra: oc.fechaOrdenCompra,
-      //usernameUsuario: oc.usernameUsuario,
-      //codUnidad: oc.codUnidad,
-      //rutProveedor: oc.rutProveedor,
-      //codDocumentoTributario: oc.codDocumentoTributario,
-      //codEstadoActualOc: oc.codEstadoActualOc,
-      //nombreOrdenCompra: oc.nombreOrdenCompra,
-      //observaciones: oc.observaciones,
-      //listProductosOrden: oc.listProductosOrden || JSON.stringify(oc.items),
-      //totalNeto: oc.totalNeto,
-      //impuesto: oc.impuesto,
-      //total: oc.total
-    };
+  parsearProductos(listProductosStr: any): any[] {
+  if (!listProductosStr) return [];
+  if (typeof listProductosStr === 'object') return listProductosStr;
+  try {
+    return JSON.parse(listProductosStr);
+  } catch (e) {
+    console.error("Error parseando productos:", e);
+    return [];
   }
-
-  parsearProductos(jsonString: any): any[] {
-    if (!jsonString) return [];
-    if (Array.isArray(jsonString)) return jsonString;
-    try {
-      return JSON.parse(jsonString);
-    } catch (e) {
-      return [];
-    }
-  }
+}
+  
 }

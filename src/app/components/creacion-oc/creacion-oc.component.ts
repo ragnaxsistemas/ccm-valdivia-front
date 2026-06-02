@@ -3,8 +3,6 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { environment } from "../../../environments/environment";
-import { DataService } from '../../services/data.service'; // Asegúrate de que la ruta sea correcta
-
 import { Subject, debounceTime, distinctUntilChanged, switchMap, of } from 'rxjs';
 
 @Component({
@@ -16,8 +14,8 @@ import { Subject, debounceTime, distinctUntilChanged, switchMap, of } from 'rxjs
 })
 export class CreacionOcComponent implements OnInit {
   private http = inject(HttpClient);
-  private dataService = inject(DataService); // Inyectamos tu DataService genérico
   
+  // Endpoints centralizados
   private readonly API_BASE = environment.apiUrl;
   private readonly API_OC_NEW = `${this.API_BASE}/api/v1/oc/ordenes-compra/new`;
   private readonly API_OC = `${this.API_BASE}/api/v1/oc/ordenes-compra`;
@@ -25,50 +23,64 @@ export class CreacionOcComponent implements OnInit {
   private readonly API_PROV = `${this.API_BASE}/api/v1/oc/proveedor`;
   private readonly API_DTE = `${this.API_BASE}/api/v1/oc/dte`;
   private readonly API_PRODUCTO = `${this.API_BASE}/api/v1/oc/producto/all`;
- 
-
   private readonly API_COMUNA = `${this.API_BASE}/api/v1/comuna`;
+  private readonly API_UNIDADES = `${this.API_BASE}/api/v1/unidad-compradora/vld_ccm`;
 
+  // Estado Principal de la OC
   ocData: any = null;
   loading: boolean = false;
   ocCreada: boolean = false; 
-  
-  // Variables para Borradores
+  ocFinalizada: boolean = false;
+  codOrdenCompra: string = '';
+
+  // Buscador de Borradores
   filtroBorrador: string = '';
   borradoresFiltrados: any[] = [];
-  listaCompletaBorradores: any[] = []; 
+  private buscadorSubject = new Subject<string>();
 
-  // Datos maestros
+  // Datos Maestros (Combos globales)
   proveedores: any[] = [];
+  unidades: any[] = [];
+  listaDte: any[] = [];
+  productos: any[] = [];
+
+  // Estado de Selección de la OC actual
   proveedorSeleccionado: any = null;
   modoEdicionProveedor: boolean = true;
   filtroProveedor: string = '';
-  listaDte: any[] = [];
+  
   dteSeleccionado: any = null;
   dteIdSeleccionado: any = null;
 
-  productos: any[] = [];
-  items: any[] = []; 
-  filtroProducto: string = '';
-  filaActiva: number | null = null; 
+  idUnidadCompradoraSeleccionada: number | null = null;
+  codUnidadCompradoraSeleccionada: string = '';
 
   nombreOrdenCompra: string = '';
   observaciones: string = '';
   codGiroSeleccionado: string = '';
 
-  // Variables de estado
-  ocFinalizada: boolean = false;
-  codOrdenCompra: string = '';
+  // Tabla Dinámica de Ítems
+  items: any[] = []; 
+  filaActiva: number | null = null; 
 
-  private buscadorSubject = new Subject<string>();
+  // Adjuntos (Drag & Drop)
+  listaAdjuntos: any[] = [];
+  isDragging: boolean = false;
 
   ngOnInit() {
     this.cargarProveedores();
     this.cargarDte();
     this.cargarProductos();
+    this.cargarUnidades();
     this.inicializarTabla();
+    this.inicializarBuscadorReactivo();
+  }
 
-    // Buscador reactivo de borradores
+  // ==========================================
+  // INICIALIZADORES Y BAJADA DE MAESTROS
+  // ==========================================
+  
+  private inicializarBuscadorReactivo() {
     this.buscadorSubject.pipe(
       debounceTime(300),
       distinctUntilChanged(),
@@ -78,32 +90,15 @@ export class CreacionOcComponent implements OnInit {
           return of(null);
         }
         this.loading = true;
-        // Aplicamos API_OC dinámica
-        /******Obtenemos la Unidad de Negocio */
-        const unidadRaw = localStorage.getItem('unidadNegocio');
-          let codigoUnidad = '';
-
-          if (unidadRaw) {
-              try {
-                  const unidadObj = JSON.parse(unidadRaw);
-                  codigoUnidad = unidadObj.codigoUnidad;
-              } catch (e) {
-                  codigoUnidad = unidadRaw;
-              }
-          }
-          
-          const params: any = {
+        const params: any = {
           codOrdenCompra: term,
-          codEstadoOc: 'borrador', // Estado fijo según tu requerimiento
-          unidad: codigoUnidad,    // Filtramos por la unidad del usuario
-          page: 0,                 // Pageable empieza en 0 en Spring Data
+          codEstadoOc: 'borrador',
+          unidad: null, // Forzado nulo para búsqueda global
+          page: 0,
           size: 10,
           sort: 'idOrdenCompra,desc'
-      };
-
-
-          console.log('ngOnInit borrador búsqueda:', term, codigoUnidad);
-          return this.http.get<any>(`${this.API_BUSQUEDA_AVANZADA}`, { params });
+        };
+        return this.http.get<any>(`${this.API_BUSQUEDA_AVANZADA}`, { params });
       })
     ).subscribe({
       next: (res: any) => {
@@ -117,108 +112,147 @@ export class CreacionOcComponent implements OnInit {
   buscarBorradores() {
     this.buscadorSubject.next(this.filtroBorrador);
   }
-  // --- LÓGICA DE BORRADORES ---
 
-  listarBorradores() {
-    const unidadRaw = localStorage.getItem('unidadNegocio');
-    let codigoUnidad = '';
+  cargarProveedores() {
+    this.http.get<any[]>(`${this.API_PROV}/all`)
+      .subscribe((res) => this.proveedores = res || []);
+  }
 
-    if (unidadRaw) {
-        try {
-            const unidadObj = JSON.parse(unidadRaw);
-            codigoUnidad = unidadObj.codigoUnidad;
-        } catch (e) {
-            codigoUnidad = unidadRaw;
-        }
-    }
+  cargarDte() {
+    this.http.get<any[]>(`${this.API_DTE}/all`).subscribe({
+      next: (res) => this.listaDte = res?.filter((d: any) => d.active) || [],
+      error: (err) => console.error('Error al cargar DTEs:', err)
+    });
+  }
 
-    if (!codigoUnidad) {
-        console.warn('No se encontró código de unidad para listar borradores.');
-        return;
-    }
+  cargarUnidades() {
+    this.http.get<any[]>(this.API_UNIDADES).subscribe({
+      next: (res) => this.unidades = res || [],
+      error: (err) => console.error('Error al cargar unidades:', err)
+    });
+  }
 
-    // Definimos los parámetros de búsqueda según tu Backend
-    // Los nombres deben coincidir exactamente con los @RequestParam de Java
-    const params: any = {
-        codEstadoOc: 'borrador', // Estado fijo según tu requerimiento
-        unidad: codigoUnidad,    // Filtramos por la unidad del usuario
-        page: 0,                 // Pageable empieza en 0 en Spring Data
-        size: 10,
-        sort: 'idOrdenCompra,desc'
-    };
-    console.log('Parámetros para --listar borradores--:', params);
-    // Si quieres filtrar por un código de OC específico que tengas en el front:
-    if (this.filtroBorrador) {
-        params.codOrdenCompra = this.filtroBorrador;
-    }
+  cargarProductos() {
+    this.http.get<any[]>(`${this.API_PRODUCTO}`).subscribe({
+      next: (res) => this.productos = res || [],
+      error: (err) => console.error('Error al cargar productos:', err)
+    });
+  }
+
+  inicializarTabla() {
+    this.items = Array.from({ length: 5 }, () => ({
+      codigoProducto: '', descripcionProducto: '', valorProducto: 0, cantidad: 1, total: 0
+    }));
+  }
+
+  // ==========================================
+  // CICLO DE VIDA DE LA ORDEN DE COMPRA
+  // ==========================================
+
+  iniciarNuevaOC() {
+    this.loading = true;
+    const userSub = localStorage.getItem('sub');
     
-    // Usamos el servicio para hacer la petición
-    return this.http.get<any>(`${this.API_BUSQUEDA_AVANZADA}`, { params })
+    this.http.post<any>(`${this.API_OC_NEW}`, { plantillaDTO: { usernameUsuario: userSub, codUnidad: '' } })
       .subscribe({
         next: (res) => {
-          this.listaCompletaBorradores = res.content || [];
-          console.log('Borradores cargados:', this.listaCompletaBorradores);
-        },
-        error: () => this.loading = false
-      });
-}
+          const unidadRaw = localStorage.getItem('unidadNegocio');
+          let nombreUnidadCalculado = '';
+          let codUnidad = '';
+          
+          if (unidadRaw) {
+            try {
+              const unidadObj = JSON.parse(unidadRaw);
+              codUnidad = unidadObj.codigoUnidad || '';
+              nombreUnidadCalculado = unidadObj.nombreUnidad || unidadObj.showNombreUnidad || ''; 
+            } catch (e) {
+              codUnidad = unidadRaw;
+              nombreUnidadCalculado = unidadRaw;
+            }
+          }
 
- cargarBorrador(borrador: any) {
+          this.ocData = {
+            ...res,
+            fechaOrdenCompra: this.obtenerFechaActual(),
+            usuario: userSub,              
+            nombreusuario: localStorage.getItem('nombre'),              
+            apellidousuario: localStorage.getItem('apellidoPaterno'),
+            unidad: null, // Forzar selección manual inicial            
+            unidadCompradora: nombreUnidadCalculado, 
+            idUnidadCompradora: null 
+          };
+
+          this.idUnidadCompradoraSeleccionada = null;
+          this.codUnidadCompradoraSeleccionada = '';
+          this.ocCreada = true;
+          this.loading = false;
+          this.proveedorSeleccionado = null;
+          this.modoEdicionProveedor = true;
+          this.inicializarTabla();
+        },
+        error: (err) => {
+          console.error('Error al iniciar OC:', err);
+          this.loading = false;
+        }
+      });
+  }
+
+  cargarBorrador(borrador: any) {
     this.loading = true;
-    
     const unidadData = JSON.parse(localStorage.getItem('unidadNegocio') || '{}');
 
-    this.ocData = { ...borrador,
-      unidad: borrador.unidad || borrador.codUnidad || unidadData.codigoUnidad,
-      
-      // Mantenemos el NOMBRE para el layout
-      unidadCompradora: borrador.nombreUnidad || unidadData.showNombreUnidad || unidadData.nombreUnidad,
-      
-      // Mantenemos el USUARIO
-      usuario: borrador.usernameUsuario || borrador.usuario || localStorage.getItem('sub')
-     };
-    this.nombreOrdenCompra = borrador.nombreOrdenCompra || '';
-    this.observaciones = borrador.observaciones || '';
-    
-
-    // 1. Vincular DTE usando comparación de STRING
+    // 1. Vincular DTE
     if (borrador.codDocumentoTributario) {
-      // Convertimos el código buscado a string y limpiamos espacios
       const codBuscado = String(borrador.codDocumentoTributario).trim();
-
       const dteEncontrado = this.listaDte.find((d: any) => 
-        // Comparamos ambos como String para asegurar el match
         String(d.codigoDocumentoTributario || d.codDocumentoTributario).trim() === codBuscado
       );
-
       if (dteEncontrado) {
         this.dteSeleccionado = dteEncontrado;
-        // Asignamos el valor exacto para que el ngModel del select lo reconozca
-        this.dteIdSeleccionado = codBuscado; 
-        console.log('✅ DTE vinculado con éxito:', this.dteIdSeleccionado);
-      } else {
-        console.warn('❌ No se encontró el DTE:', codBuscado, 'en la lista:', this.listaDte);
+        this.dteIdSeleccionado = codBuscado;
       }
     }
 
-    // 2. Vincular Proveedor
+    // 2. Asignación Unidad Compradora
+    const codUnidadBD = borrador.codUnidad || borrador.unidad || unidadData.codigoUnidad || null;
+    const idUnidadBD = borrador.idUnidadCompradora || borrador.idUnidad || borrador.unidadId || unidadData.idUnidad || null;
+
+    this.ocData = { 
+      ...borrador,
+      unidad: codUnidadBD,
+      unidadCompradora: borrador.nombreUnidad || borrador.unidadCompradora || unidadData.showNombreUnidad || unidadData.nombreUnidad,
+      usuario: borrador.usernameUsuario || borrador.usuario || localStorage.getItem('sub'),
+      idUnidadCompradora: idUnidadBD
+    };
+
+    setTimeout(() => {
+      this.codUnidadCompradoraSeleccionada = codUnidadBD ? codUnidadBD.toString().trim() : '';
+      this.idUnidadCompradoraSeleccionada = idUnidadBD;
+      if (this.ocData) this.ocData.unidad = this.codUnidadCompradoraSeleccionada;
+    }, 150);
+
+    this.nombreOrdenCompra = borrador.nombreOrdenCompra || '';
+    this.observaciones = borrador.observaciones || '';
+
+    // 3. Vincular Proveedor
     if (borrador.rutProveedor || borrador.proveedor) {
       const rutABuscar = borrador.rutProveedor || borrador.proveedor;
-      
       this.proveedorSeleccionado = this.proveedores.find((p: any) => p.rutProveedor === rutABuscar);
       
       if (this.proveedorSeleccionado) {
         this.completarCargaProveedor();
       } else {
-        // Si no está en la lista de los 'top' proveedores, lo buscamos directo al API
-        this.http.get<any>(`${this.API_PROV}/${rutABuscar}`).subscribe(res => {
-          this.proveedorSeleccionado = res;
-          this.completarCargaProveedor();
+        this.http.get<any>(`${this.API_PROV}/${rutABuscar}`).subscribe({
+          next: (res) => {
+            this.proveedorSeleccionado = res;
+            this.completarCargaProveedor();
+          },
+          error: (err) => console.error('Error al cargar proveedor desde API:', err)
         });
       }
     }
 
-    // 3. Cargar Items (Parsear el LONGTEXT de la base de datos)
+    // 4. Cargar Items
     if (borrador.listProductosOrden) {
       try {
         const productosGuardados = JSON.parse(borrador.listProductosOrden);
@@ -226,21 +260,17 @@ export class CreacionOcComponent implements OnInit {
           ...p,
           total: (p.valorProducto || 0) * (p.cantidad || 0)
         }));
-        
-        // Rellenar hasta 5 filas si es necesario
         while (this.items.length < 5) {
           this.items.push({ codigoProducto: '', descripcionProducto: '', valorProducto: 0, cantidad: 1, total: 0 });
         }
       } catch (e) {
-        console.error("Error parseando productos:", e);
         this.inicializarTabla();
       }
-
       if (borrador.codGiroSeleccionado) {
-        setTimeout(() => {
-          this.codGiroSeleccionado = borrador.codGiroSeleccionado;
-        }, 100);
+        setTimeout(() => this.codGiroSeleccionado = borrador.codGiroSeleccionado, 100);
       }
+    } else {
+      this.inicializarTabla();
     }
 
     this.loading = false;
@@ -254,144 +284,60 @@ export class CreacionOcComponent implements OnInit {
     if (this.proveedorSeleccionado.codComuna) {
       this.obtenerDetallesGeograficos(this.proveedorSeleccionado.codComuna);
     }
-    // Forzamos la asignación del giro si viene en el borrador
-    if (this.ocData.codGiroSeleccionado) {
+    if (this.ocData?.codGiroSeleccionado) {
         this.codGiroSeleccionado = this.ocData.codGiroSeleccionado;
     }
   }
 
-  // --- MÉTODOS DE APOYO Y CARGA ---
+  // ==========================================
+  // MANEJO DE EVENTOS Y SELECCIONES
+  // ==========================================
 
-    onSeleccionarDte(event: any) {
-      const val = event.target.value;
-      if (!val) return;
+  onSeleccionarDte(event: any) {
+    const val = event.target.value;
+    if (!val) return;
 
-      // Buscamos comparando como string para evitar errores de tipo
-      this.dteSeleccionado = this.listaDte.find(d => 
-        String(d.codigoDocumentoTributario) === String(val) || 
-        String(d.idDocumentoTributario) === String(val)
-      );
-
-      this.dteIdSeleccionado = val;
-
-      if (this.puedeEditarItems && this.items.length === 0) {
-        this.agregarFila();
-      }
-      this.calcularTotales();
+    this.dteSeleccionado = this.listaDte.find(d => 
+      String(d.codigoDocumentoTributario) === String(val) || String(d.idDocumentoTributario) === String(val)
+    );
+    this.dteIdSeleccionado = val;
+    this.calcularTotales();
   }
 
-  cargarProveedores() {
-    this.http.get<any[]>(`${this.API_PROV}/all`)
-      .subscribe((res: any) => this.proveedores = res || []);
-  }
-
-  cargarDte() {
-    this.http.get<any[]>(`${this.API_DTE}/all`).subscribe({
-      next: (res: any) => {
-        this.listaDte = res.filter((d: any) => d.active);
-      },
-      error: (err) => console.error('Error al cargar DTEs:', err)
-    });
-  }
-
-  obtenerFechaActual(): string {
-    const hoy = new Date();
-    const dd = String(hoy.getDate()).padStart(2, '0');
-    const mm = String(hoy.getMonth() + 1).padStart(2, '0');
-    const yyyy = hoy.getFullYear();
-    return `${dd}/${mm}/${yyyy}`;
-  }
-
-  iniciarNuevaOC() {
-    this.loading = true;
-    const userSub = localStorage.getItem('sub');
-    const unidadRaw = localStorage.getItem('unidadNegocio');
-    
-    const nombreUserLog = localStorage.getItem('nombre');
-    const apellidoUserLog = localStorage.getItem('apellidoPaterno');
-
-    let codUnidad = '';
-    let nombreUnidadCompradora = '';
-    
-    if (unidadRaw) {
-        try {
-            // Parseamos porque en el login viene como objeto
-            const unidadObj = JSON.parse(unidadRaw);
-            codUnidad = unidadObj.codigoUnidad;
-            nombreUnidadCompradora = unidadObj.nombreUnidad || unidadObj.showNombreUnidad || ''; 
-        } catch (e) {
-            // Si por alguna razón se guardó como string plano, lo usamos directamente
-            codUnidad = unidadRaw;
-            nombreUnidadCompradora = unidadRaw;
-        }
+  onSeleccionarUnidad(event: any) {
+    const codigoSelected = this.ocData?.unidad;
+    if (!codigoSelected) {
+      this.idUnidadCompradoraSeleccionada = null;
+      this.codUnidadCompradoraSeleccionada = '';
+      return;
     }
-    const payload = { 
-    plantillaDTO: { usernameUsuario: userSub, codUnidad: codUnidad } 
-    };
-    
-    this.http.post<any>(`${this.API_OC_NEW}`, payload)
-      .subscribe({
-        next: (res) => {
-          this.ocData = {
-            ...res,
-            fechaOrdenCompra: this.obtenerFechaActual(),
-            // Aseguramos que el nombre de la propiedad coincida con el HTML
-            usuario: userSub,              // <--- Desde localStorage
-            nombreusuario: nombreUserLog,              // <--- Desde localStora
-            apellidousuario: apellidoUserLog,
-            unidad: codUnidad,             // <--- Desde localStorage
-            unidadCompradora: nombreUnidadCompradora // <--- Para mostrar en el HTML
-          };
-          this.ocCreada = true;
-          this.loading = false;
-          this.proveedorSeleccionado = null;
-          this.modoEdicionProveedor = true;
-          this.inicializarTabla();
-        },
-        error: (err) => {
-          console.error('Error al iniciar OC:', err);
-          this.loading = false;
-        }
-      });
-      console.log('OC creada con éxito:', this.ocData);
-}
 
-  get proveedoresFiltrados() {
-    if (!this.proveedores || this.proveedores.length === 0) return [];
-    if (!this.filtroProveedor.trim()) return this.proveedores.slice(0, 10);
-    const busqueda = this.filtroProveedor.toLowerCase();
-    return this.proveedores.filter(p => {
-      const nombre = (p?.nombreProveedor || '').toLowerCase();
-      const rut = (p?.rut || '').toLowerCase();
-      return nombre.includes(busqueda) || rut.includes(busqueda);
-    });
+    const unidadEncontrada = this.unidades.find(
+      (u: any) => u.codigoUnidad?.toString().trim().toUpperCase() === codigoSelected.toString().trim().toUpperCase()
+    );
+
+    if (unidadEncontrada) {
+      this.idUnidadCompradoraSeleccionada = unidadEncontrada.idUnidad || null; 
+      this.codUnidadCompradoraSeleccionada = unidadEncontrada.codigoUnidad || '';
+    }
   }
 
   onSeleccionarProveedorManual(p: any) {
     if (!p) return;
-
-    // 1. Limpiamos selección previa
     this.codGiroSeleccionado = ""; 
-
     this.proveedorSeleccionado = {
       ...p,
       emailProveedor: p.emailProveedor || p.email || 'No registrado',
       telefonoContactoProveedor: p.telefonoContactoProveedor || p.telefono || 'Sin teléfono',
       nombreComuna: '',
       nombreRegion: '',
-      // Forzamos la creación de un nuevo array para que Angular detecte el cambio
       listaGiros: p.listaGiros ? [...p.listaGiros] : []
     };
 
     this.modoEdicionProveedor = false;
     this.filtroProveedor = '';
-    
     if (p.codComuna) this.obtenerDetallesGeograficos(p.codComuna);
-
-    // LOG DE CONTROL: Verifica que esto imprima el array en la consola
-    console.log('Giros Habilitado dte prov', this.dteSeleccionado, this.proveedorSeleccionado)
-    console.log('Giros disponibles para el combo:', this.proveedorSeleccionado.listaGiros);
-}
+  }
 
   obtenerDetallesGeograficos(codComuna: string | number) {
     this.http.get<any>(`${this.API_COMUNA}/${codComuna}`).subscribe({
@@ -403,23 +349,20 @@ export class CreacionOcComponent implements OnInit {
     });
   }
 
-  onSeleccionarProveedor(event: any) {
-    const id = event.target.value;
-    this.proveedorSeleccionado = this.proveedores.find(p => p.rutProveedor === id);
-    if (this.proveedorSeleccionado) this.modoEdicionProveedor = false;
-  }
-
-  cargarProductos() {
-    this.http.get<any[]>(`${this.API_PRODUCTO}`).subscribe((res: any) => {
-      this.productos = res || [];
+  get proveedoresFiltrados() {
+    if (!this.proveedores || this.proveedores.length === 0) return [];
+    if (!this.filtroProveedor.trim()) return this.proveedores.slice(0, 10);
+    const busqueda = this.filtroProveedor.toLowerCase();
+    return this.proveedores.filter(p => {
+      const nombre = (p?.nombreProveedor || '').toLowerCase();
+      const rut = (p?.rutProveedor || p?.rut || '').toLowerCase();
+      return nombre.includes(busqueda) || rut.includes(busqueda);
     });
   }
 
-  inicializarTabla() {
-    this.items = Array.from({ length: 5 }, () => ({
-      codigoProducto: '', descripcionProducto: '', valorProducto: 0, cantidad: 1, total: 0
-    }));
-  }
+  // ==========================================
+  // LÓGICA DE LA TABLA DE PRODUCTOS
+  // ==========================================
 
   get puedeEditarItems(): boolean {
     return !!this.dteSeleccionado;
@@ -484,55 +427,92 @@ export class CreacionOcComponent implements OnInit {
     }
   }
 
+  // Getters para etiquetas dinámicas en vista
   get labelNeto(): string { 
-    return this.dteSeleccionado?.codigoDocumentoTributario === '38' || this.dteSeleccionado?.codigoDocumentoTributario === '38-c' ? 'MONTO TOTAL' : 'TOTAL NETO'; }
+    return ['38', '38-c'].includes(this.dteSeleccionado?.codigoDocumentoTributario) ? 'MONTO TOTAL' : 'TOTAL NETO'; 
+  }
   get labelImpuesto(): string { 
-    return this.dteSeleccionado?.codigoDocumentoTributario === '38' || this.dteSeleccionado?.codigoDocumentoTributario === '38-c' ? 'RETENCIÓN' : 'IMPUESTO'; }
+    return ['38', '38-c'].includes(this.dteSeleccionado?.codigoDocumentoTributario) ? 'RETENCIÓN' : 'IMPUESTO'; 
+  }
   get labelTotal(): string { 
-    return this.dteSeleccionado?.codigoDocumentoTributario === '38' || this.dteSeleccionado?.codigoDocumentoTributario === '38-c' ? 'VALOR LÍQUIDO' : 'TOTAL'; }
+    return ['38', '38-c'].includes(this.dteSeleccionado?.codigoDocumentoTributario) ? 'VALOR LÍQUIDO' : 'TOTAL'; 
+  }
 
   get isFormularioCompleto(): boolean {
-    const validaciones = {
-      codigoOC: !!(this.ocData?.codOrdenCompra),
-      dteSeleccionado: !!(this.dteSeleccionado),
-      proveedor: !!(this.proveedorSeleccionado),
-      giroSeleccionado: !!(this.codGiroSeleccionado), // Nueva validación
-      comuna: !!(this.proveedorSeleccionado?.nombreComuna),
-      nombreOC: !!(this.nombreOrdenCompra && this.nombreOrdenCompra.trim().length > 0),
-      alMenosUnItem: this.items.some(item => 
-        item.descripcionProducto && 
-        item.descripcionProducto.trim() !== '' && 
-        item.valorProducto > 0
-      )
-    };
-    return Object.values(validaciones).every(valor => valor === true);
+    return !!(
+      this.ocData?.codOrdenCompra &&
+      this.dteSeleccionado &&
+      this.proveedorSeleccionado &&
+      this.codGiroSeleccionado &&
+      this.proveedorSeleccionado?.nombreComuna &&
+      this.nombreOrdenCompra?.trim().length > 0 &&
+      this.items.some(item => item.descripcionProducto?.trim() && item.valorProducto > 0)
+    );
   }
+
+  // ==========================================
+  // MANEJO DE ADJUNTOS (DRAG & DROP)
+  // ==========================================
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files) return;
+    this.procesarArchivos(Array.from(input.files));
+    input.value = ''; 
+  }
+
+  eliminarAdjunto(index: number): void {
+    this.listaAdjuntos.splice(index, 1);
+  }
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (this.puedeEditarItems && this.listaAdjuntos.length < 5) this.isDragging = true;
+  }
+
+  onDragLeave(): void {
+    this.isDragging = false;
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = false;
+    if (!this.puedeEditarItems || !event.dataTransfer?.files) return;
+    this.procesarArchivos(Array.from(event.dataTransfer.files));
+  }
+
+  private procesarArchivos(archivos: File[]) {
+    for (const archivo of archivos) {
+      if (this.listaAdjuntos.length >= 5) {
+        alert('Solo se permite un máximo de 5 archivos adjuntos por orden de compra.');
+        break;
+      }
+      this.listaAdjuntos.push(archivo);
+    }
+  }
+
+  // ==========================================
+  // PERSISTENCIA Y ENVÍOS AL SERVIDOR
+  // ==========================================
 
   prepararPayload() {
     const productosMap = this.items
-      .filter(item => item.descripcionProducto && item.descripcionProducto.trim() !== '' && item.cantidad > 0 && item.valorProducto > 0)
+      .filter(item => item.descripcionProducto?.trim() && item.cantidad > 0 && item.valorProducto > 0)
       .map(item => ({
         codigoProducto: item.codigoProducto ? item.codigoProducto.trim() : '',
         descripcionProducto: item.descripcionProducto.trim(),
         cantidad: item.cantidad,
-        valorProducto: item.valorProducto,
-       // idProducto: item.idProducto || null
+        valorProducto: item.valorProducto
       }));
      
-      // Recuperamos datos de respaldo del storage
-    const unidadSesion = JSON.parse(localStorage.getItem('unidadNegocio') || '{}').codigoUnidad;
-    const usuarioSesion = localStorage.getItem('sub');
-
     return {
       plantillaDTO: {
-        usernameUsuario: usuarioSesion,
-        codUnidad: unidadSesion,
+        usernameUsuario: localStorage.getItem('sub'),
         rutProveedor: this.proveedorSeleccionado.rutProveedor,
-
         codOrdenCompra: this.ocData.codOrdenCompra,
         codGiroSeleccionado: this.codGiroSeleccionado,
-        
-        
         codDocumentoTributario: this.dteSeleccionado.codigoDocumentoTributario,
         estadoOc: this.ocData.codEstadoActualOc,
         nombreOrdenCompra: this.nombreOrdenCompra,
@@ -540,61 +520,91 @@ export class CreacionOcComponent implements OnInit {
         listProductosOrden: JSON.stringify(productosMap),
         totalNeto: this.ocData.neto,
         impuesto: this.ocData.impuestoCalculado,
-        total: this.ocData.totalFinal
+        total: this.ocData.totalFinal,
+        idUnidadCompradora: this.idUnidadCompradoraSeleccionada,
+        codUnidad: this.codUnidadCompradoraSeleccionada,
       }
     };
   }
 
   guardarOrden() {
     const payload = this.prepararPayload();
-    console.log('payload:', payload);
-
     this.http.post(`${this.API_OC}`, payload).subscribe({
       next: () => alert('Orden guardada correctamente'),
       error: (err) => console.error('Error al guardar:', err)
     });
   }
 
-  solicitarAutorizacion() {
+  async solicitarAutorizacion() {
     if (!this.puedeEditarItems) return;
     this.loading = true;
-    const payload = this.prepararPayload();
-    const idOc = this.ocData.idOrdenCompra || 1;
-    this.http.post(`${this.API_OC}/solicitar`, payload)
-      .subscribe({
+
+    try {
+      const codigoOC = this.ocData?.codOrdenCompra;
+      const payloadOrden = this.prepararPayload();
+
+      // 1. Procesamiento síncrono secuencial de Adjuntos
+      if (this.listaAdjuntos?.length > 0) {
+        let index = 1;
+        for (const archivo of this.listaAdjuntos) {
+          const formData = new FormData();
+          formData.append('file', archivo);
+          formData.append('req', new Blob([JSON.stringify(payloadOrden)], { type: 'application/json' }));
+
+          await this.http.post(`${this.API_OC}/${codigoOC}/adjuntos`, formData).toPromise();
+          index++;
+        }
+      }
+
+      // 2. Ejecutar Solicitud Final de Autorización
+      this.http.post(`${this.API_OC}/solicitar`, payloadOrden).subscribe({
         next: (res: any) => {
           this.codOrdenCompra = res.codOrdenCompra || this.ocData.codOrdenCompra;
           this.ocFinalizada = true;
           this.loading = false;
+          this.listaAdjuntos = []; 
         },
         error: (err) => {
-          console.error('Error al solicitar:', err);
+          console.error('Error en la autorización final:', err);
+          alert('Se procesaron los adjuntos pero falló la autorización final.');
           this.loading = false;
         }
       });
+
+    } catch (error) {
+      console.error('Error grave en adjuntos:', error);
+      alert('Ocurrió un error al registrar los adjuntos. El proceso se detuvo.');
+      this.loading = false;
+    }
   }
 
   nuevaOrdenDesdeExito() {
-    // 1. Volvemos al formulario
-  this.ocFinalizada = false;
-  
-  // 2. Reseteamos el objeto principal
-  this.ocData = {}; 
-  
-  // 3. ¡IMPORTANTE! Limpiar variables de control manual
-  this.nombreOrdenCompra = '';  // <--- Añade esta línea
-  this.observaciones = ''; // Aprovecha de limpiar también las observaciones
-  this.filtroProveedor = '';
-  
-  // 4. Resetear selección de objetos
-  this.proveedorSeleccionado = null;
-  this.modoEdicionProveedor = true;
-  
-  // 5. Si tienes un array de items, vacíalo también
-  this.items = [];
+    this.ocFinalizada = false;
+    this.ocData = null; 
+    this.nombreOrdenCompra = '';  
+    this.observaciones = ''; 
+    this.filtroProveedor = '';
+    this.dteIdSeleccionado = null;
+    this.dteSeleccionado = null;
+    this.idUnidadCompradoraSeleccionada = null;
+    this.codUnidadCompradoraSeleccionada = '';
+    this.proveedorSeleccionado = null;
+    this.modoEdicionProveedor = true;
+    this.items = [];
     this.iniciarNuevaOC();
   }
 
-  resetProveedor() { this.proveedorSeleccionado = null; this.modoEdicionProveedor = true; }
-  previsualizar() { window.print(); }
+  resetProveedor() { 
+    this.proveedorSeleccionado = null; 
+    this.modoEdicionProveedor = true; 
+  }
+  
+  previsualizar() { 
+    window.print(); 
+  }
+
+  obtenerFechaActual(): string {
+    const hoy = new Date();
+    return `${String(hoy.getDate()).padStart(2, '0')}/${String(hoy.getMonth() + 1).padStart(2, '0')}/${hoy.getFullYear()}`;
+  }
 }

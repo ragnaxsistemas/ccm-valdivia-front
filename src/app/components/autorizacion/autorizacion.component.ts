@@ -1,6 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
 import { AuthService } from '../../services/auth.service';
 import { environment } from "../../../environments/environment";
@@ -8,7 +9,7 @@ import { environment } from "../../../environments/environment";
 @Component({
   selector: 'app-autorizacion',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './autorizacion.component.html',
   styleUrls: ['./autorizacion.component.scss']
 })
@@ -23,17 +24,62 @@ export class AutorizacionComponent implements OnInit {
     private readonly API_PROV = `${this.API_BASE}/api/v1/oc/proveedor`;
     private readonly API_DTE = `${this.API_BASE}/api/v1/oc/dte`;
     private readonly API_PRODUCTO = `${this.API_BASE}/api/v1/oc/producto/all`;
+    private readonly API_UNIDADES = `${this.API_BASE}/api/v1/unidad-compradora/vld_ccm`;
+
+    loading: boolean = false;
 
   listaPendientes: any[] = [];
   ocSeleccionada: any = null;
-  
+  listaAdjuntosOC: any[] = [];
+
+  // 🔄 NUEVAS VARIABLES PARA UNIDADES COMPRADORAS
+  unidades: any[] = [];
+  unidadSeleccionada: string = '';
+
   // Usamos el Signal del servicio si está disponible, sino fallback a localStorage
   public esSupervisorGlobal: boolean = false;
   private usuarioInfo: any = null;
+  userRole: string = '';
 
   ngOnInit() {
+    this.obtenerRolDesdeStorage();
+    this.cargarUnidades();
     this.verificarPermisos();
     this.cargarPendientes();
+  }
+
+  obtenerRolDesdeStorage(): void {
+    const userJson = localStorage.getItem('usuario');
+    if (userJson) {
+      try {
+        const user = JSON.parse(userJson);
+        // Extraemos el nombre del rol en mayúsculas idéntico al Layout
+        this.userRole = user.role?.nombre?.toUpperCase() || 'SIN ROL';
+        console.log("Rol detectado en Autorización:", this.userRole);
+      } catch (e) {
+        console.error("Error al parsear el usuario desde localStorage", e);
+        this.userRole = 'SIN ROL';
+      }
+    } else {
+      this.userRole = 'SIN ROL';
+    }
+  }
+
+  esSupervisor(): boolean {
+    // Validamos directamente contra la cadena unificada extraída del Storage
+    return this.userRole.includes('SUPERVISOR') || 
+           this.userRole.includes('ADMINISTRACION') || 
+           this.userRole.includes('ADMIN');
+  }
+
+  cargarUnidades() {
+    
+    this.http.get<any[]>(`${this.API_UNIDADES}`).subscribe({
+      next: (res) => {
+        this.unidades = res || [];
+      },
+      error: (err) => console.error('Error al cargar unidades:', err)
+    });
   }
 
   verificarPermisos() {
@@ -55,50 +101,103 @@ export class AutorizacionComponent implements OnInit {
     }
   }
 
-  esSupervisor(): boolean {
-    return this.esSupervisorGlobal;
-  }
-
   cargarPendientes() {
-    
-    const unidadRaw = localStorage.getItem('unidadNegocio');
-    let codigoUnidad = '';
+    this.loading = true;
 
-    if (unidadRaw) {
-        try {
-            const unidadObj = JSON.parse(unidadRaw);
-            codigoUnidad = unidadObj.codigoUnidad;
-        } catch (e) {
-            codigoUnidad = unidadRaw;
-        }
+    // 1. Inicializamos los HttpParams con los campos obligatorios de paginación y estado fijo
+    let params = new HttpParams()
+      .set('codEstadoOc', 'pendiente_autorizacion') // Requerido por tu lógica de negocio
+      .set('page', '0')                             // Spring Data es base 0
+      .set('size', '10')
+      .set('sort', 'idOrdenCompra,desc');
+
+    // 2. Evaluamos la unidad seleccionada en el combo
+    if (this.unidadSeleccionada && this.unidadSeleccionada.trim() !== '') {
+      // Si seleccionó una unidad específica, usamos el parámetro 'unidad' (en singular)
+      params = params.set('unidad', this.unidadSeleccionada);
+    } else {
+      // Si NO se selecciona unidad en el combo, extraemos todos los códigos del array
+      const todosLosCodigos = this.unidades
+        .map((u: any) => u.codigoUnidad)
+        .filter((cod: string) => !!cod);
+
+      if (todosLosCodigos.length > 0) {
+        // Mandamos la lista concatenada por comas en el parámetro 'unidad'
+        params = params.set('unidad', todosLosCodigos.join(','));
+      }
     }
 
-    if (!codigoUnidad) {
-        console.warn('No se encontró código de unidad para listar borradores.');
-        return;
-    }
+    console.log('🔍 [Cargar Pendientes] Parámetros exactos enviados:', params.toString());
 
-    const params: any = {
-        codEstadoOc: 'pendiente_autorizacion', // Estado fijo según tu requerimiento
-        unidad: codigoUnidad,    // Filtramos por la unidad del usuario
-        page: 0,                 // Pageable empieza en 0 en Spring Data
-        size: 10,
-        sort: 'idOrdenCompra,desc'
-    };
-
-    return this.http.get<any>(`${this.API_BUSQUEDA_AVANZADA}`, { params })
+    // 3. Realizamos la llamada apuntando a la API_BUSQUEDA_AVANZADA
+    this.http.get<any>(`${this.API_BUSQUEDA_AVANZADA}`, { params })
       .subscribe({
         next: (res) => {
-          this.listaPendientes = res.content || [];
-          console.log('Pendientes cargados:', this.listaPendientes);
+          // ✨ CORRECCIÓN CRÍTICA: Extraemos '.content' porque el backend responde con paginación
+          this.listaPendientes = res?.content || [];
+          console.log('✅ Pendientes cargados exitosamente:', this.listaPendientes);
+          this.loading = false;
         },
-      error: () => Swal.fire('Error', 'No se pudo cargar la lista de pendientes', 'error')
+        error: (err) => {
+          console.error('❌ Error al cargar pendientes en el backend:', err);
+          this.loading = false;
+          Swal.fire('Error', 'No se pudo cargar la lista de pendientes', 'error');
+        }
       });
   }
 
   verDetalle(oc: any) {
-    this.ocSeleccionada = oc;
+  this.ocSeleccionada = oc;
+  this.listaAdjuntosOC = []; // Limpiamos la lista anterior
+
+  if (oc && oc.codOrdenCompra) {
+    const urlAdjuntos = `${this.API_BASE}/api/v1/oc/ordenes-compra/${oc.codOrdenCompra}/archivos`;
+    
+    this.http.get<any[]>(urlAdjuntos).subscribe({
+      next: (res) => {
+        // Tu backend responde 204 (No Content) o devuelve vacío si no hay archivos
+        this.listaAdjuntosOC = res || [];
+        console.log('📎 Adjuntos cargados para la OC:', this.listaAdjuntosOC);
+      },
+      error: (err) => {
+        console.error('Error al cargar adjuntos:', err);
+        this.listaAdjuntosOC = [];
+      }
+    });
   }
+}
+
+  descargarAdjunto(arch: any) {
+      if (!arch || !arch.idAdjunto) {
+        Swal.fire('Error', 'Información de archivo adjunto no válida.', 'error');
+        return;
+      }
+
+      console.log("Iniciando descarga del adjunto ID:", arch.idAdjunto);
+      
+      // Ajusta esta URL si tu endpoint de descarga de archivos adjuntos es diferente
+      const urlDescarga = `${this.API_OC}/adjunto/${arch.idAdjunto}`;
+
+      this.http.get(urlDescarga, { responseType: 'blob' }).subscribe({
+        next: (blob: Blob) => {
+          // Crear un link temporal en el DOM para forzar la descarga nativa
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = arch.nombreArchivo || 'archivo_adjunto';
+          document.body.appendChild(a);
+          a.click();
+          
+          // Limpieza del DOM
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+        },
+        error: (err) => {
+          console.error('❌ Error al descargar el archivo:', err);
+          Swal.fire('Error', 'No se pudo descargar el archivo adjunto desde el servidor.', 'error');
+        }
+      });
+    }
 
   abrirConfirmar(oc: any, accion: string) {
     if (!this.esSupervisor()) {
@@ -186,6 +285,7 @@ export class AutorizacionComponent implements OnInit {
     console.log("Mapeando OC a plantilla:", oc);
     return {
       codOrdenCompra: oc.codOrdenCompra,
+      usernameUsuario: oc.usernameUsuario,
       //fechaOrdenCompra: oc.fechaOrdenCompra,
       //usernameUsuario: oc.usernameUsuario,
       //codUnidad: oc.codUnidad,

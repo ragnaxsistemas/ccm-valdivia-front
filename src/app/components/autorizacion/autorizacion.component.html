@@ -1,7 +1,25 @@
 <div class="container-fluid mt-3">
-  <h3 class="magenta-text mb-4"><i class="bi bi-shield-check"></i> AUTORIZACIÓN DE ÓRDENES</h3>
+  <h3 class="mustard-text mb-4">
+    <i class="bi bi-shield-check"></i> AUTORIZACIÓN DE ÓRDENES
+  </h3>
 
-  <div class="table-container shadow-sm bg-white p-3 rounded">
+  <div class="card-filtro-auth no-print mb-4">
+    <div class="filter-group-auth">
+      <label class="filter-label-auth">FILTRAR POR UNIDAD COMPRADORA</label>
+      <div class="select-wrapper-auth">
+        <select [(ngModel)]="unidadSeleccionada" (change)="cargarPendientes()" class="select-unidad-auth">
+          <option value="">TODAS LAS UNIDADES COMPRADORAS</option>
+          @for (u of unidades; track u.codigoUnidad) {
+            <option [value]="u.codigoUnidad">
+              {{ u.nombreUnidad | uppercase }}
+            </option>
+          }
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-container shadow-sm p-3 rounded">
     <table class="table custom-table-auth">
       <thead>
         <tr>
@@ -20,11 +38,12 @@
             <td>{{ oc.fechaOrdenCompra | date:'dd/MM/yyyy HH:mm' }}</td>
             <td><i class="bi bi-person-circle"></i> {{ oc.nombreUsuario }} {{ oc.apellidoUsuario }}</td>
             <td><span class="badge-unidad">{{ oc.nombreUnidad | uppercase }}</span></td>
-            <td class="text-end font-mono fw-bold">$ {{ oc.total | number:'1.0-0' }}</td>
+            <td class="font-bold text-primary">$ {{ oc.total | number:'1.0-0' }}</td>
             <td class="text-center">
               <div class="btn-group-actions">
-                <button class="btn-cyan" (click)="verDetalle(oc)" title="Ver Detalle"> <i class="bi bi-eye"></i> </button>
-
+                <button class="btn-cyan" (click)="verDetalle(oc)" title="Ver detalle/Validar">
+                  <i class="bi bi-eye-fill"></i>
+                </button>
                 @if (esSupervisor()) {
                   <button class="btn-cyan" (click)="abrirConfirmar(oc, 'autorizar')"> <i class="bi bi-check"></i> </button>
                   <button class="btn-cyan" (click)="abrirConfirmar(oc, 'devolver')"> <i class="bi bi-arrow-left-right"></i> </button>
@@ -32,11 +51,11 @@
               </div>
             </td>
           </tr>
-         }
-        @if (listaPendientes.length === 0) {
+        }
+        @if (listaPendientes.length === 0 && !loading) {
           <tr>
-            <td colspan="6" class="text-center py-4 text-muted italic">
-              No hay órdenes pendientes de autorización.
+            <td colspan="6" class="text-center text-muted py-4">
+              <i class="bi bi-inbox"></i> No existen órdenes pendientes de autorización.
             </td>
           </tr>
         }
@@ -46,124 +65,109 @@
 </div>
 
 @if (ocSeleccionada) {
-  <div class="modal-backdrop-custom">
-    <div class="modal-content-auth shadow-lg">
+  <div class="modal-overlay-auth no-print">
+    <div class="modal-window-auth">
       
-      <div class="modal-header auth-header d-flex justify-content-between align-items-center">
-        <button type="button" class="btn-close-custom" (click)="ocSeleccionada = null" title="Cerrar">
+      <div class="modal-header-auth">
+        <span class="modal-title-text">
+          <i class="bi bi-file-earmark-text"></i> CONTROL Y VALIDACIÓN DE ORDEN: {{ ocSeleccionada.codOrdenCompra }}
+        </span>
+        <button type="button" class="btn-close-x" (click)="ocSeleccionada = null">
           <i class="bi bi-x-lg"></i>
         </button>
-        <h5 class="mb-0 magenta-text">
-          <i class="bi bi-file-earmark-text"></i> REVISIÓN DE ORDEN: {{ ocSeleccionada.codOrdenCompra }}
-        </h5>
-        
       </div>
 
-      <div class="modal-body bg-light p-4 custom-scroll">
-        <div class="paper-layout shadow-sm mx-auto">
+      <div class="modal-body-scroll">
+        <div class="paper-view-container">
           
-          <div class="oc-document-title text-center mb-4">
-            ORDEN DE COMPRA
+          <div class="section-title-auth">I. ANTECEDENTES GENERALES</div>
+          <div class="grid-info-auth">
+            <div class="info-block"><span class="lbl">Nombre OC:</span><span class="val">{{ ocSeleccionada.nombreOrdenCompra | uppercase }}</span></div>
+            <div class="info-block"><span class="lbl">Unidad:</span><span class="val">{{ ocSeleccionada.nombreUnidad | uppercase }}</span></div>
+            <div class="info-block"><span class="lbl">Creador por:</span><span class="val">{{ ocSeleccionada.nombreUsuario }} {{ ocSeleccionada.apellidoUsuario }}</span></div>
+            <div class="info-block"><span class="lbl">Fecha Emisión:</span><span class="val">{{ ocSeleccionada.fechaOrdenCompra | date:'dd/MM/yyyy HH:mm' }}</span></div>
           </div>
 
-          <div class="info-grid">
-            <div class="info-column">
-              <div class="field">
-                <span class="label">PROVEEDOR:</span>
-                <span class="val-black font-bold">{{ ocSeleccionada.nombreProveedor | uppercase }}</span>
-              </div>
-              
-              <div class="field"><span class="label">RUT:</span> <span class="val-black">{{ ocSeleccionada.rutProveedor || '—' }}</span></div>
-              <div class="field"><span class="label">DIRECCIÓN:</span> <span class="val-black">{{ (ocSeleccionada.direccionProveedor || '—') | uppercase }}</span></div>
-              <div class="field"><span class="label">COMUNA:</span> <span class="val-black">{{ (ocSeleccionada.comunaProveedor || '—') | uppercase }}</span></div>
-              <div class="field"><span class="label">REGIÓN:</span> <span class="val-black">{{ (ocSeleccionada.regionProveedor || '—') | uppercase }}</span></div>
-              <div class="field"><span class="label">GIRO:</span> <span class="val-black">{{ (ocSeleccionada.giroProveedor || '—') | uppercase }}</span></div>
-              <div class="field"><span class="label">TELÉFONO:</span> <span class="val-black">{{ (ocSeleccionada.telefonoContactoProveedor || '—') | uppercase }}</span></div>
-              <div class="field"><span class="label">CORREO ELECTRÓNICO:</span> <span class="val-black">{{ (ocSeleccionada.emailProveedor || '—') | uppercase }}</span></div>
-            </div>
-
-            <div class="info-column">
-              <div class="field"><span class="label">FECHA:</span> <span class="val-black">{{ ocSeleccionada.fechaOrdenCompra | date:'dd/MM/yyyy HH:mm' }}</span></div>
-              <div class="field"><span class="label">CÓDIGO OC:</span> <span class="val-black font-bold">{{ ocSeleccionada.codOrdenCompra }}</span></div>
-              <div class="field"><span class="label">UNIDAD COMPRADORA:</span> <span class="val-black">{{ (ocSeleccionada.nombreUnidad || '—') | uppercase }}</span></div>
-              <div class="field"><span class="label">REALIZADO POR:</span> <span class="val-black">{{ (ocSeleccionada.nombreUsuario + ' ' + ocSeleccionada.apellidoUsuario) | uppercase }}</span></div>
-              <div class="field mt-2">
-                <span class="label">ESTADO ACTUAL: </span> 
-                <span class="badge-estado">{{ ocSeleccionada.estadoActualOc | uppercase }}</span>
-              </div>
-            </div>
+          <div class="section-title-auth">II. DATOS DEL PROVEEDOR Y GIRO</div>
+          <div class="grid-info-auth">
+            <div class="info-block"><span class="lbl">Razón Social:</span><span class="val">{{ ocSeleccionada.nombreProveedor | uppercase }}</span></div>
+            <div class="info-block"><span class="lbl">RUT Proveedor:</span><span class="val">{{ ocSeleccionada.rutProveedor }}</span></div>
+            <div class="info-block col-span-2"><span class="lbl">Giro Seleccionado:</span><span class="val text-warning">{{ ocSeleccionada.giroProveedor | uppercase }}</span></div>
           </div>
 
-          <div class="name-section mt-3">
-            <label class="form-label-thin">NOMBRE DE LA ORDEN DE COMPRA</label>
-            <div class="value-box-readonly">{{ ocSeleccionada.nombreOrdenCompra }}</div>
-          </div>
-
-          <div class="table-container mt-3">
-            <table class="table table-bordered custom-table-thin mb-0">
-              <thead>
+          <div class="section-title-auth">III. DESGLOSE DE PRODUCTOS / SERVICIOS</div>
+          <table class="table-inner-paper">
+            <thead>
+              <tr>
+                <th>N°</th>
+                <th>Descripción Artículo</th>
+                <th class="text-end">Valor Unit.</th>
+                <th class="text-center">Cant.</th>
+                <th class="text-end">Total línea</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of parsearProductos(ocSeleccionada.listProductosOrden); track $index) {
                 <tr>
-                  <th style="width: 40px;">Nº</th>
-                  <th style="width: 120px;">CÓDIGO</th>
-                  <th>DESCRIPCIÓN DE PRODUCTO O SERVICIO</th>
-                  <th class="text-end" style="width: 110px;">VALOR U.</th>
-                  <th class="text-center" style="width: 70px;">CANT.</th>
-                  <th class="text-end" style="width: 110px;">TOTAL</th>
+                   <td>{{ $index + 1 }}</td>
+                  <td>{{ item.descripcionProducto | uppercase }}</td>
+                  <td class="text-end font-mono">$ {{ item.valorProducto | number:'1.0-0' }}</td>
+                  <td class="text-center fw-bold">{{ item.cantidad }}</td>
+                  <td class="text-end font-mono fw-bold">$ {{ (item.valorProducto * item.cantidad) | number:'1.0-0' }}</td>
                 </tr>
-              </thead>
-              <tbody>
-                @for (item of parsearProductos(ocSeleccionada.listProductosOrden); track $index) {
-                  <tr>
-                    <td class="text-center">{{ $index + 1 }}</td>
-                    <td class="val-black font-mono">
-                      {{ item.codigoProducto && item.codigoProducto !== '' ? item.codigoProducto : '—' }}
-                    </td>
-                    <td>{{ item.descripcionProducto | uppercase }}</td>
-                    <td class="text-end font-mono">
-                      $ {{ item.valorProducto | number:'1.0-0' }}
-                    </td>
-                    <td class="text-center">{{ item.cantidad }}</td>
-                    <td class="text-end font-mono bg-light-readonly">
-                      $ {{ (item.valorProducto * item.cantidad) | number:'1.0-0' }}
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
+              }
+            </tbody>
+          </table>
+
+          <div class="section-title-auth">IV. OBSERVACIONES DE LA PROPUESTA</div>
+          <div class="p-2 mb-3 bg-dark text-light rounded small italic style-obs">
+            {{ ocSeleccionada.observaciones || 'Sin observaciones registradas por el creador.' }}
           </div>
 
-          <div class="footer-layout mt-3">
-            <div class="totals-container-auth">
-              <div class="total-row-thin"><span>TOTAL NETO</span> <strong>$ {{ ocSeleccionada.totalNeto | number:'1.0-0' }}</strong></div>
-              <div class="total-row-thin"><span>IVA ({{ ocSeleccionada.impuestoDocumentoElectronico }}%)</span> <strong>$ {{ ocSeleccionada.impuesto | number:'1.0-0' }}</strong></div>
-              <div class="total-row-thin highlight-magenta">
-                <span>TOTAL</span> <strong class="magenta-text">$ {{ ocSeleccionada.total | number:'1.0-0' }}</strong>
+          <div class="section-title-auth">V. ADJUNTOS DIGITALES DE RESPALDO</div>
+          <div class="row g-2">
+            @if (ocSeleccionada.adjuntos && ocSeleccionada.adjuntos.length > 0) {
+              @for (arch of ocSeleccionada.adjuntos; track arch.idAdjunto) {
+                <div class="col-md-6">
+                  <div class="attachment-item-box" (click)="descargarAdjunto(arch)">
+                    <div class="file-icon-container">
+                      <i class="bi bi-file-earmark-pdf-fill"></i>
+                    </div>
+                    <div class="file-details">
+                      <span class="file-name-text">{{ arch.nombreArchivo }}</span>
+                      <small class="file-download-action"><i class="bi bi-cloud-arrow-down"></i> Ver / Descargar</small>
+                    </div>
+                  </div>
+                </div>
+              }
+            } @else {
+              <div class="col-12 text-center text-muted small py-2">
+                <i class="bi bi-file-earmark-lock"></i> Esta orden de compra no registra documentos adjuntos.
               </div>
-            </div>
-
-            <div class="observations-section mt-2">
-              <label class="form-label-thin">OBSERVACIONES</label>
-              <div class="observation-box-readonly">{{ ocSeleccionada.observaciones || 'SIN OBSERVACIONES' }}</div>
-            </div>
+            }
           </div>
-
         </div>
       </div>
 
-      <div class="modal-footer bg-white shadow-top">
-        @if (esSupervisor()) {
-          <button type="button" class="btn-action-oc btn-return-auth" (click)="abrirConfirmar(ocSeleccionada, 'devolver')">
-            <i class="bi bi-arrow-left-right"></i> DEVOLVER
-          </button>
-          <button type="button" class="btn-action-oc btn-authorize-auth" (click)="abrirConfirmar(ocSeleccionada, 'autorizar')">
-            <i class="bi bi-check-all"></i> AUTORIZAR ORDEN
-          </button>
-        } @else {
-          <div class="alert alert-warning m-0 py-2 small">
-            <i class="bi bi-info-circle"></i> Solo usuarios con perfil <b>Supervisor</b> pueden anular órdenes.
+      <div class="modal-footer">
+        <div class="footer-actions-layout">
+          <div class="left-box">
+            <button type="button" class="btn-close-outline" (click)="ocSeleccionada = null">CERRAR VISTA</button>
           </div>
-        }
+          
+          <div class="right-box">
+            @if (esSupervisor()) {
+              <button type="button" class="btn-action-oc btn-return-auth" (click)="abrirConfirmar(ocSeleccionada, 'devolver')">
+                <i class="bi bi-arrow-left-right"></i> DEVOLVER
+              </button>
+              <button type="button" class="btn-action-oc btn-authorize-auth" (click)="abrirConfirmar(ocSeleccionada, 'autorizar')">
+                <i class="bi bi-check-all"></i> AUTORIZAR ORDEN
+              </button>
+            }
+          </div>
+        </div>
       </div>
+
     </div>
   </div>
 }
