@@ -80,21 +80,30 @@
       <div class="modal-body-scroll">
         <div class="paper-view-container">
           
+          <!-- SECCIÓN I: ANTECEDENTES GENERALES -->
           <div class="section-title-auth">I. ANTECEDENTES GENERALES</div>
           <div class="grid-info-auth">
+            <div class="info-block"><span class="lbl">FOLIO OC:</span><span class="val fw-bold text-primary">{{ ocSeleccionada.codOrdenCompra }}</span></div>
             <div class="info-block"><span class="lbl">Nombre OC:</span><span class="val">{{ ocSeleccionada.nombreOrdenCompra | uppercase }}</span></div>
-            <div class="info-block"><span class="lbl">Unidad:</span><span class="val">{{ ocSeleccionada.nombreUnidad | uppercase }}</span></div>
-            <div class="info-block"><span class="lbl">Creador por:</span><span class="val">{{ ocSeleccionada.nombreUsuario }} {{ ocSeleccionada.apellidoUsuario }}</span></div>
+            <div class="info-block"><span class="lbl">Tipo DTE:</span><span class="val text-success">{{ (ocSeleccionada.nombreDocumentoTributario || ocSeleccionada.dteSeleccionado?.nombreDocumentoTributario || '—') | uppercase }}</span></div>
+            <div class="info-block"><span class="lbl">Unidad Compradora:</span><span class="val">{{ (ocSeleccionada.nombreUnidad || ocSeleccionada.nombreUnidadCompradora || '—') | uppercase }}</span></div>
+            <div class="info-block"><span class="lbl">Creado por:</span><span class="val">{{ ocSeleccionada.nombreUsuarioCreador || ocSeleccionada.nombreUsuario || '—' }} {{ ocSeleccionada.apellidoUsuarioCreador || ocSeleccionada.apellidoUsuario || '' }}</span></div>
+            <div class="info-block"><span class="lbl">Solicitante:</span><span class="val">{{ ocSeleccionada.nombreUsuarioSolicitante || ocSeleccionada.nombreUsuario || '—' }} {{ ocSeleccionada.apellidoUsuarioSolicitante || ocSeleccionada.apellidoUsuario || '' }}</span></div>
             <div class="info-block"><span class="lbl">Fecha Emisión:</span><span class="val">{{ ocSeleccionada.fechaOrdenCompra | date:'dd/MM/yyyy HH:mm' }}</span></div>
           </div>
 
-          <div class="section-title-auth">II. DATOS DEL PROVEEDOR Y GIRO</div>
+          <!-- SECCIÓN II: DATOS DEL PROVEEDOR Y GIRO -->
+          <div class="section-title-auth">II. DATOS DEL PROVEEDOR, GIRO Y UBICACIÓN</div>
           <div class="grid-info-auth">
             <div class="info-block"><span class="lbl">Razón Social:</span><span class="val">{{ ocSeleccionada.nombreProveedor | uppercase }}</span></div>
             <div class="info-block"><span class="lbl">RUT Proveedor:</span><span class="val">{{ ocSeleccionada.rutProveedor }}</span></div>
-            <div class="info-block col-span-2"><span class="lbl">Giro Seleccionado:</span><span class="val text-warning">{{ ocSeleccionada.giroProveedor | uppercase }}</span></div>
+            <div class="info-block col-span-2"><span class="lbl">Dirección:</span><span class="val">{{ (ocSeleccionada.direccionProveedor || ocSeleccionada.direccion || '—') | uppercase }}</span></div>
+            <div class="info-block"><span class="lbl">Comuna:</span><span class="val">{{ (ocSeleccionada.nombreComunaProveedor || ocSeleccionada.nombreComuna || '—') | uppercase }}</span></div>
+            <div class="info-block"><span class="lbl">Región:</span><span class="val">{{ (ocSeleccionada.nombreRegionProveedor || ocSeleccionada.nombreRegion || '—') | uppercase }}</span></div>
+            <div class="info-block col-span-2"><span class="lbl">Giro Código / Actividad:</span><span class="val text-warning">{{ (ocSeleccionada.codGiroSeleccionado || '') }} - {{ (ocSeleccionada.giroProveedor || ocSeleccionada.nombreGiroSii || '—') | uppercase }}</span></div>
           </div>
 
+          <!-- SECCIÓN III: DESGLOSE DE PRODUCTOS / SERVICIOS -->
           <div class="section-title-auth">III. DESGLOSE DE PRODUCTOS / SERVICIOS</div>
           <table class="table-inner-paper">
             <thead>
@@ -107,45 +116,88 @@
               </tr>
             </thead>
             <tbody>
-              @for (item of parsearProductos(ocSeleccionada.listProductosOrden); track $index) {
+              @for (item of parsearProductos(ocSeleccionada.listProductosOrden || ocSeleccionada.items); track $index) {
                 <tr>
-                   <td>{{ $index + 1 }}</td>
-                  <td>{{ item.descripcionProducto | uppercase }}</td>
-                  <td class="text-end font-mono">$ {{ item.valorProducto | number:'1.0-0' }}</td>
+                  <td class="text-center fw-bold">{{ $index + 1 }}</td>
+                  <td class="text-center fw-bold">{{  item.descripcionProducto | uppercase }}</td>
+                  <td class="text-center fw-bold">$ {{ item.valorProducto | number:'1.0-0' }}</td>
                   <td class="text-center fw-bold">{{ item.cantidad }}</td>
-                  <td class="text-end font-mono fw-bold">$ {{ (item.valorProducto * item.cantidad) | number:'1.0-0' }}</td>
+                  <td class="text-center fw-bold">$ {{ (item.total || (item.valorProducto * item.cantidad)) | number:'1.0-0' }}</td>
                 </tr>
               }
             </tbody>
           </table>
 
-          <div class="section-title-auth">IV. OBSERVACIONES DE LA PROPUESTA</div>
+          <!-- NUEVA SECCIÓN IV: TOTALES FINANCIEROS -->
+          <div class="section-title-auth">IV. RESUMEN FINANCIERO</div>
+            <div class="totals-paper-box">
+              <div>
+                <div class="t-row">
+                  <span>
+                    @if (ocSeleccionada.codDocumentoTributario === '38' || ocSeleccionada.codDocumentoTributario === '38-c') {
+                      MONTO TOTAL
+                    } @else {
+                      TOTAL NETO
+                    }
+                  </span> 
+                  <strong>$ {{ ocSeleccionada.totalNeto | number:'1.0-0' }}</strong>
+                </div>
+
+                <div class="t-row">
+                  <span>
+                    @if (ocSeleccionada.codDocumentoTributario === '38' || ocSeleccionada.codDocumentoTributario === '38-c') {
+                      RETENCIÓN ({{ ocSeleccionada.impuestoDocumentoElectronico || '15.25' }}%)
+                    } @else {
+                      IMPUESTO ({{ ocSeleccionada.impuestoDocumentoElectronico || '19' }}%)
+                    }
+                  </span> 
+                  <strong>$ {{ ocSeleccionada.impuesto | number:'1.0-0' }}</strong>
+                </div>
+
+                <div class="t-row t-master">
+                  <span>
+                    @if (ocSeleccionada.codDocumentoTributario === '38' || ocSeleccionada.codDocumentoTributario === '38-c') {
+                      VALOR LÍQUIDO
+                    } @else {
+                      TOTAL
+                    }
+                  </span> 
+                  <strong>$ {{ ocSeleccionada.total | number:'1.0-0' }}</strong>
+                </div>
+              </div>
+            </div>
+
+          <!-- SECCIÓN V: OBSERVACIONES DE LA PROPUESTA -->
+          <div class="section-title-auth">V. OBSERVACIONES DE LA PROPUESTA</div>
           <div class="p-2 mb-3 bg-dark text-light rounded small italic style-obs">
             {{ ocSeleccionada.observaciones || 'Sin observaciones registradas por el creador.' }}
           </div>
 
-          <div class="section-title-auth">V. ADJUNTOS DIGITALES DE RESPALDO</div>
+          <!-- SECCIÓN VI: ADJUNTOS DIGITALES DE RESPALDO -->
+          <div class="section-title-auth">VI. ADJUNTOS DIGITALES DE RESPALDO</div>
           <div class="row g-2">
-            @if (ocSeleccionada.adjuntos && ocSeleccionada.adjuntos.length > 0) {
-              @for (arch of ocSeleccionada.adjuntos; track arch.idAdjunto) {
+            <!-- Corregido: Se enlaza directamente con listaAdjuntosOC cargado asíncronamente en verDetalle() -->
+            @if (listaAdjuntosOC && listaAdjuntosOC.length > 0) {
+              @for (arch of listaAdjuntosOC; track arch.idAdjunto || $index) {
                 <div class="col-md-6">
-                  <div class="attachment-item-box" (click)="descargarAdjunto(arch)">
+                  <div class="attachment-item-box" (click)="descargarAdjunto(arch)" style="cursor: pointer;">
                     <div class="file-icon-container">
-                      <i class="bi bi-file-earmark-pdf-fill"></i>
+                      <i class="bi bi-file-earmark-pdf-fill text-danger"></i>
                     </div>
                     <div class="file-details">
-                      <span class="file-name-text">{{ arch.nombreArchivo }}</span>
-                      <small class="file-download-action"><i class="bi bi-cloud-arrow-down"></i> Ver / Descargar</small>
+                      <span class="file-name-text" [title]="arch.nombreArchivo">{{ arch.nombreArchivo }}</span>
+                      <small class="file-download-action text-primary"><i class="bi bi-cloud-arrow-down"></i> Descargar Adjunto</small>
                     </div>
                   </div>
                 </div>
               }
             } @else {
               <div class="col-12 text-center text-muted small py-2">
-                <i class="bi bi-file-earmark-lock"></i> Esta orden de compra no registra documentos adjuntos.
+                <i class="bi bi-file-earmark-lock"></i> Esta orden de compra no registra documentos adjuntos en el servidor.
               </div>
             }
           </div>
+
         </div>
       </div>
 
@@ -167,7 +219,6 @@
           </div>
         </div>
       </div>
-
     </div>
   </div>
 }

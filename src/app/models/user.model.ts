@@ -22,6 +22,16 @@ export interface UnidadNegocio {
   codigoUnidad: string;
 }
 
+export interface Adjunto {
+  idAdjunto?: number;
+  nombreArchivo: string;
+  rutaArchivo?: string;    // Esta ruta se pasará al download universal
+  contentType?: string;
+  // Propiedades auxiliares para el control del Frontend:
+  isServerFile?: boolean;  // Nos dice si ya existe en el servidor
+  fileReal?: File;         // Si es nuevo, aquí guardamos los bytes temporales
+}
+
 export interface UserToken {
   sub: string;
   nombre: string;
@@ -36,3 +46,4 @@ export interface UserToken {
   iat: number;
   exp: number;
 }
+

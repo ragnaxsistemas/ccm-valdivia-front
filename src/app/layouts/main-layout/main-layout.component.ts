@@ -5,6 +5,7 @@ import { AuthStateService } from '../../services/auth-state.service'; // Ajusta 
 import { Subscription } from 'rxjs';
 import { UserToken, Role, UnidadNegocio, Menu } from '../../models/user.model'; // Ajusta la ruta
 import { SidebarComponent } from '../../components/sidebar/sidebar.component';
+import { AuthService } from '../../services/auth.service';
 
 /***interface MenuItem {
   id: number;
@@ -23,6 +24,7 @@ import { SidebarComponent } from '../../components/sidebar/sidebar.component';
 export class MainLayoutComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private authState = inject(AuthStateService);
+  private authService = inject(AuthService);
   private authSub?: Subscription;
   
   userName: string = '';
@@ -32,46 +34,56 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   //menuItems: MenuItem[] = [];
 
   ngOnInit() {
-    this.loadUserData();
-    this.authSub = this.authState.userSession$.subscribe(() => this.loadUserData());
+    let inicializado = false;
+
+    // 1. Nos suscribimos a la escucha reactiva
+    this.authSub = this.authState.userSession$.subscribe(() => {
+      console.log('🔄 [MAIN LAYOUT] Detectado cambio de sesión, recargando datos...');
+      this.loadUserData();
+      inicializado = true; // Marcamos que la suscripción ya emitió y cargó los datos
+    });
+
+    // 2. RESPALDO SEGURIDAD: Si la suscripción no emitió inmediatamente, forzamos la carga
+    if (!inicializado) {
+      console.log('🛡️ [MAIN LAYOUT] Respaldo: userSession$ no emitió en el arranque. Forzando carga manual...');
+      this.loadUserData();
+    }
   }
 
   loadUserData() {
-  const userJson = localStorage.getItem('usuario');
-  if (!userJson) return;
+    const userJson = localStorage.getItem('usuario');
+    if (!userJson) {
+      console.warn('⚠️ [MAIN LAYOUT] No se encontró el objeto "usuario" en localStorage.');
+      this.userName = 'Usuario Desconocido';
+      this.userRole = 'SIN ROL';
+      this.userUnidad = 'General';
+      return;
+    }
 
-  const user: UserToken = JSON.parse(userJson);
-
-  this.userName = `${user.nombre} ${user.apellidoPaterno}`;
-  this.userRole = user.role?.nombre.toUpperCase() || 'SIN ROL';
-  this.userUnidad = user.unidadNegocio?.showNombreUnidad || 'General';
-}
-
-/***getIconForMenu(nombre: string): string {
-  if (!nombre) return 'circle';
-
-  // Normalizamos: quitamos espacios extras y convertimos a minúsculas para comparar mejor
-  const nombreLimpio = nombre.trim();
-
-  const icons: { [key: string]: string } = {
-    'Registros': 'search', 
-    'Creacion OC': 'file-earmark-plus',
-    'Autorizacion': 'check-all',
-    'Anulacion': 'x-circle',
-    'Gestion Proveedores': 'people',
-    'Administracion de Items': 'box-seam',
-    'Reportes': 'file-earmark-bar-graph',
-    'Capacitacion': 'mortarboard'
-  };
-
-  // Si no encuentra el nombre exacto, devolvemos un icono por defecto que sepamos que existe
-  return icons[nombreLimpio] || 'list-ul'; 
-}***/
+    try {
+      const user: UserToken = JSON.parse(userJson);
+      
+      // 📝 Asignación segura y limpia basada en el token estructurado
+      this.userName = `${user.nombre || ''} ${user.apellidoPaterno || ''}`.trim() || 'Usuario Sin Nombre';
+      this.userRole = user.role?.nombre?.toUpperCase() || 'SIN ROL';
+      
+      // Mapeo flexible de la unidad de negocio
+      this.userUnidad = user.unidadNegocio?.showNombreUnidad || user.unidadNegocio?.nombreUnidad || 'General';
+      
+      console.log('👤 [MAIN LAYOUT] Datos cargados con éxito en la interfaz:', {
+        usuario: this.userName,
+        rol: this.userRole,
+        unidad: this.userUnidad
+      });
+    } catch (e) {
+      console.error('❌ [MAIN LAYOUT] Error al parsear el JSON de usuario:', e);
+    }
+  }
 
   logout() {
-    localStorage.clear();
-    sessionStorage.clear();
-    this.router.navigate(['/login']);
+    console.log('🚪 [MAIN LAYOUT] Cerrando sesión de forma segura...');
+    // Llamamos al logout centralizado del servicio para no romper el storage global
+    this.authService.logout(); 
   }
 
   ngOnDestroy() {

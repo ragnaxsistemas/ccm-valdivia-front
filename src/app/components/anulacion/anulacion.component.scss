@@ -465,3 +465,67 @@ $text-white-gray: #f1f5f9;      // Letras claras auxiliares
   color: white !important;
   &:hover { background-color: darken(#e2007a, 8%) !important; }
 }
+
+
+/* ==========================================================================
+   OPTIMIZACIÓN DE ESPACIOS MODAL DE AUTORIZACIÓN (NO APRETADO)
+   ========================================================================== */
+
+/* 1. SECCIÓN DE OBSERVACIONES: Mayor separación interna (padding) y externa */
+.style-obs {
+  padding: 16px 20px !important; /* Más espacio interno arriba/abajo y a los lados */
+  margin-bottom: 28px !important; /* Más separación con la sección de adjuntos */
+  line-height: 1.6;               /* Mejor lectura del texto largo */
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+/* 2. CAJA CONTENEDORA DE CADA ADJUNTO: Más separación de los bordes del modal */
+.attachment-item-box {
+  display: flex;
+  align-items: center;
+  padding: 14px 18px;            /* Incrementamos el padding para desapretar el contenido */
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  margin-bottom: 12px;           /* Separación limpia entre filas de archivos */
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background-color: #e9ecef;
+    border-color: #0dcaf0;       /* Efecto visual Cyan al pasar el mouse */
+  }
+}
+
+/* 3. ICONO DE DESCARGA: Separación del icono respecto al texto */
+.file-icon-container {
+  font-size: 1.6rem;
+  margin-right: 16px;            /* Espacio seguro entre el clip/pdf y los textos */
+  display: flex;
+  align-items: center;
+}
+
+/* 4. TEXTOS DEL ADJUNTO: Ajuste para que respiren dentro de la caja */
+.file-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;                      /* Espacio vertical interno entre el título y el link */
+  width: 100%;
+
+  .file-name-text {
+    font-weight: 600;
+    color: #212529;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;    /* Corta nombres ultra largos elegantemente */
+  }
+
+  .file-download-action {
+    font-weight: 500;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;                    /* Separa el micro-icono de "Descargar Adjunto" de su texto */
+    color: #0d6efd;
+  }
+}

@@ -146,58 +146,88 @@ export class AutorizacionComponent implements OnInit {
       });
   }
 
-  verDetalle(oc: any) {
-  this.ocSeleccionada = oc;
-  this.listaAdjuntosOC = []; // Limpiamos la lista anterior
-
-  if (oc && oc.codOrdenCompra) {
-    const urlAdjuntos = `${this.API_BASE}/api/v1/oc/ordenes-compra/${oc.codOrdenCompra}/archivos`;
+verDetalle(oc: any) {
+    this.ocSeleccionada = oc;
+    this.listaAdjuntosOC = []; // Limpiamos la lista local del modal
     
-    this.http.get<any[]>(urlAdjuntos).subscribe({
-      next: (res) => {
-        // Tu backend responde 204 (No Content) o devuelve vacío si no hay archivos
-        this.listaAdjuntosOC = res || [];
-        console.log('📎 Adjuntos cargados para la OC:', this.listaAdjuntosOC);
+    const codigoOC = oc.codOrdenCompra || oc.codigoOrdenCompra;
+    if (!codigoOC) return;
+
+    console.log(`[Adjuntos Auth] Buscando archivos en servidor para la OC: ${codigoOC}`);
+    
+    // Llamada al servicio para traer los archivos reales guardados
+    this.http.get<any[]>(`${this.API_OC}/${codigoOC}/archivos`).subscribe({
+      next: (archivosServidor) => {
+        if (archivosServidor && archivosServidor.length > 0) {
+          this.listaAdjuntosOC = archivosServidor.map(adj => {
+            
+            // Extraer el ID desde la URL (Ej: "/api/v1/oc/ordenes-compra/download/14")
+            let idExtraido: number | undefined = undefined;
+            if (adj.urlDescarga) {
+              const partes = adj.urlDescarga.split('/');
+              const ultimoSegmento = partes[partes.length - 1];
+              if (ultimoSegmento && !isNaN(ultimoSegmento)) {
+                idExtraido = parseInt(ultimoSegmento, 10);
+              }
+            }
+
+            return {
+              idAdjunto: idExtraido, 
+              nombreArchivo: adj.nombreArchivo,
+              urlDescargaCompleta: adj.urlDescarga, // Guardamos la ruta parcial o completa
+              isServerFile: true
+            };
+          });
+          console.log('[Adjuntos Auth] Archivos cargados con éxito en el modal:', this.listaAdjuntosOC);
+        }
       },
       error: (err) => {
-        console.error('Error al cargar adjuntos:', err);
-        this.listaAdjuntosOC = [];
+        if (err.status === 204) {
+          console.log(`[Adjuntos Auth] La orden ${codigoOC} no registra archivos adjuntos (204).`);
+        } else {
+          console.error('[Adjuntos Auth] Error al obtener adjuntos:', err);
+        }
       }
     });
   }
-}
 
   descargarAdjunto(arch: any) {
-      if (!arch || !arch.idAdjunto) {
-        Swal.fire('Error', 'Información de archivo adjunto no válida.', 'error');
-        return;
-      }
-
-      console.log("Iniciando descarga del adjunto ID:", arch.idAdjunto);
-      
-      // Ajusta esta URL si tu endpoint de descarga de archivos adjuntos es diferente
-      const urlDescarga = `${this.API_OC}/adjunto/${arch.idAdjunto}`;
-
-      this.http.get(urlDescarga, { responseType: 'blob' }).subscribe({
-        next: (blob: Blob) => {
-          // Crear un link temporal en el DOM para forzar la descarga nativa
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = arch.nombreArchivo || 'archivo_adjunto';
-          document.body.appendChild(a);
-          a.click();
-          
-          // Limpieza del DOM
-          document.body.removeChild(a);
-          window.URL.revokeObjectURL(url);
-        },
-        error: (err) => {
-          console.error('❌ Error al descargar el archivo:', err);
-          Swal.fire('Error', 'No se pudo descargar el archivo adjunto desde el servidor.', 'error');
-        }
-      });
+    if (!arch || !arch.urlDescargaCompleta) {
+      Swal.fire('Error', 'No se pudo determinar la ruta de descarga del archivo.', 'error');
+      return;
     }
+
+    // Si la URL viene relativa (ej: /api/v1/...) le anteponemos la API_BASE si no la trae ya
+    let urlCompleta = arch.urlDescargaCompleta;
+    if (!urlCompleta.startsWith('http')) {
+      // Nos aseguramos de no duplicar barras diagonales
+      const base = this.API_BASE.endsWith('/') ? this.API_BASE.slice(0, -1) : this.API_BASE;
+      const ruta = arch.urlDescargaCompleta.startsWith('/') ? arch.urlDescargaCompleta : '/' + arch.urlDescargaCompleta;
+      urlCompleta = `${base}${ruta}`;
+    }
+
+    console.log(`[Descarga] Solicitando archivo binario a: ${urlCompleta}`);
+
+    // Solicitamos el archivo como un BLOB (Binary Large Object) para forzar la descarga nativa
+    this.http.get(urlCompleta, { responseType: 'blob' }).subscribe({
+      next: (blobData: Blob) => {
+        const urlBlob = window.URL.createObjectURL(blobData);
+        const link = document.createElement('a');
+        link.href = urlBlob;
+        link.download = arch.nombreArchivo || 'archivo_adjunto';
+        document.body.appendChild(link);
+        link.click();
+        
+        // Limpieza de memoria
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(urlBlob);
+      },
+      error: (err) => {
+        console.error('[Descarga - ERROR] No se pudo obtener el archivo binario:', err);
+        Swal.fire('Error de descarga', 'El archivo no se encuentra disponible o no tienes permisos para descargarlo.', 'error');
+      }
+    });
+  }
 
   abrirConfirmar(oc: any, accion: string) {
     if (!this.esSupervisor()) {
@@ -231,24 +261,49 @@ export class AutorizacionComponent implements OnInit {
       Swal.fire('Acceso Denegado', 'No tienes permisos de supervisor para autorizar.', 'error');
       return;
     }
+
     console.log("Usuario en sesión para autorización:", this.usuarioInfo);
-    // 2. Construir el body asegurando que usuarioSup sea el de la sesión
+
+    // Recuperamos el usuario logueado (Supervisor)
+    const usernameLogueado = localStorage.getItem('sub') || this.usuarioInfo?.sub || 'SISTEMA';
+
+    // ===================================================================
+    // EXTRACTOR DEL CÓDIGO DE UNIDAD DEL EJECUTOR (Desde localStorage)
+    // ===================================================================
+    const unidadRaw = localStorage.getItem('unidadNegocio');
+    let codUnidadEjecutor = '';
+
+    if (unidadRaw) {
+      try {
+        const unidadObj = JSON.parse(unidadRaw);
+        codUnidadEjecutor = unidadObj.codigoUnidad || '';
+      } catch (e) {
+        console.error('[Confirmar Autorización] Error al parsear unidadNegocio:', e);
+      }
+    }
+    // ===================================================================
+
+    // 2. Construir el body estructurado con los parámetros de ejecución requeridos
     const body = {
       codOc: this.ocSeleccionada.codOrdenCompra,
-      plantillaDTO: this.mapearAPlantilla(this.ocSeleccionada),
-      usuarioSup: this.usuarioInfo.sub // Usuario de la sesión actual
+      usuarioExec: usernameLogueado,       // Reemplaza o complementa usuarioSup
+      unidadExec: codUnidadEjecutor,       // Código de unidad de negocio de la sesión activa
+      plantillaDTO: this.mapearAPlantilla(this.ocSeleccionada)
     };
 
+    console.log('[Confirmar Autorización] Despachando payload al servidor:', body);
+
+    // 3. Consumir el endpoint '/autorizar'
     this.http.post(`${this.API_OC}/autorizar`, body)
       .subscribe({
         next: () => {
-          Swal.fire('Éxito', 'La orden ha sido autorizada.', 'success');
+          Swal.fire('Éxito', 'La orden ha sido autorizada correctamente.', 'success');
           this.ocSeleccionada = null;
-          this.cargarPendientes();
+          this.cargarPendientes(); // Recarga la grilla de pendientes en la bandeja
         },
         error: (err) => {
-          console.error(err);
-          Swal.fire('Error', 'Hubo un problema al autorizar en el servidor.', 'error');
+          console.error('[Confirmar Autorización - ERROR]', err);
+          Swal.fire('Error', 'Hubo un problema al autorizar la orden en el servidor.', 'error');
         }
       });
   }
@@ -259,28 +314,53 @@ export class AutorizacionComponent implements OnInit {
       Swal.fire('Acceso Denegado', 'No tienes permisos de supervisor para devolver órdenes.', 'error');
       return;
     }
-    console.log("Usuario en sesión para autorización:", this.usuarioInfo);
-    // 2. Construir el body asegurando que usuarioSup sea el de la sesión
+
+    console.log("Usuario en sesión para devolución:", this.usuarioInfo);
+
+    // Recuperamos el usuario logueado (Supervisor)
+    const usernameLogueado = localStorage.getItem('sub') || this.usuarioInfo?.sub || 'SISTEMA';
+
+    // ===================================================================
+    // EXTRACTOR DEL CÓDIGO DE UNIDAD DEL EJECUTOR (Desde localStorage)
+    // ===================================================================
+    const unidadRaw = localStorage.getItem('unidadNegocio');
+    let codUnidadEjecutor = '';
+
+    if (unidadRaw) {
+      try {
+        const unidadObj = JSON.parse(unidadRaw);
+        codUnidadEjecutor = unidadObj.codigoUnidad || '';
+      } catch (e) {
+        console.error('[Devolver] Error al parsear unidadNegocio desde localStorage:', e);
+      }
+    }
+    // ===================================================================
+
+    // 2. Construir el body estructurado según OrdenCompraRequest esperado por el Backend
     const body = {
       codOc: this.ocSeleccionada.codOrdenCompra,
-      plantillaDTO: this.mapearAPlantilla(this.ocSeleccionada),
-      usuarioSup: this.usuarioInfo.sub // Usuario de la sesión actual
+      usuarioExec: usernameLogueado,       // Reemplaza usuarioSup para auditoría uniforme
+      unidadExec: codUnidadEjecutor,       // Código de unidad de negocio de quien ejecuta la acción
+      plantillaDTO: this.mapearAPlantilla(this.ocSeleccionada)
     };
-    console.log("Payload para devolución:", body);
+
+    console.log("Payload para devolución despachado al servidor:", body);
+
+    // 3. Consumir el endpoint '/devolver'
     this.http.post(`${this.API_OC}/devolver`, body)
       .subscribe({
         next: () => {
-          Swal.fire('Devuelta', 'La orden fue enviada a revisión.', 'info');
+          Swal.fire('Devuelta', 'La orden fue enviada a revisión con éxito.', 'info');
           this.ocSeleccionada = null;
-          this.cargarPendientes();
+          this.cargarPendientes(); // Recarga la grilla para limpiar la bandeja
         },
         error: (err) => {
-          console.error(err);
-          Swal.fire('Error', 'No se pudo procesar la devolución.', 'error');
+          console.error('[Devolver - ERROR]', err);
+          Swal.fire('Error', 'No se pudo procesar la devolución en el servidor.', 'error');
         }
       });
   }
-
+  
   private mapearAPlantilla(oc: any) {
     console.log("Mapeando OC a plantilla:", oc);
     return {

@@ -18,7 +18,8 @@ export class AnulacionComponent implements OnInit {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
   
-  private readonly API_BASE = environment.apiUrl;
+  // Endpoints e infraestructura base
+  readonly API_BASE = environment.apiUrl;
   private readonly API_OC = `${this.API_BASE}/api/v1/oc/ordenes-compra`;
   private readonly API_BUSQUEDA_AVANZADA = `${this.API_BASE}/api/v1/oc/ordenes-compra/busqueda-avanzada`;
   private readonly API_UNIDADES = `${this.API_BASE}/api/v1/unidad-compradora/vld_ccm`;
@@ -31,6 +32,9 @@ export class AnulacionComponent implements OnInit {
   unidadSeleccionada: string = '';
   usuarioInfo: any = null;
   
+  // Listado asíncrono de adjuntos cargados en el modal
+  listaAdjuntosOC: any[] = [];
+
   // Variable unificada para match de rol con el Layout
   userRole: string = '';
 
@@ -79,23 +83,20 @@ export class AnulacionComponent implements OnInit {
   cargarOrdenesAutorizadas() {
     this.loading = true;
 
-    // Estado 3: Corresponde al ID de estado 'AUTORIZADA' en tu consulta avanzada del Backend
     let params = new HttpParams()
-      .set('codEstadoOc', 'autorizado') // Requerido por tu lógica de negocio
-      .set('page', '0')                             // Spring Data es base 0
+      .set('codEstadoOc', 'autorizado') 
+      .set('page', '0')                             
       .set('size', '10')
       .set('sort', 'idOrdenCompra,desc');
 
-    // Si hay una unidad específica seleccionada, filtramos por su código/ID
     if (this.unidadSeleccionada) {
       params = params.set('unidad', this.unidadSeleccionada);
     }
 
-    console.log('🔍 [anulacion] Buscando Autorizadas con parámetros:', params.toString());
+    console.log('🔍 [Anulación] Buscando Autorizadas con parámetros:', params.toString());
 
     this.http.get<any>(this.API_BUSQUEDA_AVANZADA, { params }).subscribe({
       next: (res) => {
-        // Adaptado por si el backend responde con Page (Spring Data) o lista directa
         this.listaAutorizadas = res.content || res || [];
         this.loading = false;
       },
@@ -107,20 +108,187 @@ export class AnulacionComponent implements OnInit {
     });
   }
 
-  parseProductos(listProductosStr: any): any[] {
-    if (!listProductosStr) return [];
-    if (typeof listProductosStr === 'object') return listProductosStr;
-    try {
-      return JSON.parse(listProductosStr);
-    } catch (e) {
-      console.error("Error parseando productos:", e);
-      return [];
+  /**
+   * Abre la visualización detallada en el papel digital e hidrata los adjuntos del servidor
+   */
+  verDetalle(oc: any) {
+    this.ocSeleccionada = oc;
+    this.listaAdjuntosOC = []; // Limpiamos la bandeja del modal
+    
+    const codigoOC = oc.codOrdenCompra || oc.codigoOrdenCompra;
+    if (!codigoOC) return;
+
+    console.log(`[Adjuntos Anulación] Buscando archivos en servidor para la OC: ${codigoOC}`);
+    
+    this.http.get<any[]>(`${this.API_OC}/${codigoOC}/archivos`).subscribe({
+      next: (archivosServidor) => {
+        if (archivosServidor && archivosServidor.length > 0) {
+          this.listaAdjuntosOC = archivosServidor.map(adj => {
+            
+            // Extraer el ID único desde la URL de descarga
+            let idExtraido: number | undefined = undefined;
+            if (adj.urlDescarga) {
+              const partes = adj.urlDescarga.split('/');
+              const ultimoSegmento = partes[partes.length - 1];
+              if (ultimoSegmento && !isNaN(ultimoSegmento)) {
+                idExtraido = parseInt(ultimoSegmento, 10);
+              }
+            }
+
+            return {
+              idAdjunto: idExtraido, 
+              nombreArchivo: adj.nombreArchivo,
+              urlDescargaCompleta: adj.urlDescarga,
+              isServerFile: true
+            };
+          });
+          console.log('[Adjuntos Anulación] Archivos inyectados con éxito:', this.listaAdjuntosOC);
+        }
+      },
+      error: (err) => {
+        if (err.status === 204) {
+          console.log(`[Adjuntos Anulación] La orden ${codigoOC} no registra archivos adjuntos (204).`);
+        } else {
+          console.error('[Adjuntos Anulación] Error al obtener adjuntos:', err);
+        }
+      }
+    });
+  }
+
+  /**
+   * Modificado: Cambia de estado a revisión despachando usuarioExec y unidadExec
+   */
+  devolver() {
+    if (!this.ocSeleccionada || !this.esSupervisor()) {
+      Swal.fire('Acceso Denegado', 'No tienes permisos de supervisor para devolver órdenes.', 'error');
+      return;
     }
+
+    const usernameLogueado = localStorage.getItem('sub') || this.usuarioInfo?.sub || 'SISTEMA';
+
+    // EXTRACTOR DEL CÓDIGO DE UNIDAD DEL EJECUTOR (Desde localStorage)
+    const unidadRaw = localStorage.getItem('unidadNegocio');
+    let codUnidadEjecutor = '';
+    if (unidadRaw) {
+      try {
+        const unidadObj = JSON.parse(unidadRaw);
+        codUnidadEjecutor = unidadObj.codigoUnidad || '';
+      } catch (e) {
+        console.error('[Devolver Anulación] Error al parsear unidadNegocio:', e);
+      }
+    }
+
+    const body = {
+      codOc: this.ocSeleccionada.codOrdenCompra,
+      usuarioExec: usernameLogueado,
+      unidadExec: codUnidadEjecutor,
+      plantillaDTO: this.mapearAPlantilla(this.ocSeleccionada)
+    };
+
+    console.log("Payload para devolución (Bandeja Anulación):", body);
+
+    this.http.post(`${this.API_OC}/devolver`, body).subscribe({
+      next: () => {
+        Swal.fire('Devuelta', 'La orden fue devuelta a revisión con éxito.', 'info');
+        this.ocSeleccionada = null;
+        this.cargarOrdenesAutorizadas();
+      },
+      error: (err) => {
+        console.error('[Devolver Anulación - ERROR]', err);
+        Swal.fire('Error', 'No se pudo procesar la devolución en el servidor.', 'error');
+      }
+    });
+  }
+
+  /**
+   * Modificado: Ejecuta la anulación definitiva enviando usuarioExec y unidadExec en la raíz
+   */
+  ejecutarAnulacion(oc: any) {
+    if (!oc || !this.esSupervisor()) {
+      Swal.fire('Acceso Denegado', 'No tienes permisos de supervisor para anular.', 'error');
+      return;
+    }
+
+    const usernameLogueado = localStorage.getItem('sub') || this.usuarioInfo?.sub || 'SISTEMA';
+
+    // EXTRACTOR DEL CÓDIGO DE UNIDAD DEL EJECUTOR (Desde localStorage)
+    const unidadRaw = localStorage.getItem('unidadNegocio');
+    let codUnidadEjecutor = '';
+    if (unidadRaw) {
+      try {
+        const unidadObj = JSON.parse(unidadRaw);
+        codUnidadEjecutor = unidadObj.codigoUnidad || '';
+      } catch (e) {
+        console.error('[Anulación] Error al parsear unidadNegocio:', e);
+      }
+    }
+
+    const body = {
+      codOc: oc.codOrdenCompra,
+      usuarioExec: usernameLogueado,
+      unidadExec: codUnidadEjecutor,
+      plantillaDTO: this.mapearAPlantilla(oc)
+    };
+
+    console.log("Payload para anulación enviado al servidor:", body);
+
+    this.http.post(`${this.API_OC}/anular`, body).subscribe({
+      next: () => {
+        Swal.fire('Anulada', 'La orden ha sido anulada con éxito.', 'success');
+        this.ocSeleccionada = null;
+        this.cargarOrdenesAutorizadas();
+      },
+      error: (err) => {
+        console.error('[Anular - ERROR]', err);
+        Swal.fire('Error', 'No se pudo procesar la anulación en el servidor.', 'error');
+      }
+    });
+  }
+
+  /**
+   * Descarga física del archivo binario como un Blob nativo
+   */
+  descargarAdjunto(arch: any) {
+    if (!arch || !arch.urlDescargaCompleta) {
+      Swal.fire('Error', 'No se pudo determinar la ruta de descarga del archivo.', 'error');
+      return;
+    }
+
+    let urlCompleta = arch.urlDescargaCompleta;
+    if (!urlCompleta.startsWith('http')) {
+      const base = this.API_BASE.endsWith('/') ? this.API_BASE.slice(0, -1) : this.API_BASE;
+      const ruta = arch.urlDescargaCompleta.startsWith('/') ? arch.urlDescargaCompleta : '/' + arch.urlDescargaCompleta;
+      urlCompleta = `${base}${ruta}`;
+    }
+
+    console.log(`[Descarga Anulación] Solicitando binario a: ${urlCompleta}`);
+
+    this.http.get(urlCompleta, { responseType: 'blob' }).subscribe({
+      next: (blobData: Blob) => {
+        const urlBlob = window.URL.createObjectURL(blobData);
+        const link = document.createElement('a');
+        link.href = urlBlob;
+        link.download = arch.nombreArchivo || 'archivo_adjunto';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(urlBlob);
+      },
+      error: (err) => {
+        console.error('[Descarga Anulación] Error al descargar binario:', err);
+        Swal.fire('Error de descarga', 'El archivo no se encuentra disponible.', 'error');
+      }
+    });
   }
 
   abrirConfirmar(oc: any, accion: string) {
     if (!this.esSupervisor()) {
       Swal.fire('No autorizado', 'Acceso restringido a Supervisores o Administración', 'warning');
+      return;
+    }
+
+    if (accion === 'devolver') {
+      this.devolver();
       return;
     }
 
@@ -140,69 +308,22 @@ export class AnulacionComponent implements OnInit {
     });
   }
 
-  descargarAdjunto(arch: any) {
-        if (!arch || !arch.idAdjunto) {
-          Swal.fire('Error', 'Información de archivo adjunto no válida.', 'error');
-          return;
-        }
-  
-        console.log("Iniciando descarga del adjunto ID:", arch.idAdjunto);
-        
-        // Ajusta esta URL si tu endpoint de descarga de archivos adjuntos es diferente
-        const urlDescarga = `${this.API_OC}/adjunto/${arch.idAdjunto}`;
-  
-        this.http.get(urlDescarga, { responseType: 'blob' }).subscribe({
-          next: (blob: Blob) => {
-            // Crear un link temporal en el DOM para forzar la descarga nativa
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = arch.nombreArchivo || 'archivo_adjunto';
-            document.body.appendChild(a);
-            a.click();
-            
-            // Limpieza del DOM
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-          },
-          error: (err) => {
-            console.error('❌ Error al descargar el archivo:', err);
-            Swal.fire('Error', 'No se pudo descargar el archivo adjunto desde el servidor.', 'error');
-          }
-        });
-      }
-      
-  ejecutarAnulacion(oc: any) {
-    const body = {
-      codOc: oc.codOrdenCompra,
-      plantillaDTO: { codOrdenCompra: oc.codOrdenCompra,
-        usernameUsuario: oc.usernameUsuario
-       },
-      usuarioSup: this.usuarioInfo.sub
+  private mapearAPlantilla(oc: any) {
+    console.log("Mapeando OC a plantilla:", oc);
+    return {
+      codOrdenCompra: oc.codOrdenCompra,
+      usernameUsuario: oc.usernameUsuario || oc.usernameUsuarioCreador
     };
-
-    this.http.post(`${this.API_OC}/anular`, body).subscribe({
-      next: () => {
-        Swal.fire('Anulada', 'La orden ha sido anulada con éxito.', 'success');
-        this.ocSeleccionada = null;
-        this.cargarOrdenesAutorizadas();
-      },
-      error: (err) => {
-        console.error('Error al anular', err);
-        Swal.fire('Error', 'No se pudo procesar la anulación en el servidor.', 'error');
-      }
-    });
   }
 
   parsearProductos(listProductosStr: any): any[] {
-  if (!listProductosStr) return [];
-  if (typeof listProductosStr === 'object') return listProductosStr;
-  try {
-    return JSON.parse(listProductosStr);
-  } catch (e) {
-    console.error("Error parseando productos:", e);
-    return [];
+    if (!listProductosStr) return [];
+    if (typeof listProductosStr === 'object') return listProductosStr;
+    try {
+      return JSON.parse(listProductosStr);
+    } catch (e) {
+      console.error("Error parseando productos:", e);
+      return [];
+    }
   }
-}
-  
 }

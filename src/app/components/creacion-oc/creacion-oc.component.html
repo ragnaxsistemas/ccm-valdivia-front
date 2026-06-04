@@ -51,7 +51,7 @@
           <div class="select-wrapper">
             <select class="form-select-custom" [(ngModel)]="dteIdSeleccionado" (change)="onSeleccionarDte($event)">
               <option [value]="null" disabled>SELECCIONAR TIPO...</option>
-              @for (dte of listaDte; track dte.idDocumentoTributario || dte.codigoDocumentoTributario) {
+              @for (dte of listaDte; track dte.codigoDocumentoTributario) {
                 <option [value]="dte.codigoDocumentoTributario">
                   {{ dte.impuesto }}% {{ dte.nombreDocumentoTributario | uppercase }}
                 </option>
@@ -71,7 +71,6 @@
       <div class="paper-layout">
         <div class="oc-details-section">
           
-          <!-- COLUMNA IZQUIERDA: PROVEEDOR (Corregida) -->
           <div class="details-column provider-info">
             <div class="detail-row">
               <span class="detail-label">PROVEEDOR:</span>
@@ -84,7 +83,7 @@
                     </div>
                     @if (filtroProveedor.trim().length > 0) {
                       <ul class="provider-dropdown">
-                        @for (p of proveedoresFiltrados; track $index) {
+                        @for (p of proveedoresFiltrados; track p.rutProveedor) {
                           <li (click)="onSeleccionarProveedorManual(p)">
                             {{ p.nombreProveedor | uppercase }} - {{ p.rutProveedor }}
                           </li>
@@ -132,7 +131,6 @@
             <div class="detail-row"><span class="detail-label">CORREO:</span> <span class="val-black">{{ (proveedorSeleccionado?.emailProveedor || '—') | uppercase }}</span></div>
           </div>
 
-          <!-- COLUMNA DERECHA: METADATOS Y UNIDAD COMPRADORA -->
           <div class="right-info-block">
             <div class="info-item">
               <span class="info-label">FECHA:</span>
@@ -143,11 +141,11 @@
               <div class="info-content">
                 <div class="select-wrapper-paper">
                   <select class="select-unidad-custom" 
-                          [(ngModel)]="ocData.unidad" 
+                          [(ngModel)]="codUnidadCompradoraSeleccionada" 
                           [disabled]="!dteIdSeleccionado"
                           (change)="onSeleccionarUnidad($event)">
                     
-                    <option [value]="null" disabled hidden>SELECCIONE UNIDAD...</option>
+                    <option value="" disabled hidden>SELECCIONE UNIDAD...</option>
                     
                     @for (u of unidades; track u.codigoUnidad) {
                       <option [value]="u.codigoUnidad">
@@ -159,16 +157,20 @@
               </div>
             </div>
             <div class="info-item">
-              <span class="info-label">REALIZADO POR:</span>
+              <span class="info-label">CREADA POR:</span>
               <span class="info-content">
-                {{ ocData?.nombreusuario | uppercase }} {{ ocData?.apellidousuario | uppercase }}
+                {{ ocData?.nombreusuarioCreador | uppercase }} {{ ocData?.apellidousuarioCreador | uppercase }}
+              </span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">REALIZADA POR:</span>
+              <span class="info-content">
+                {{ ocData?.nombreusuarioSolicitante | uppercase }} {{ ocData?.apellidousuarioSolicitante | uppercase }}
               </span>
             </div>
           </div>
           
-        </div> <!-- FIN <div class="oc-details-section"> -->
-
-        <div class="name-section mt-4">
+        </div> <div class="name-section mt-4">
           <label class="form-label-thin">NOMBRE DE LA ORDEN DE COMPRA</label>
           <input type="text" class="form-control-thin" [(ngModel)]="nombreOrdenCompra" [disabled]="!puedeEditarItems"
                  [placeholder]="!puedeEditarItems ? 'SELECCIONE DTE PARA EMPEZAR...' : 'EJ: ADQUISICIÓN DE MATERIALES...'">
@@ -251,15 +253,15 @@
               <label class="form-label-thin">DOCUMENTOS ADJUNTOS (MÁX. 5)</label>
               
               <div class="drag-drop-zone" 
-                   [class.dragging]="isDragging"
-                   [class.disabled]="!puedeEditarItems"
-                   (dragover)="onDragOver($event)"
-                   (dragleave)="onDragLeave()"
-                   (drop)="onDrop($event)"
-                   (click)="fileInput.click()">
+                  [class.dragging]="isDragging"
+                  [class.disabled]="!puedeEditarItems"
+                  (dragover)="onDragOver($event)"
+                  (dragleave)="onDragLeave()"
+                  (drop)="onDrop($event)"
+                  (click)="fileInput.click()">
                 
                 <input type="file" #fileInput multiple style="display: none" 
-                       (change)="onFileSelected($event)" [disabled]="!puedeEditarItems">
+                      (change)="onFileSelected($event)" [disabled]="!puedeEditarItems">
                 
                 <i class="bi bi-cloud-arrow-up-fill"></i>
                 <p *ngIf="puedeEditarItems">ARRUSTRE ARCHIVOS AQUÍ O <span class="browse-text">EXAMINE</span></p>
@@ -271,11 +273,28 @@
                   @for (file of listaAdjuntos; track $index) {
                     <li>
                       <div class="file-details">
-                        <i class="bi bi-paperclip text-cyan"></i>
-                        <span class="file-name" [title]="file.name">{{ file.name }}</span>
-                        <small class="file-size">({{ file.size | number }} bytes)</small>
+                        
+                        @if (file.isServerFile) {
+                          <i class="bi bi-file-earmark-check-fill text-success" title="Archivo guardado en servidor"></i>
+                            <a [href]="file.urlDescargaCompleta" 
+                              target="_blank" 
+                              class="file-name text-decoration-none" 
+                              [title]="file.nombreArchivo"
+                              (click)="$event.stopPropagation()">
+                              {{ file.nombreArchivo }}
+                            </a>
+                            <small class="file-size text-success" style="font-weight: 500;">(Guardado)</small>
+                        } 
+                        
+                        @else {
+                          <i class="bi bi-paperclip text-cyan"></i>
+                          <span class="file-name" [title]="file.nombreArchivo">{{ file.nombreArchivo }}</span>
+                          <small class="file-size">({{ file.fileReal?.size | number }} bytes)</small>
+                        }
+
                       </div>
-                      <button class="btn-delete-file" (click)="eliminarAdjunto($index); $event.stopPropagation()">
+                      
+                      <button type="button" class="btn-delete-file" (click)="eliminarAdjunto($index); $event.stopPropagation()">
                         <i class="bi bi-x-circle-fill"></i>
                       </button>
                     </li>
@@ -300,9 +319,7 @@
           </div>
 
         </div>
-      </div>  <!-- FIN <div class="paper-layout"> -->
-
-      <div class="system-actions-separator no-print"></div>
+      </div>  <div class="system-actions-separator no-print"></div>
       <div class="external-actions-bar no-print">
         <button class="btn-action-oc btn-save" (click)="guardarOrden()">
           <i class="bi bi-save"></i> GUARDAR BORRADOR
@@ -310,6 +327,7 @@
         <button class="btn-action-oc btn-preview" (click)="previsualizar()">
           <i class="bi bi-printer"></i> PREVISUALIZAR
         </button>
+        
         @if (isFormularioCompleto) {
           <button class="btn-action-oc btn-authorize" (click)="solicitarAutorizacion()">
             <i class="bi bi-send-check"></i> SOLICITAR AUTORIZACIÓN
@@ -317,9 +335,7 @@
         }
       </div>
 
-    } <!-- FIN IF @if (ocData) { -->
-
-   } @else {
+    } } @else {
     <div class="success-container">
       <div class="success-card">
         <div class="icon-circle"><i class="bi bi-check-lg"></i></div>

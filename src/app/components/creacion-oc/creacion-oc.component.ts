@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { environment } from "../../../environments/environment";
-import { Subject, debounceTime, distinctUntilChanged, switchMap, of } from 'rxjs';
+import { Subject, debounceTime, distinctUntilChanged, switchMap, of, catchError } from 'rxjs';
 
 @Component({
   selector: 'app-creacion-oc',
@@ -66,6 +66,7 @@ export class CreacionOcComponent implements OnInit {
   // Adjuntos (Drag & Drop)
   listaAdjuntos: any[] = [];
   isDragging: boolean = false;
+  adjuntosEliminadosIds: number[] = [];
 
   ngOnInit() {
     this.cargarProveedores();
@@ -81,35 +82,61 @@ export class CreacionOcComponent implements OnInit {
   // ==========================================
   
   private inicializarBuscadorReactivo() {
+    console.log('[Buscador] Inicializando flujo reactivo...');
+
     this.buscadorSubject.pipe(
       debounceTime(300),
       distinctUntilChanged(),
       switchMap(term => {
-        if (!term.trim()) {
+        console.log(`[Buscador] Capturado término: "${term}"`);
+
+        if (!term || !term.trim()) {
+          console.log('[Buscador] Término vacío. Limpiando lista.');
           this.borradoresFiltrados = [];
           return of(null);
         }
+
         this.loading = true;
+
         const params: any = {
-          codOrdenCompra: term,
+          codOrdenCompra: term.trim(),
           codEstadoOc: 'borrador',
-          unidad: null, // Forzado nulo para búsqueda global
           page: 0,
           size: 10,
           sort: 'idOrdenCompra,desc'
         };
-        return this.http.get<any>(`${this.API_BUSQUEDA_AVANZADA}`, { params });
+
+        console.log('[Buscador] Ejecutando HTTP GET en backend con params:', params);
+
+        return this.http.get<any>(`${this.API_BUSQUEDA_AVANZADA}`, { params }).pipe(
+          switchMap(res => {
+            console.log('[Buscador] Respuesta HTTP exitosa recibida:', res);
+            return of(res);
+          }),
+          catchError(err => {
+            console.error('[Buscador] Error controlado en la petición HTTP:', err);
+            this.loading = false;
+            return of({ content: [] });
+          })
+        );
       })
     ).subscribe({
       next: (res: any) => {
-        if (res) this.borradoresFiltrados = res.content || [];
+        if (res) {
+          this.borradoresFiltrados = res.content || [];
+          console.log(`[Buscador] Renderizando ${this.borradoresFiltrados.length} borradores en UI.`);
+        }
         this.loading = false;
       },
-      error: () => this.loading = false
+      error: (err) => {
+        console.error('[Buscador] Error crítico. El Subject principal se ha cerrado:', err);
+        this.loading = false;
+      }
     });
   }
 
   buscarBorradores() {
+    console.log(`[Buscador] Input disparado. Filtro actual texto: "${this.filtroBorrador}"`);
     this.buscadorSubject.next(this.filtroBorrador);
   }
 
@@ -151,33 +178,44 @@ export class CreacionOcComponent implements OnInit {
 
   iniciarNuevaOC() {
     this.loading = true;
-    const userSub = localStorage.getItem('sub');
+    const userSub = localStorage.getItem('sub') || '';
+    const unidadRaw = localStorage.getItem('unidadNegocio');
+    let codUnidad = '';
+    let nombreUnidadCalculado = '';
+
+    if (unidadRaw) {
+      try {
+        const unidadObj = JSON.parse(unidadRaw);
+        codUnidad = unidadObj.codigoUnidad || '';
+        nombreUnidadCalculado = unidadObj.nombreUnidad || unidadObj.showNombreUnidad || ''; 
+      } catch (e) {
+        codUnidad = unidadRaw;
+        nombreUnidadCalculado = unidadRaw;
+      }
+    }
+
+    // Nuevo formato OrdenCompraRequest mapeado para endpoint /new
+    const payloadInit = {
+      codOc: null,
+      usuarioExec: userSub,
+      unidadExec: codUnidad,
+      plantillaDTO: {
+        codUnidad: codUnidad
+      }
+    };
     
-    this.http.post<any>(`${this.API_OC_NEW}`, { plantillaDTO: { usernameUsuario: userSub, codUnidad: '' } })
+    this.http.post<any>(`${this.API_OC_NEW}`, payloadInit)
       .subscribe({
         next: (res) => {
-          const unidadRaw = localStorage.getItem('unidadNegocio');
-          let nombreUnidadCalculado = '';
-          let codUnidad = '';
-          
-          if (unidadRaw) {
-            try {
-              const unidadObj = JSON.parse(unidadRaw);
-              codUnidad = unidadObj.codigoUnidad || '';
-              nombreUnidadCalculado = unidadObj.nombreUnidad || unidadObj.showNombreUnidad || ''; 
-            } catch (e) {
-              codUnidad = unidadRaw;
-              nombreUnidadCalculado = unidadRaw;
-            }
-          }
-
           this.ocData = {
             ...res,
             fechaOrdenCompra: this.obtenerFechaActual(),
             usuario: userSub,              
-            nombreusuario: localStorage.getItem('nombre'),              
-            apellidousuario: localStorage.getItem('apellidoPaterno'),
-            unidad: null, // Forzar selección manual inicial            
+            nombreusuarioCreador: localStorage.getItem('nombre'),              
+            apellidousuarioCreador: localStorage.getItem('apellidoPaterno'),
+            nombreusuarioSolicitante: "-",              
+            apellidousuarioSolicitante: "-",              
+            unidad: null,            
             unidadCompradora: nombreUnidadCalculado, 
             idUnidadCompradora: null 
           };
@@ -196,12 +234,13 @@ export class CreacionOcComponent implements OnInit {
         }
       });
   }
-
+  
   cargarBorrador(borrador: any) {
+    console.log('[Adjuntos] Cargando borrador seleccionado:', borrador.codOrdenCompra);
     this.loading = true;
-    const unidadData = JSON.parse(localStorage.getItem('unidadNegocio') || '{}');
+    const unidadExec = JSON.parse(localStorage.getItem('unidadNegocio') || '{}');
 
-    // 1. Vincular DTE
+    // 1. Resolver el Documento Tributario (DTE)
     if (borrador.codDocumentoTributario) {
       const codBuscado = String(borrador.codDocumentoTributario).trim();
       const dteEncontrado = this.listaDte.find((d: any) => 
@@ -213,16 +252,35 @@ export class CreacionOcComponent implements OnInit {
       }
     }
 
-    // 2. Asignación Unidad Compradora
-    const codUnidadBD = borrador.codUnidad || borrador.unidad || unidadData.codigoUnidad || null;
-    const idUnidadBD = borrador.idUnidadCompradora || borrador.idUnidad || borrador.unidadId || unidadData.idUnidad || null;
+    // 2. Resolver Unidad de Negocio / Unidad Compradora
+    const codUnidadBD = borrador.codUnidad || borrador.unidad || unidadExec.codigoUnidad || null;
+    const idUnidadBD = borrador.idUnidadCompradora || borrador.idUnidad || borrador.unidadId || unidadExec.idUnidad || null;
+    const fecha =  this.obtenerFechaActual();
+    const uCreadorNombre = borrador.nombreUsuarioCreador || borrador.nombreusuarioCreador;
+    const nombreusuarioCreador = (uCreadorNombre && uCreadorNombre.trim() !== '') ? uCreadorNombre.trim() : "-";
+
+    const uCreadorApellido = borrador.apellidoUsuarioCreador || borrador.apellidousuarioCreador;
+    const apellidousuarioCreador = (uCreadorApellido && uCreadorApellido.trim() !== '') ? uCreadorApellido.trim() : "-";
+
+    const uSolicitanteNombre = borrador.nombreUsuarioSolicitante || borrador.nombreusuarioSolicitante;
+    const nombreusuarioSolicitante = (uSolicitanteNombre && uSolicitanteNombre.trim() !== '') ? uSolicitanteNombre.trim() : "-";
+
+    const uSolicitanteApellido = borrador.apellidoUsuarioSolicitante || borrador.apellidousuarioSolicitante;
+    const apellidousuarioSolicitante = (uSolicitanteApellido && uSolicitanteApellido.trim() !== '') ? uSolicitanteApellido.trim() : "-";
 
     this.ocData = { 
       ...borrador,
       unidad: codUnidadBD,
-      unidadCompradora: borrador.nombreUnidad || borrador.unidadCompradora || unidadData.showNombreUnidad || unidadData.nombreUnidad,
+      unidadCompradora: borrador.nombreUnidad || borrador.unidadCompradora || unidadExec.showNombreUnidad || unidadExec.nombreUnidad,
       usuario: borrador.usernameUsuario || borrador.usuario || localStorage.getItem('sub'),
-      idUnidadCompradora: idUnidadBD
+      fechaOrdenCompra: fecha,
+      
+      // Inyección de los nuevos campos sanitizados para renderizar en el HTML
+      nombreusuarioCreador: nombreusuarioCreador,
+      apellidousuarioCreador: apellidousuarioCreador,
+      nombreusuarioSolicitante: nombreusuarioSolicitante,
+      apellidousuarioSolicitante: apellidousuarioSolicitante,
+
     };
 
     setTimeout(() => {
@@ -234,7 +292,7 @@ export class CreacionOcComponent implements OnInit {
     this.nombreOrdenCompra = borrador.nombreOrdenCompra || '';
     this.observaciones = borrador.observaciones || '';
 
-    // 3. Vincular Proveedor
+    // 3. Resolver Datos del Proveedor (Local o API Externa)
     if (borrador.rutProveedor || borrador.proveedor) {
       const rutABuscar = borrador.rutProveedor || borrador.proveedor;
       this.proveedorSeleccionado = this.proveedores.find((p: any) => p.rutProveedor === rutABuscar);
@@ -252,7 +310,7 @@ export class CreacionOcComponent implements OnInit {
       }
     }
 
-    // 4. Cargar Items
+    // 4. Resolver Grilla de Productos de la Orden
     if (borrador.listProductosOrden) {
       try {
         const productosGuardados = JSON.parse(borrador.listProductosOrden);
@@ -273,11 +331,59 @@ export class CreacionOcComponent implements OnInit {
       this.inicializarTabla();
     }
 
+    // 5. NUEVO: Recuperar archivos adjuntos guardados en el Servidor para este Borrador
+    this.listaAdjuntos = [];
+    this.adjuntosEliminadosIds = [];
+    const codigoOC = borrador.codigoOrdenCompra || borrador.codOrdenCompra;
+
+    if (codigoOC) {
+      this.http.get<any[]>(`${this.API_OC}/${codigoOC}/archivos`).subscribe({
+        next: (archivosServidor) => {
+          if (archivosServidor && archivosServidor.length > 0) {
+            console.log(`[Adjuntos] Se encontraron ${archivosServidor.length} archivos para la orden: ${codigoOC}`);
+            
+            this.listaAdjuntos = archivosServidor.map(adj => {
+              // 1. EXTRAER EL ID DESDE LA URL (Ej: "/api/v1/oc/ordenes-compra/download/14")
+              let idExtraido: number | undefined = undefined;
+              if (adj.urlDescarga) {
+                const partes = adj.urlDescarga.split('/');
+                const ultimoSegmento = partes[partes.length - 1];
+                // Convertimos el último fragmento de la URL a número entero
+                if (ultimoSegmento && !isNaN(ultimoSegmento)) {
+                  idExtraido = parseInt(ultimoSegmento, 10);
+                }
+              }
+
+              return {
+                // Conservamos el ID extraído para que la "X" sepa exactamente qué borrar
+                idAdjunto: idExtraido, 
+                nombreArchivo: adj.nombreArchivo,
+                // Guardamos la urlDescarga completa para usarla directamente en el enlace del HTML
+                urlDescargaCompleta: adj.urlDescarga, 
+                isServerFile: true
+              };
+            });
+            
+            console.log('[Adjuntos] Lista de adjuntos procesada con IDs extraídos:', this.listaAdjuntos);
+          }
+        },
+        error: (err) => {
+          if (err.status === 204) {
+            console.log(`[Adjuntos] La orden ${codigoOC} no registra archivos adjuntos (204 No Content).`);
+          } else {
+            console.error('[Adjuntos] Error al obtener adjuntos desde el backend:', err);
+          }
+        }
+      });
+    }
+
+    // 6. Cierre del proceso de carga y reestructuración de la interfaz
     this.loading = false;
     this.filtroBorrador = '';
     this.borradoresFiltrados = [];
     this.calcularTotales();
   }
+         
 
   completarCargaProveedor() {
     this.modoEdicionProveedor = false;
@@ -305,22 +411,39 @@ export class CreacionOcComponent implements OnInit {
   }
 
   onSeleccionarUnidad(event: any) {
-    const codigoSelected = this.ocData?.unidad;
-    if (!codigoSelected) {
-      this.idUnidadCompradoraSeleccionada = null;
-      this.codUnidadCompradoraSeleccionada = '';
-      return;
-    }
+  // 1. Obtenemos el código directamente desde la variable vinculada al ngModel
+  const codigoSelected = this.codUnidadCompradoraSeleccionada;
 
-    const unidadEncontrada = this.unidades.find(
-      (u: any) => u.codigoUnidad?.toString().trim().toUpperCase() === codigoSelected.toString().trim().toUpperCase()
-    );
+  if (!codigoSelected) {
+    this.idUnidadCompradoraSeleccionada = null;
+    this.codUnidadCompradoraSeleccionada = '';
+    if (this.ocData) this.ocData.unidad = null;
+    return;
+  }
 
-    if (unidadEncontrada) {
-      this.idUnidadCompradoraSeleccionada = unidadEncontrada.idUnidad || null; 
-      this.codUnidadCompradoraSeleccionada = unidadEncontrada.codigoUnidad || '';
+  // 2. Buscamos la entidad completa en la lista maestra de unidades
+  const unidadEncontrada = this.unidades.find(
+    (u: any) => u.codigoUnidad?.toString().trim().toUpperCase() === codigoSelected.toString().trim().toUpperCase()
+  );
+
+  if (unidadEncontrada) {
+    this.idUnidadCompradoraSeleccionada = unidadEncontrada.idUnidad || null; 
+    this.codUnidadCompradoraSeleccionada = unidadEncontrada.codigoUnidad || '';
+    
+    // 3. Sincronizamos con ocData para que no pierda consistencia en otras vistas/plantillas
+    if (this.ocData) {
+      this.ocData.unidad = unidadEncontrada.codigoUnidad || '';
+      this.ocData.idUnidadCompradora = unidadEncontrada.idUnidad || null;
     }
   }
+
+  console.log('Unidad seleccionada correctamente:', {
+    codigoSelected,
+    unidadEncontrada,
+    idUnidadCompradoraSeleccionada: this.idUnidadCompradoraSeleccionada,
+    codUnidadCompradoraSeleccionada: this.codUnidadCompradoraSeleccionada
+  });
+}
 
   onSeleccionarProveedorManual(p: any) {
     if (!p) return;
@@ -427,7 +550,6 @@ export class CreacionOcComponent implements OnInit {
     }
   }
 
-  // Getters para etiquetas dinámicas en vista
   get labelNeto(): string { 
     return ['38', '38-c'].includes(this.dteSeleccionado?.codigoDocumentoTributario) ? 'MONTO TOTAL' : 'TOTAL NETO'; 
   }
@@ -462,6 +584,23 @@ export class CreacionOcComponent implements OnInit {
   }
 
   eliminarAdjunto(index: number): void {
+    const adjunto = this.listaAdjuntos[index];
+    console.log('[UI - Click Eliminar] Index seleccionado:', index, 'Datos del objeto:', adjunto);
+
+    if (adjunto && adjunto.isServerFile) {
+      // Extraemos el identificador que procesamos en el paso anterior
+      const idParaEliminar = adjunto.idAdjunto;
+
+      if (idParaEliminar !== undefined && idParaEliminar !== null) {
+        this.adjuntosEliminadosIds.push(idParaEliminar);
+        console.log('[Adjuntos] Éxito: ID insertado firmemente en cola de borrado:', idParaEliminar);
+        console.log('[Adjuntos] Estado actual de la cola en memoria:', this.adjuntosEliminadosIds);
+      } else {
+        console.error('[Adjuntos] Error Crítico: El archivo está marcado como de servidor, pero el idAdjunto sigue llegando undefined.', adjunto);
+      }
+    }
+
+    // Remueve el elemento de la grilla visual de inmediato
     this.listaAdjuntos.splice(index, 1);
   }
 
@@ -483,21 +622,34 @@ export class CreacionOcComponent implements OnInit {
     this.procesarArchivos(Array.from(event.dataTransfer.files));
   }
 
+  public obtenerUrlDescarga(rutaArchivo: string | undefined): string {
+  if (!rutaArchivo) return '#';
+  return `${this.API_BASE}/api/v1/oc/ordenes-compra/download/${rutaArchivo}`;
+}
+
   private procesarArchivos(archivos: File[]) {
     for (const archivo of archivos) {
       if (this.listaAdjuntos.length >= 5) {
         alert('Solo se permite un máximo de 5 archivos adjuntos por orden de compra.');
         break;
       }
-      this.listaAdjuntos.push(archivo);
+      
+      // Estructura unificada: envolvemos el File nativo en nuestro formato común
+      this.listaAdjuntos.push({
+        nombreArchivo: archivo.name,
+        isServerFile: false, // Indica que está local en la PC
+        fileReal: archivo    // Mantiene los bytes intactos para el FormData
+      });
     }
+    console.log('[Adjuntos] Estado actual de la lista de adjuntos:', this.listaAdjuntos);
   }
 
   // ==========================================
-  // PERSISTENCIA Y ENVÍOS AL SERVIDOR
+  // PERSISTENCIA Y ENVÍOS AL SERVIDOR (DTI RAÍZ)
   // ==========================================
 
-  prepararPayload() {
+  prepararPayload(): any { 
+    // Retorna la estructura raíz OrdenCompraRequest esperada por Spring Boot
     const productosMap = this.items
       .filter(item => item.descripcionProducto?.trim() && item.cantidad > 0 && item.valorProducto > 0)
       .map(item => ({
@@ -510,70 +662,200 @@ export class CreacionOcComponent implements OnInit {
     return {
       plantillaDTO: {
         usernameUsuario: localStorage.getItem('sub'),
-        rutProveedor: this.proveedorSeleccionado.rutProveedor,
-        codOrdenCompra: this.ocData.codOrdenCompra,
+        rutProveedor: this.proveedorSeleccionado?.rutProveedor,
+        codOrdenCompra: this.ocData?.codOrdenCompra,
         codGiroSeleccionado: this.codGiroSeleccionado,
-        codDocumentoTributario: this.dteSeleccionado.codigoDocumentoTributario,
-        estadoOc: this.ocData.codEstadoActualOc,
+        codDocumentoTributario: this.dteSeleccionado?.codigoDocumentoTributario,
+        estadoOc: this.ocData?.codEstadoActualOc,
         nombreOrdenCompra: this.nombreOrdenCompra,
         observaciones: this.observaciones,
         listProductosOrden: JSON.stringify(productosMap),
-        totalNeto: this.ocData.neto,
-        impuesto: this.ocData.impuestoCalculado,
-        total: this.ocData.totalFinal,
+        totalNeto: this.ocData?.neto,
+        impuesto: this.ocData?.impuestoCalculado,
+        total: this.ocData?.totalFinal,
         idUnidadCompradora: this.idUnidadCompradoraSeleccionada,
         codUnidad: this.codUnidadCompradoraSeleccionada,
       }
     };
   }
 
-  guardarOrden() {
+  async guardarOrden() {
+    const codigoFinal = await this.guardarDatos();
+    if (codigoFinal) {
+      alert('Borrador guardado correctamente junto con los cambios en sus archivos.');
+    }
+  }
+
+  private async guardarDatos(): Promise<string | null> {
+    if (!this.ocData) return null;
+    this.loading = true;
+
     const payload = this.prepararPayload();
-    this.http.post(`${this.API_OC}`, payload).subscribe({
-      next: () => alert('Orden guardada correctamente'),
-      error: (err) => console.error('Error al guardar:', err)
-    });
+    const codigoOC = this.ocData.codOrdenCompra;
+
+    console.log('[guardarDatos] Iniciando persistencia asíncrona en el servidor...');
+
+    try {
+      // 1. Enviamos el POST y obtenemos el DTO rico real del servidor
+      const res: any = await this.http.post(`${this.API_OC}`, payload).toPromise();
+      
+      const codigoFinal = res?.codOrdenCompra || codigoOC;
+      console.log('[guardarDatos] Respuesta exitosa del servidor. Código final:', codigoFinal);
+
+      // 2. Ejecutar la conciliación asíncrona de archivos adjuntos
+      await this.procesarSincronizacionAdjuntos(codigoFinal);
+      
+      // 3. RE-INICIALIZACIÓN ULTRA LIMPIA DEL FORMULARIO
+      const dtoRespuestaTemporal = {
+        ...res,
+        codOrdenCompra: codigoFinal
+      };
+
+      this.ocData = null;
+      this.items = [];
+      this.listaAdjuntos = [];
+      this.adjuntosEliminadosIds = [];
+      this.nombreOrdenCompra = '';
+      this.observaciones = '';
+      this.proveedorSeleccionado = null;
+      this.dteSeleccionado = null;
+
+      // 4. Cargamos el formulario desde cero y limpio con el DTO temporal
+      this.cargarBorrador(dtoRespuestaTemporal);
+
+      return codigoFinal; // Retornamos el código para que lo use solicitarAutorizacion si es necesario
+
+    } catch (err) {
+      console.error('[guardarDatos] Error crítico detectado en la operación:', err);
+      alert('Ocurrió un error al procesar el guardado de la orden o sus adjuntos.');
+      return null;
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  private async procesarSincronizacionAdjuntos(codigoOrdenCompra: string): Promise<void> {
+    console.log('==================================================================');
+    console.log(`[CONCILIACIÓN] Iniciando contraste para OC: ${codigoOrdenCompra}`);
+    console.log(`[CONCILIACIÓN] IDs en cola para eliminación física:`, this.adjuntosEliminadosIds);
+    console.log(`[CONCILIACIÓN] Total archivos actuales en la grilla UI: ${this.listaAdjuntos.length}`);
+    console.log('==================================================================');
+
+    // A. Procesar eliminaciones pendientes en el servidor
+    if (this.adjuntosEliminadosIds && this.adjuntosEliminadosIds.length > 0) {
+      console.log(`[CONCILIACIÓN - ELIMINAR] Detectados ${this.adjuntosEliminadosIds.length} elementos pendientes de borrado.`);
+      
+      for (const idAdjunto of this.adjuntosEliminadosIds) {
+        if (!idAdjunto) {
+          console.warn('[CONCILIACIÓN - ELIMINAR] Alerta: Se detectó un ID nulo o inválido en la cola. Saltando...');
+          continue;
+        }
+
+        const urlDelete = `${this.API_BASE}/api/v1/oc/ordenes-compra/adjuntos/${idAdjunto}`;
+        console.log(`[CONCILIACIÓN - HTTP DELETE] Disparando solicitud hacia: ${urlDelete}`);
+
+        try {
+          await this.http.delete(urlDelete).toPromise();
+          console.log(`[CONCILIACIÓN - ÉXITO] Archivo ID: ${idAdjunto} borrado correctamente en Base de Datos y Servidor.`);
+        } catch (err) {
+          console.error(`[CONCILIACIÓN - ERROR] Falló la eliminación del ID ${idAdjunto}:`, err);
+        }
+      }
+      
+      console.log('[CONCILIACIÓN - ELIMINAR] Limpiando cola temporal de eliminados.');
+      this.adjuntosEliminadosIds = []; 
+    } else {
+      console.log('[CONCILIACIÓN - ELIMINAR] Cero (0) eliminaciones detectadas en este guardado.');
+    }
+
+    // B. Procesar subida de nuevos archivos adjuntos locales
+    const archivosPorSubir = this.listaAdjuntos.filter(adj => !adj.isServerFile && adj.fileReal);
+    console.log(`[CONCILIACIÓN - SUBIDAS] Evaluando nuevos archivos locales. Encontrados por subir: ${archivosPorSubir.length}`);
+
+    if (archivosPorSubir.length === 0) {
+      console.log('[CONCILIACIÓN] No se registran archivos locales nuevos. Finalizando sincronización.');
+      return;
+    }
+
+    const username = localStorage.getItem('sub') || 'SISTEMA';
+    const reqPayload = { usuarioExec: username };
+
+    for (const adj of archivosPorSubir) {
+      if (!adj.fileReal) continue;
+
+      const formData = new FormData();
+      formData.append('file', adj.fileReal);
+      formData.append('req', new Blob([JSON.stringify(reqPayload)], { type: 'application/json' }));
+
+      console.log(`[CONCILIACIÓN - HTTP POST] Subiendo archivo: ${adj.nombreArchivo} (${adj.fileReal.size} bytes)`);
+      try {
+        await this.http.post(`${this.API_OC}/${codigoOrdenCompra}/adjuntos`, formData).toPromise();
+        console.log(`[CONCILIACIÓN - ÉXITO] Archivo subido e indexado con éxito: ${adj.nombreArchivo}`);
+      } catch (postErr) {
+        console.error(`[CONCILIACIÓN - ERROR] No se pudo subir el archivo ${adj.nombreArchivo}:`, postErr);
+      }
+    }
+    
+    console.log('[CONCILIACIÓN] Sincronización e inspección finalizada exitosamente.');
+    console.log('==================================================================');
   }
 
   async solicitarAutorizacion() {
-    if (!this.puedeEditarItems) return;
+    if (!this.ocData) return;
+
+    // 1. Forzamos el guardado de consistencia llamando al método centralizado
+    console.log('[Autorizar] Ejecutando guardado previo de consistencia a través de guardarDatos...');
+    const codigoFinal = await this.guardarDatos();
+
+    // Si el guardado falló, detenemos el flujo de inmediato sin pasar a la solicitud
+    if (!codigoFinal) {
+      console.warn('[Autorizar] Solicitud cancelada debido a un fallo en el guardado previo.');
+      return;
+    }
+
     this.loading = true;
+    const usernameLogueado = localStorage.getItem('sub') || 'SISTEMA';
+    
+    // 2. EXTRACTOR DEL CÓDIGO DE UNIDAD DEL EJECUTOR (Desde localStorage de la sesión)
+    const unidadRaw = localStorage.getItem('unidadNegocio');
+    let codUnidadEjecutor = '';
+    if (unidadRaw) {
+      try {
+        const unidadObj = JSON.parse(unidadRaw);
+        codUnidadEjecutor = unidadObj.codigoUnidad || '';
+      } catch (e) {
+        console.error('[Autorizar] Error al parsear unidadNegocio:', e);
+      }
+    }
+
+    // 3. CONSTRUIR PAYLOAD DE OrdenCompraRequest utilizando el estado actual hidratado
+    const payloadOrden = {
+      codOc: codigoFinal,
+      usuarioExec: usernameLogueado, 
+      unidadExec: codUnidadEjecutor,  
+      plantillaDTO: this.prepararPayload().plantillaDTO 
+    };
+
+    console.log('[Autorizar] Despachando cambio de estado final a revisión (/solicitar):', payloadOrden);
 
     try {
-      const codigoOC = this.ocData?.codOrdenCompra;
-      const payloadOrden = this.prepararPayload();
+      // 4. LLAMADA AL ENDPOINT: Cambia el estado a revisión en el servidor
+      const res: any = await this.http.post(`${this.API_OC}/solicitar`, payloadOrden).toPromise();
+      console.log('[Autorizar - ÉXITO] El estado ha sido congelado por el backend.', res);
 
-      // 1. Procesamiento síncrono secuencial de Adjuntos
-      if (this.listaAdjuntos?.length > 0) {
-        let index = 1;
-        for (const archivo of this.listaAdjuntos) {
-          const formData = new FormData();
-          formData.append('file', archivo);
-          formData.append('req', new Blob([JSON.stringify(payloadOrden)], { type: 'application/json' }));
-
-          await this.http.post(`${this.API_OC}/${codigoOC}/adjuntos`, formData).toPromise();
-          index++;
-        }
-      }
-
-      // 2. Ejecutar Solicitud Final de Autorización
-      this.http.post(`${this.API_OC}/solicitar`, payloadOrden).subscribe({
-        next: (res: any) => {
-          this.codOrdenCompra = res.codOrdenCompra || this.ocData.codOrdenCompra;
-          this.ocFinalizada = true;
-          this.loading = false;
-          this.listaAdjuntos = []; 
-        },
-        error: (err) => {
-          console.error('Error en la autorización final:', err);
-          alert('Se procesaron los adjuntos pero falló la autorización final.');
-          this.loading = false;
-        }
-      });
+      // 5. CAMBIO VISUAL A LA PANTALLA DE ÉXITO DE ANGULAR
+      this.codOrdenCompra = res?.codOrdenCompra || codigoFinal;
+      this.ocFinalizada = true; // Oculta el formulario y muestra el banner verde
+      
+      this.listaAdjuntos = []; 
+      this.adjuntosEliminadosIds = [];
+      
+      alert('Solicitud de autorización enviada con éxito.');
 
     } catch (error) {
-      console.error('Error grave en adjuntos:', error);
-      alert('Ocurrió un error al registrar los adjuntos. El proceso se detuvo.');
+      console.error('[Autorizar - ERROR CRÍTICO] Falló el cambio de estado a revisión:', error);
+      alert('La orden se guardó con éxito, pero ocurrió un problema al pasarla al estado de revisión en el servidor.');
+    } finally {
       this.loading = false;
     }
   }
@@ -591,6 +873,8 @@ export class CreacionOcComponent implements OnInit {
     this.proveedorSeleccionado = null;
     this.modoEdicionProveedor = true;
     this.items = [];
+    this.adjuntosEliminadosIds = [];
+    this.listaAdjuntos = [];
     this.iniciarNuevaOC();
   }
 

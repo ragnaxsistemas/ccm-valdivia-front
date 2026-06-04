@@ -12,22 +12,28 @@ export class AuthService {
   saveToken(token: string): UserToken {
     localStorage.setItem('token', token);
 
-    console.group('--- Token Guardado ---', token);
+    console.group('--- Token Guardado e Indexado ---');
     const decoded = jwtDecode<UserToken>(token);
+    console.log('Token decodificado con éxito:', decoded);
     
-    // Guardamos el objeto completo
+    // 1. Guardamos el objeto completo para consultas centralizadas
     localStorage.setItem('usuario', JSON.stringify(decoded));
     
-    // IMPORTANTE: También guarda estas llaves individuales si tu MainLayout las busca así
-    localStorage.setItem('nombre', decoded.nombre);
-    localStorage.setItem('apellidoPaterno', decoded.apellidoPaterno);
-    localStorage.setItem('role', JSON.stringify(decoded.role));
-    localStorage.setItem('unidadNegocio', JSON.stringify(decoded.unidadNegocio));
-    localStorage.setItem('menus', JSON.stringify(decoded.menus || [])); // <--- ESTO faltaba
+    // 2. Indexamos las llaves planas individuales para compatibilidad global
+    localStorage.setItem('sub', decoded.sub || '');
+    localStorage.setItem('nombre', decoded.nombre || '');
+    localStorage.setItem('apellidoPaterno', decoded.apellidoPaterno || '');
+    
+    // 3. Serializamos los objetos complejos estructurados
+    localStorage.setItem('role', JSON.stringify(decoded.role || {}));
+    localStorage.setItem('empresa', JSON.stringify(decoded.empresa || {}));
+    localStorage.setItem('unidadNegocio', JSON.stringify(decoded.unidadNegocio || {}));
+    localStorage.setItem('menus', JSON.stringify(decoded.menus || [])); 
+    console.groupEnd();
     
     this.userState.set(decoded);
     return decoded;
-}
+  }
 
   // Verifica si el token ha expirado
   isTokenExpired(): boolean {

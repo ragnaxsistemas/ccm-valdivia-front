@@ -25,7 +25,6 @@ export class LoginComponent {
   loading = signal(false);
 
   onLogin() {
-    
     if (!this.loginData.username || !this.loginData.password) {
       this.mostrarError('Por favor, complete todos los campos');
       return;
@@ -35,45 +34,38 @@ export class LoginComponent {
     this.errorMessage.set(null);
 
     this.dataService.post<any>('api/v1/login', this.loginData).subscribe({
-    next: (res) => {
-      // 1. Extraemos los datos decodificados (UserToken)
-      const user = this.authService.saveToken(res.accessToken);
-       // Aquí puedes ver toda la información decodificada del token 
-      if (user) {
-        console.group('--- Auditoría de Login CCM---');
-        console.log('Datos extraídos:', user);
-        console.groupEnd();
-
-        // 2. Persistencia en LocalStorage
-        // Strings simples
-        localStorage.setItem('sub', user.sub || '');
-        localStorage.setItem('nombre', user.nombre || '');
-        localStorage.setItem('apellidoPaterno', user.apellidoPaterno || '');
+      next: (res) => {
+        // 1. El servicio procesa, decodifica y persiste TODO de forma centralizada
+        const user = this.authService.saveToken(res.accessToken);
         
-        // Objetos complejos (DEBEN ser serializados con JSON.stringify)
-        localStorage.setItem('role', JSON.stringify(user.role));
-        localStorage.setItem('empresa', JSON.stringify(user.empresa));
-        localStorage.setItem('unidadNegocio', JSON.stringify(user.unidadNegocio));
-        localStorage.setItem('menus', JSON.stringify(user.menus || []));
-        console.log('Datos guardados en localStorage:', {
-          menus: JSON.parse(localStorage.getItem('menus') || '[]')
-        });
-      
+        if (user) {
+          // 📊 PANEL DE AUDITORÍA AVANZADA EN CONSOLA (Lectura limpia)
+          console.group('🔐 [AUDITORÍA DE LOGIN CCM]');
+          console.log('📦 Objeto decodificado desde el Servicio:', user);
+          console.groupEnd();
 
-        // 3. Notificación de estado y navegación
-        this.authState.notifyLogin();
-        this.router.navigate(['/ccm/registros']);
-      }else{
-        console.error('Error: No se pudo decodificar el token correctamente.');
-      }
-    },
-    error: (err) => {
-        console.error('Error en login:', err);
+          console.group('💾 [VERIFICACIÓN POST-LOGIN LOCALSTORAGE]');
+          console.log('sub:', localStorage.getItem('sub'));
+          console.log('nombre:', localStorage.getItem('nombre'));
+          console.log('role:', JSON.parse(localStorage.getItem('role') || '{}'));
+          console.log('unidadNegocio:', JSON.parse(localStorage.getItem('unidadNegocio') || '{}'));
+          console.groupEnd();
+
+          // 2. Notificación de estado y navegación
+          this.authState.notifyLogin();
+          this.router.navigate(['/ccm/registros']);
+        } else {
+          console.error('❌ Error Crítico: El authService.saveToken devolvió un objeto "user" nulo.');
+          this.loading.set(false);
+        }
+      },
+      error: (err) => {
+        console.error('❌ Error en el llamado HTTP de login:', err);
         this.loading.set(false);
         this.mostrarError('Usuario o contraseña incorrectos');
       }
-  });
-}
+    });
+  }
 
   private mostrarError(mensaje: string) {
     this.errorMessage.set(mensaje);
