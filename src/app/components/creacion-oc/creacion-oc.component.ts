@@ -48,6 +48,7 @@ export class CreacionOcComponent implements OnInit {
   proveedorSeleccionado: any = null;
   modoEdicionProveedor: boolean = true;
   filtroProveedor: string = '';
+  userRole: string = '';
   
   dteSeleccionado: any = null;
   dteIdSeleccionado: any = null;
@@ -73,6 +74,7 @@ export class CreacionOcComponent implements OnInit {
     this.cargarDte();
     this.cargarProductos();
     this.cargarUnidades();
+    this.obtenerRolDesdeStorage();
     this.inicializarTabla();
     this.inicializarBuscadorReactivo();
   }
@@ -81,6 +83,21 @@ export class CreacionOcComponent implements OnInit {
   // INICIALIZADORES Y BAJADA DE MAESTROS
   // ==========================================
   
+  obtenerRolDesdeStorage(): void {
+  const userJson = localStorage.getItem('usuario');
+  if (userJson) {
+    try {
+      const user = JSON.parse(userJson);
+      this.userRole = user.role?.nombre?.toUpperCase() || 'SIN ROL';
+    } catch (e) {
+      console.error("Error al parsear el usuario en localStorage", e);
+      this.userRole = 'SIN ROL';
+    }
+  } else {
+    this.userRole = 'SIN ROL';
+  }
+}
+
   private inicializarBuscadorReactivo() {
     console.log('[Buscador] Inicializando flujo reactivo...');
 
@@ -561,7 +578,10 @@ export class CreacionOcComponent implements OnInit {
   }
 
   get isFormularioCompleto(): boolean {
-    return !!(
+
+    const tieneRolValido = this.userRole.includes('SUPERVISOR') || this.userRole.includes('ADMINISTRACION');
+
+    return !!(tieneRolValido &&
       this.ocData?.codOrdenCompra &&
       this.dteSeleccionado &&
       this.proveedorSeleccionado &&
