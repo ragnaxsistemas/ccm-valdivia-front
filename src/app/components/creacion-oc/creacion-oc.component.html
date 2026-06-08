@@ -1,4 +1,14 @@
 <div class="oc-main-container">
+  @if (alertaUI) {
+    <div class="custom-app-banner" [ngClass]="alertaUI.tipo">
+      <div class="banner-body">
+        <i class="bi" [ngClass]="alertaUI.tipo === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'"></i>
+        <p class="banner-text">{{ alertaUI.mensaje }}</p>
+        <button type="button" class="btn-close-banner" (click)="alertaUI = null">&times;</button>
+      </div>
+    </div>
+  }
+  
   @if (!ocFinalizada) {
     
     @if (!ocData) {

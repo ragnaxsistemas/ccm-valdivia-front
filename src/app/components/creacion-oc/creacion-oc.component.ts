@@ -33,6 +33,9 @@ export class CreacionOcComponent implements OnInit {
   ocFinalizada: boolean = false;
   codOrdenCompra: string = '';
 
+  alertaUI: { mensaje: string; tipo: 'error' | 'success' } | null = null;
+  private alertaTimeout: any = null;
+
   // Buscador de Borradores
   filtroBorrador: string = '';
   borradoresFiltrados: any[] = [];
@@ -650,7 +653,7 @@ export class CreacionOcComponent implements OnInit {
   private procesarArchivos(archivos: File[]) {
     for (const archivo of archivos) {
       if (this.listaAdjuntos.length >= 5) {
-        alert('Solo se permite un máximo de 5 archivos adjuntos por orden de compra.');
+        this.mostrarNotificacion('Solo se permite un máximo de 5 archivos adjuntos por orden de compra.', 'error');
         break;
       }
       
@@ -702,12 +705,24 @@ export class CreacionOcComponent implements OnInit {
   async guardarOrden() {
     const codigoFinal = await this.guardarDatos();
     if (codigoFinal) {
-      alert('Borrador guardado correctamente junto con los cambios en sus archivos.');
+      this.mostrarNotificacion('Borrador guardado correctamente junto con los cambios en sus archivos.', 'success');
     }
   }
 
   private async guardarDatos(): Promise<string | null> {
     if (!this.ocData) return null;
+
+    if (!this.dteSeleccionado || !this.codUnidadCompradoraSeleccionada || !this.proveedorSeleccionado) {
+      let camposFaltantes: string[] = [];
+      
+      if (!this.dteSeleccionado) camposFaltantes.push('Documento Tributario (DTE)');
+      if (!this.codUnidadCompradoraSeleccionada) camposFaltantes.push('Unidad Compradora');
+      if (!this.proveedorSeleccionado) camposFaltantes.push('Proveedor');
+
+      this.mostrarNotificacion(`Para guardar el borrador debe seleccionar los siguientes campos obligatorios: ${camposFaltantes.join(', ')}.`, 'error');
+      return null;
+    }
+    // Si cumple con las validaciones, continúa con el proceso original de guardado
     this.loading = true;
 
     const payload = this.prepararPayload();
@@ -747,7 +762,7 @@ export class CreacionOcComponent implements OnInit {
 
     } catch (err) {
       console.error('[guardarDatos] Error crítico detectado en la operación:', err);
-      alert('Ocurrió un error al procesar el guardado de la orden o sus adjuntos.');
+      this.mostrarNotificacion('Ocurrió un error al procesar el guardado de la orden o sus adjuntos.', 'error');
       return null;
     } finally {
       this.loading = false;
@@ -870,11 +885,11 @@ export class CreacionOcComponent implements OnInit {
       this.listaAdjuntos = []; 
       this.adjuntosEliminadosIds = [];
       
-      alert('Solicitud de autorización enviada con éxito.');
+      //this.mostrarNotificacion('Solicitud de autorización enviada con éxito.', 'success');
 
     } catch (error) {
       console.error('[Autorizar - ERROR CRÍTICO] Falló el cambio de estado a revisión:', error);
-      alert('La orden se guardó con éxito, pero ocurrió un problema al pasarla al estado de revisión en el servidor.');
+      this.mostrarNotificacion('La orden se guardó con éxito, pero ocurrió un problema al pasarla al estado de revisión en el servidor.', 'error');
     } finally {
       this.loading = false;
     }
@@ -910,5 +925,22 @@ export class CreacionOcComponent implements OnInit {
   obtenerFechaActual(): string {
     const hoy = new Date();
     return `${String(hoy.getDate()).padStart(2, '0')}/${String(hoy.getMonth() + 1).padStart(2, '0')}/${hoy.getFullYear()}`;
+  }
+
+  mostrarNotificacion(mensaje: string, tipo: 'error' | 'success' = 'error') {
+    // Limpiamos cualquier temporizador previo activo
+    if (this.alertaTimeout) clearTimeout(this.alertaTimeout);
+    
+    this.alertaUI = { mensaje, tipo };
+    
+    // Auto-scroll suave al inicio del contenedor principal para visibilidad
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Si es un mensaje de éxito, se cerrará solo tras 6 segundos
+    if (tipo === 'success') {
+      this.alertaTimeout = setTimeout(() => {
+        this.alertaUI = null;
+      }, 6000);
+    }
   }
 }

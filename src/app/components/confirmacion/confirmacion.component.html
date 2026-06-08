@@ -48,7 +48,7 @@
             <tr>
               <td class="font-bold text-primary">{{ oc.codOrdenCompra }}</td>
               <td>{{ oc.fechaOrdenCompra | date:'dd/MM/yyyy HH:mm' }}</td>
-              <td><i class="bi bi-person-circle"></i> {{ (oc.nombreUsuario || oc.usernameUsuario) | uppercase }}</td>
+              <td><i class="bi bi-person-circle"></i> {{ oc.nombreUsuarioCreador | uppercase}} {{ oc.apellidoUsuarioCreador | uppercase}}</td>
               <td><span class="badge-unidad">{{ (oc.nombreUnidad || '—') | uppercase }}</span></td>
               <td class="text-end font-mono fw-bold text-primary">$ {{ oc.total | number:'1.0-0' }}</td>
               <td class="text-center">
@@ -94,7 +94,8 @@
             <div class="info-block"><span class="lbl">Nombre OC:</span><span class="val">{{ ocSeleccionada.nombreOrdenCompra | uppercase }}</span></div>
             <div class="info-block"><span class="lbl">Tipo DTE:</span><span class="val text-success">{{ (ocSeleccionada.nombreDocumentoTributario || ocSeleccionada.dteSeleccionado?.nombreDocumentoTributario || '—') | uppercase }}</span></div>
             <div class="info-block"><span class="lbl">Unidad Compradora:</span><span class="val">{{ (ocSeleccionada.nombreUnidad || ocSeleccionada.nombreUnidadCompradora || '—') | uppercase }}</span></div>
-            <div class="info-block"><span class="lbl">Creado por:</span><span class="val">{{ ocSeleccionada.nombreUsuario }} {{ ocSeleccionada.apellidoUsuario }}</span></div>
+            <div class="info-block"><span class="lbl">Creado por:</span><span class="val">{{ ocSeleccionada.nombreUsuarioCreador | uppercase}} {{ ocSeleccionada.apellidoUsuarioCreador | uppercase}}</span></div>
+            <div class="info-block"><span class="lbl">Solicitante:</span><span class="val">{{ ocSeleccionada.nombreUsuarioSolicitante | uppercase }} {{ ocSeleccionada.apellidoUsuarioSolicitante | uppercase }}</span></div>
             <div class="info-block"><span class="lbl">Fecha Emisión:</span><span class="val">{{ ocSeleccionada.fechaOrdenCompra | date:'dd/MM/yyyy HH:mm' }}</span></div>
           </div>
 
@@ -104,9 +105,9 @@
             <div class="info-block"><span class="lbl">Razón Social:</span><span class="val">{{ ocSeleccionada.nombreProveedor | uppercase }}</span></div>
             <div class="info-block"><span class="lbl">RUT Proveedor:</span><span class="val">{{ ocSeleccionada.rutProveedor || '—' }}</span></div>
             <div class="info-block col-span-2"><span class="lbl">Dirección:</span><span class="val">{{ (ocSeleccionada.direccionProveedor || ocSeleccionada.direccion || '—') | uppercase }}</span></div>
-            <div class="info-block"><span class="lbl">Comuna:</span><span class="val">{{ (ocSeleccionada.comunaProveedor || ocSeleccionada.nombreComuna || '—') | uppercase }}</span></div>
-            <div class="info-block"><span class="lbl">Región:</span><span class="val">{{ (ocSeleccionada.regionProveedor || ocSeleccionada.nombreRegion || '—') | uppercase }}</span></div>
-            <div class="info-block col-span-2"><span class="lbl">Giro Código / Actividad:</span><span class="val text-warning">{{ (ocSeleccionada.codigoGiroSii || '') }} - {{ (ocSeleccionada.giroProveedor || ocSeleccionada.nombreGiroSii || '—') | uppercase }}</span></div>
+            <div class="info-block"><span class="lbl">Comuna:</span><span class="val">{{ (ocSeleccionada.nombreComunaProveedor || ocSeleccionada.nombreComuna || '—') | uppercase }}</span></div>
+            <div class="info-block"><span class="lbl">Región:</span><span class="val">{{ (ocSeleccionada.nombreRegionProveedor || ocSeleccionada.nombreRegion || '—') | uppercase }}</span></div>
+            <div class="info-block col-span-2"><span class="lbl">Giro Código / Actividad:</span><span class="val text-warning">{{ (ocSeleccionada.codGiroSeleccionado || '') }} - {{ (ocSeleccionada.giroProveedor || ocSeleccionada.nombreGiroSii || '—') | uppercase }}</span></div>
           </div>
 
           <!-- SECCIÓN III: DESGLOSE DE PRODUCTOS / SERVICIOS -->
@@ -124,18 +125,18 @@
             <tbody>
               @for (item of parsearProductos(ocSeleccionada.listProductosOrden || ocSeleccionada.items); track $index) {
                 <tr>
-                  <td>{{ $index + 1 }}</td>
-                  <td>{{ item.descripcionProducto | uppercase }}</td>
-                  <td class="text-end font-mono">$ {{ item.valorProducto | number:'1.0-0' }}</td>
+                  <td class="text-center fw-bold">{{ $index + 1 }}</td>
+                  <td class="text-center fw-bold">{{ item.descripcionProducto | uppercase }}</td>
+                  <td class="text-center fw-bold">$ {{ item.valorProducto | number:'1.0-0' }}</td>
                   <td class="text-center fw-bold">{{ item.cantidad }}</td>
-                  <td class="text-end font-mono fw-bold">$ {{ (item.total || (item.valorProducto * item.cantidad)) | number:'1.0-0' }}</td>
+                  <td class="text-center fw-bold">$ {{ (item.total || (item.valorProducto * item.cantidad)) | number:'1.0-0' }}</td>
                 </tr>
               }
             </tbody>
           </table>
 
           <!-- SECCIÓN IV: RESUMEN FINANCIERO DINÁMICO SEGÚN DTE -->
-          <div class="section-title-auth">IV. RESUMEN FINANCIERO DEL DOCUMENTO</div>
+          <div class="section-title-auth">IV. RESUMEN FINANCIERO</div>
           <div class="totals-paper-box">
             <div>
               <div class="t-row">

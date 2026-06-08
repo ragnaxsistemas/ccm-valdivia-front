@@ -1080,3 +1080,76 @@ select.select-unidad-custom {
     }
   }
 }
+
+.custom-app-banner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 1rem auto 1.5rem auto;
+  max-width: 100%;
+  animation: slideDownIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+
+  // Variación: Error (Rojo suave)
+  &.error .banner-body {
+    background-color: #fff5f5;
+    border: 1px solid #feb2b2;
+    color: #c53030;
+    i { color: #e53e3e; }
+    .btn-close-banner { color: #9b2c2c; }
+  }
+
+  // Variación: Éxito (Verde suave)
+  &.success .banner-body {
+    background-color: #f0fff4;
+    border: 1px solid #c6f6d5;
+    color: #22543d;
+    i { color: #38a169; }
+    .btn-close-banner { color: #276749; }
+  }
+}
+
+.banner-body {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1.25rem;
+  width: 100%;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
+}
+
+.banner-text {
+  font-family: inherit; // Uniformidad total con los inputs y labels
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin: 0;
+  flex-grow: 1;
+  text-align: center; // Centrado exacto del mensaje
+  letter-spacing: 0.3px;
+}
+
+.btn-close-banner {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 0 0 0.5rem;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+
+  &:hover {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes slideDownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
