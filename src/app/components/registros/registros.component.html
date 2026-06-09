@@ -74,47 +74,187 @@
 
   <!-- TABLA PRINCIPAL DE REGISTROS -->
   <div class="table-container shadow-sm p-3 rounded">
-    <table class="table custom-table-reg">
-      <thead>
+  <table class="table custom-table-reg">
+    <thead>
+      <tr>
+        <th>FOLIO</th>
+        <th>FECHA</th>
+        <th>PROVEEDOR</th>
+        <th>UNIDAD</th>
+        <th class="text-end">MONTO TOTAL</th>
+        <th>ESTADO</th> <!-- Separado centrado -->
+        <th>ACCIONES</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (oc of ordenes; track $index) {
         <tr>
-          <th>FOLIO</th>
-          <th>FECHA</th>
-          <th>PROVEEDOR</th>
-          <th>UNIDAD</th>
-          <th class="text-end">MONTO TOTAL</th>
-          <th class="text-center">ESTADO</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (oc of ordenes; track $index) {
-          <tr>
-            <td class="font-bold text-primary">{{ oc.codOrdenCompra }}</td>
-            <td>{{ formatFecha(oc.fechaOrdenCompra) }}</td>
-            <td>{{ oc.nombreProveedor | uppercase }}</td>
-            <td><span class="badge-unidad-reg">{{ oc.nombreUnidad | uppercase }}</span></td>
-            <td class="font-bold text-primary text-end">$ {{ oc.total | number:'1.0-0' }}</td>
-            <td class="text-center">
+          <td class="font-bold text-primary">{{ oc.codOrdenCompra }}</td>
+          <td>{{ formatFecha(oc.fechaOrdenCompra) }}</td>
+          <td>{{ oc.nombreProveedor | uppercase }}</td>
+          <td><span class="badge-unidad-reg">{{ oc.nombreUnidad | uppercase }}</span></td>
+          <td class="font-bold text-primary text-end">$ {{ oc.total | number:'1.0-0' }}</td>
+          
+          <!-- COLUMNA ESTADO (CENTRADA) -->
+          <td class="text-center cell-estado">
+            <span class="status-text-only-reg">
+              {{ oc.estadoActualOc | uppercase }}
+            </span>
+          </td>
+
+          <!-- COLUMNA ACCIONES (CENTRADA CON SUS ICONOS) -->
+          <td class="cell-acciones">
+            <div class="buttons-group-container">
               @if (oc.codEstadoActualOc === 'confirmada' || oc.codEstadoActualOc === 'anulado') {
-                <a href="javascript:void(0)" (click)="descargarDocumento(oc)" class="status-link-pdf-reg">
-                  {{ oc.estadoActualOc | uppercase }}
+                <button class="btn-magenta" (click)="descargarDocumento(oc)" title="Descargar documento PDF">
                   <i class="bi bi-file-earmark-pdf-fill"></i>
-                </a>
-              } @else {
-                <span class="status-text-only-reg">
-                  {{ oc.estadoActualOc | uppercase }}
-                </span>
+                </button>
               }
-            </td>
-          </tr>
-        }
-        @if (ordenes.length === 0 && !loading) {
-          <tr>
-            <td colspan="6" class="text-center text-muted py-4">
-              <i class="bi bi-inbox"></i> No se encontraron órdenes de compra con los filtros seleccionados.
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </div>
+
+              <button class="btn-cyan" (click)="verDetalle(oc)" title="Ver detalle de la OC">
+                <i class="bi bi-eye-fill"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      }
+      <!-- ... resto del @if por si no hay registros -->
+    </tbody>
+  </table>
 </div>
+
+<!-- =================================================================== -->
+<!-- MODAL DE VISTA PREVIA (SOLO LECTURA) CON ESTILOS ORIGINALES        -->
+<!-- =================================================================== -->
+@if (ocSeleccionada) {
+  <div class="modal-overlay-auth no-print">
+    <div class="modal-window-auth">
+      
+      <div class="modal-header-auth">
+        <span class="modal-title-text">
+          <i class="bi bi-file-earmark-text"></i> VISTA DE CONTROL DE ORDEN: {{ ocSeleccionada.codOrdenCompra }}
+        </span>
+        <button type="button" class="btn-close-x" (click)="ocSeleccionada = null">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <div class="modal-body-scroll">
+        <div class="paper-view-container">
+          
+          <!-- SECCIÓN I: ANTECEDENTES GENERALES -->
+          <div class="section-title-auth">I. ANTECEDENTES GENERALES</div>
+          <div class="grid-info-auth">
+            <div class="info-block"><span class="lbl">FOLIO OC:</span><span class="val fw-bold text-primary">{{ ocSeleccionada.codOrdenCompra }}</span></div>
+            <div class="info-block"><span class="lbl">Fecha Emisión:</span><span class="val">{{ formatFecha(ocSeleccionada.fechaOrdenCompra) }}</span></div>
+            <div class="info-block"><span class="lbl">Tipo DTE:</span><span class="val text-success">{{ (ocSeleccionada.nombreDocumentoTributario || ocSeleccionada.dteSeleccionado?.nombreDocumentoTributario || '—') | uppercase }}</span></div>
+            <div class="info-block"><span class="lbl">Unidad Compradora:</span><span class="val">{{ (ocSeleccionada.nombreUnidad || ocSeleccionada.nombreUnidadCompradora || '—') | uppercase }}</span></div>
+            <div class="info-block"><span class="lbl">Creado por:</span><span class="val">{{ (ocSeleccionada.nombreUsuarioCreador || '') | uppercase}} {{ (ocSeleccionada.apellidoUsuarioCreador || '') | uppercase}}</span></div>
+            <div class="info-block"><span class="lbl">Solicitante:</span><span class="val">{{ (ocSeleccionada.nombreUsuarioSolicitante || '') | uppercase }} {{ (ocSeleccionada.apellidoUsuarioSolicitante || '') | uppercase }}</span></div>
+            <div class="info-block col-span-2"><span class="lbl">Actividad:</span><span class="val">{{ (ocSeleccionada.nombreOrdenCompra || '—') | uppercase }}</span></div>
+          </div>
+
+          <!-- SECCIÓN II: DATOS DEL PROVEEDOR Y GIRO -->
+          <div class="section-title-auth">II. DATOS DEL PROVEEDOR, GIRO Y UBICACIÓN</div>
+          <div class="grid-info-auth">
+            <div class="info-block"><span class="lbl">Razón Social:</span><span class="val">{{ ocSeleccionada.nombreProveedor | uppercase }}</span></div>
+            <div class="info-block"><span class="lbl">RUT Proveedor:</span><span class="val">{{ ocSeleccionada.rutProveedor || ocSeleccionada.rut }}</span></div>
+            <div class="info-block col-span-2"><span class="lbl">Dirección:</span><span class="val">{{ (ocSeleccionada.direccionProveedor || ocSeleccionada.direccion || '—') | uppercase }}</span></div>
+            <div class="info-block"><span class="lbl">Comuna:</span><span class="val">{{ (ocSeleccionada.nombreComunaProveedor || ocSeleccionada.nombreComuna || '—') | uppercase }}</span></div>
+            <div class="info-block"><span class="lbl">Región:</span><span class="val">{{ (ocSeleccionada.nombreRegionProveedor || ocSeleccionada.nombreRegion || '—') | uppercase }}</span></div>
+            <div class="info-block col-span-2"><span class="lbl">Giro Código / Actividad:</span><span class="val text-warning">{{ (ocSeleccionada.codGiroSeleccionado || '') }} - {{ (ocSeleccionada.giroProveedor || ocSeleccionada.nombreGiroSii || '—') | uppercase }}</span></div>
+          </div>
+
+          <!-- SECCIÓN III: DESGLOSE DE PRODUCTOS / SERVICIOS -->
+          <div class="section-title-auth">III. DESGLOSE DE PRODUCTOS / SERVICIOS</div>
+          <table class="table-inner-paper">
+            <thead>
+              <tr>
+                <th>N°</th>
+                <th>Descripción Artículo</th>
+                <th class="text-end">Valor Unit.</th>
+                <th class="text-center">Cant.</th>
+                <th class="text-end">Total línea</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of parsearProductos(ocSeleccionada.listProductosOrden || ocSeleccionada.items); track $index) {
+                <tr>
+                  <td class="text-center fw-bold">{{ $index + 1 }}</td>
+                  <td class="text-center fw-bold">{{ item.descripcionProducto | uppercase }}</td>
+                  <td class="text-center fw-bold">$ {{ item.valorProducto | number:'1.0-0' }}</td>
+                  <td class="text-center fw-bold">{{ item.cantidad }}</td>
+                  <td class="text-center fw-bold">$ {{ (item.total || (item.valorProducto * item.cantidad)) | number:'1.0-0' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+
+          <!-- SECCIÓN IV: RESUMEN FINANCIERO -->
+          <div class="section-title-auth">IV. RESUMEN FINANCIERO</div>
+          <div class="totals-paper-box">
+            <div>
+              <div class="t-row">
+                <span>TOTAL NETO</span> 
+                <strong>$ {{ ocSeleccionada.totalNeto | number:'1.0-0' }}</strong>
+              </div>
+              <div class="t-row">
+                <span>IMPUESTO ({{ ocSeleccionada.impuestoDocumentoElectronico || '19' }}%)</span> 
+                <strong>$ {{ ocSeleccionada.impuesto | number:'1.0-0' }}</strong>
+              </div>
+              <div class="t-row t-master">
+                <span>TOTAL</span> 
+                <strong>$ {{ ocSeleccionada.total | number:'1.0-0' }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECCIÓN V: OBSERVACIONES -->
+         
+          <div class="section-title-auth">V. OBSERVACIONES DE LA PROPUESTA</div>
+          <div class="style-obs p-2 mb-3 rounded small italic">
+            {{ ocSeleccionada.observaciones || 'Sin observaciones registradas por el creador.' }}
+          </div>
+
+          <!-- SECCIÓN VI: ADJUNTOS DIGITALES DE RESPALDO -->
+          <div class="section-title-auth">VI. ADJUNTOS DIGITALES DE RESPALDO</div>
+          <div class="row g-2">
+            @if (listaAdjuntosOC && listaAdjuntosOC.length > 0) {
+              @for (arch of listaAdjuntosOC; track arch.idAdjunto || $index) {
+                <div class="col-md-6">
+                  <div class="attachment-item-box" (click)="descargarAdjunto(arch)">
+                    <div class="file-icon-container">
+                      <i class="bi bi-file-earmark-pdf-fill text-danger"></i>
+                    </div>
+                    <div class="file-details">
+                      <span class="file-name-text" [title]="arch.nombreArchivo">{{ arch.nombreArchivo }}</span>
+                      <small class="file-download-action text-primary"><i class="bi bi-cloud-arrow-down"></i> Descargar Adjunto</small>
+                    </div>
+                  </div>
+                </div>
+              }
+            } @else {
+              <div class="col-12 text-center text-muted small py-2">
+                <i class="bi bi-file-earmark-lock"></i> Esta orden de compra no registra documentos adjuntos en el servidor.
+              </div>
+            }
+          </div>
+
+        </div>
+      </div>
+
+      <!-- FOOTER EN MODAL (SÓLO BOTÓN CERRAR) -->
+      <div class="modal-footer">
+        <div class="footer-actions-layout">
+          <div class="left-box">
+            <button type="button" class="btn-close-outline" (click)="ocSeleccionada = null">CERRAR VISTA</button>
+          </div>
+          <div class="right-box">
+            <!-- Espacio vacío intencional: Sin acciones autorizar/devolver en registros -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+}

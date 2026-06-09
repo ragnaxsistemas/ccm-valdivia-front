@@ -78,12 +78,14 @@
           <div class="section-title-auth">I. ANTECEDENTES GENERALES</div>
           <div class="grid-info-auth">
             <div class="info-block"><span class="lbl">FOLIO OC:</span><span class="val fw-bold text-primary">{{ ocSeleccionada.codOrdenCompra }}</span></div>
-            <div class="info-block"><span class="lbl">Nombre OC:</span><span class="val">{{ ocSeleccionada.nombreOrdenCompra | uppercase }}</span></div>
+            <div class="info-block"><span class="lbl">Fecha Emisión:</span><span class="val">{{ ocSeleccionada.fechaOrdenCompra | date:'dd/MM/yyyy HH:mm' }}</span></div>
             <div class="info-block"><span class="lbl">Tipo DTE:</span><span class="val text-success">{{ (ocSeleccionada.nombreDocumentoTributario || ocSeleccionada.dteSeleccionado?.nombreDocumentoTributario || '—') | uppercase }}</span></div>
             <div class="info-block"><span class="lbl">Unidad Compradora:</span><span class="val">{{ (ocSeleccionada.nombreUnidad || ocSeleccionada.nombreUnidadCompradora || '—') | uppercase }}</span></div>
             <div class="info-block"><span class="lbl">Creado por:</span><span class="val">{{ ocSeleccionada.nombreUsuarioCreador | uppercase}} {{ ocSeleccionada.apellidoUsuarioCreador | uppercase}}</span></div>
             <div class="info-block"><span class="lbl">Solicitante:</span><span class="val">{{ ocSeleccionada.nombreUsuarioSolicitante | uppercase }} {{ ocSeleccionada.apellidoUsuarioSolicitante | uppercase }}</span></div>
-            <div class="info-block"><span class="lbl">Fecha Emisión:</span><span class="val">{{ ocSeleccionada.fechaOrdenCompra | date:'dd/MM/yyyy HH:mm' }}</span></div>
+                      
+            <div class="info-block col-span-2"><span class="lbl">Actividad:</span><span class="val">{{ ocSeleccionada.nombreOrdenCompra | uppercase }}</span></div>           
+            
           </div>
 
           <div class="section-title-auth">II. DATOS DEL PROVEEDOR, GIRO Y UBICACIÓN</div>

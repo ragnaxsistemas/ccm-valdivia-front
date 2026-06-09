@@ -266,15 +266,40 @@ h3 {
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
   margin-bottom: 20px;
+  width: 100%; // Asegura que la grilla no mida más que el modal
 
   .info-block {
     display: flex;
+    align-items: flex-start; // Alinea arriba por si el texto toma múltiples líneas
     border-bottom: 1px solid rgba($cyan-dark-border, 0.2);
     padding-bottom: 6px;
     font-size: 0.8rem;
+    min-width: 0; // <--- CRÍTICO: Permite que los elementos flex internos se puedan achicar
+    width: 100%;
 
-    .lbl { width: 130px; font-weight: 700; color: #64748b; }
-    .val { color: $text-dark-table; font-weight: 600; }
+    &.col-span-2 { 
+      grid-column: span 2; 
+    }
+
+    .lbl { 
+      width: 140px; 
+      min-width: 140px; // <--- Fija la etiqueta para que no se aplaste con el texto largo
+      font-weight: 700; 
+      color: #64748b; 
+    }
+
+    .val { 
+      color: $text-dark-table; 
+      font-weight: 600;
+      flex-grow: 1; // Toma todo el espacio restante limpio
+      
+      // --- REGULADORES DE DESBORDAMIENTO ESTRICTO ---
+      white-space: normal;       // Permite saltos de línea naturales
+      word-break: break-word;    // Rompe palabras excesivamente largas si es necesario
+      word-wrap: break-word;     // Compatibilidad para quiebre seguro de texto
+      overflow-wrap: anywhere;   // Fuerza al texto a respetarse dentro del bloque
+      min-width: 0;              // Evita que el contenedor asuma el ancho nativo del string largo
+    }
   }
 }
 
@@ -325,8 +350,19 @@ h3 {
 
 .style-obs {
   background-color: rgba($cyan-ccm, 0.02) !important;
-  border: 1px solid $cyan-dark-border;
+  border: 1px solid rgba($cyan-dark-border, 0.4);
   color: $text-dark-table;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  padding: 12px 14px !important;
+  
+  // --- CONTROL DE DESBORDAMIENTO ESTRICTO ---
+  display: block;            // Fuerza el comportamiento de bloque contenedor
+  width: 100%;               // Asegura que ocupe el ancho disponible sin pasarse
+  box-sizing: border-box;    // Incluye el padding dentro del cálculo del ancho total
+  white-space: pre-wrap;     // Conserva saltos de línea manuales (\n) pero salta automáticamente al llegar al borde
+  word-break: break-word;    // Rompe strings o palabras huérfanas extremadamente largas
+  overflow-wrap: anywhere;   // Segunda capa de seguridad para forzar el quiebre de texto
 }
 
 // Totales

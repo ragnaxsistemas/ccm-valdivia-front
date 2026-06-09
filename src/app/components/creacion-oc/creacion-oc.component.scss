@@ -1153,3 +1153,19 @@ select.select-unidad-custom {
     transform: translateY(0);
   }
 }
+
+.character-counter {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748b; // Gris slate por defecto
+  text-align: right;
+  margin-top: 4px;
+  letter-spacing: 0.3px;
+  transition: color 0.2s ease;
+}
+
+// Estado de alerta cuando el usuario alcanza el límite estricto
+.counter-maxed {
+  color: #b5179e !important; // Magenta corporativo para advertir el tope
+  font-weight: 800;
+}

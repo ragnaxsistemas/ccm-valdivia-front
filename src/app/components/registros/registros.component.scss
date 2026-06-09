@@ -250,14 +250,48 @@ h3 {
   display: inline-block;
 }
 
+.actions-cell-wrapper {
+  display: flex;
+  align-items: center;      /* Alineación vertical perfecta (línea central) */
+  width: 100%;
+  padding: 0 12px;          /* Espaciado interno opcional para que no choque con los bordes de la celda */
+  box-sizing: border-box;
+}
+
+/* Contenedor del texto del Estado */
+.status-text-container {
+  display: flex;
+  align-items: center;
+  text-align: left;
+  margin-right: auto;       /* ¡Clave! Empuja todo lo que esté a su derecha hacia el extremo opcional */
+  padding-left: 8px;        /* Margen sutil hacia la izquierda para el texto del estado */
+}
+
+/* El texto del estado en sí */
 .status-text-only-reg {
-  font-weight: 800;
-  font-size: 0.72rem;
-  color: #000000 !important;
-  text-transform: uppercase;
-  display: inline-block;
-  min-width: 120px;
-  text-align: center;
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+}
+
+/* Contenedor de los botones de acción (íconos) */
+.buttons-group-container {
+  display: flex;
+  align-items: center;      /* Centrado vertical de los botones */
+  gap: 6px;                 /* Separación uniforme entre los íconos de PDF y Ojo */
+  margin-left: 15px;        /* Margen de seguridad para que los estados largos no colisionen */
+  flex-shrink: 0;           /* Evita que los botones se achiquen si el texto es muy largo */
+}
+
+/* Ajuste opcional para los botones si es necesario */
+.buttons-group-container button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;             /* Asegura altura uniforme */
+  width: 32px;              /* Asegura ancho cuadrado para los iconos */
+  border-radius: 4px;
+  padding: 0;
 }
 
 .status-link-pdf-reg {
@@ -299,4 +333,408 @@ h3 {
 
 @media print {
   .no-print { display: none !important; }
+}
+
+// ==========================================================================
+// ESTILOS COMPLEMENTARIOS: MODAL DE VISTA PREVIA (VISTA DE CONTROL DE OC)
+// ==========================================================================
+
+@mixin flex-center-auth {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Botón de visualización (Fondo blanco, borde e icono Cyan)
+.btn-cyan {
+  background-color: #ffffff !important;
+  color: $cyan-ccm !important;
+  border: 1px solid $cyan-dark-border !important;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  i { 
+    color: $cyan-ccm !important; 
+  }
+  
+  &:hover {
+    background-color: rgba($cyan-ccm, 0.08) !important;
+    transform: scale(1.05);
+  }
+}
+
+// Contenedor e interfaz estructural del Modal
+.modal-overlay-auth {
+  position: fixed;
+  top: 0; 
+  left: 0; 
+  width: 100%; 
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  @include flex-center-auth;
+  z-index: 1050;
+  padding: 20px;
+}
+
+.modal-window-auth {
+  background-color: #ffffff;
+  border: 2px solid $cyan-dark-border;
+  color: $text-dark-table;
+  width: 100%;
+  max-width: 900px;
+  max-height: 90vh;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header-auth {
+  background-color: #ffffff;
+  border-bottom: 2px solid $cyan-dark-border;
+  padding: 14px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .modal-title-text {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: $cyan-ccm !important;
+  }
+}
+
+.modal-body-scroll {
+  padding: 24px;
+  overflow-y: auto;
+  flex-grow: 1;
+  background-color: #f8fafc;
+}
+
+// Hoja interna simulada de la Orden de Compra
+.paper-view-container {
+  background: #ffffff;
+  border: 2px solid $cyan-dark-border;
+  padding: 25px;
+  border-radius: 6px;
+}
+
+.section-title-auth {
+  background: rgba($cyan-ccm, 0.08);
+  color: $cyan-dark-border;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 6px 10px;
+  border-left: 4px solid $cyan-dark-border;
+  margin-bottom: 12px;
+}
+
+.grid-info-auth {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+  width: 100%; // Asegura que la grilla no mida más que el modal
+
+  .info-block {
+    display: flex;
+    align-items: flex-start; // Alinea arriba por si el texto toma múltiples líneas
+    border-bottom: 1px solid rgba($cyan-dark-border, 0.2);
+    padding-bottom: 6px;
+    font-size: 0.8rem;
+    min-width: 0; // <--- CRÍTICO: Permite que los elementos flex internos se puedan achicar
+    width: 100%;
+
+    &.col-span-2 { 
+      grid-column: span 2; 
+    }
+
+    .lbl { 
+      width: 140px; 
+      min-width: 140px; // <--- Fija la etiqueta para que no se aplaste con el texto largo
+      font-weight: 700; 
+      color: #64748b; 
+    }
+
+    .val { 
+      color: $text-dark-table; 
+      font-weight: 600;
+      flex-grow: 1; // Toma todo el espacio restante limpio
+      
+      // --- REGULADORES DE DESBORDAMIENTO ESTRICTO ---
+      white-space: normal;       // Permite saltos de línea naturales
+      word-break: break-word;    // Rompe palabras excesivamente largas si es necesario
+      word-wrap: break-word;     // Compatibilidad para quiebre seguro de texto
+      overflow-wrap: anywhere;   // Fuerza al texto a respetarse dentro del bloque
+      min-width: 0;              // Evita que el contenedor asuma el ancho nativo del string largo
+    }
+  }
+}
+
+// Tabla interna simplificada de artículos dentro de la OC
+.table-inner-paper {
+  width: 100%;
+  margin-bottom: 20px;
+  border-collapse: collapse;
+  
+  thead tr th {
+    background-color: #ffffff !important;
+    color: $cyan-ccm !important;
+    font-size: 0.68rem;
+    padding: 8px 10px;
+    border: 1px solid $cyan-dark-border;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+  
+  tbody td {
+    padding: 8px 10px;
+    font-size: 0.75rem;
+    border: 1px solid rgba($cyan-dark-border, 0.2);
+    color: $text-dark-table !important;
+    background-color: rgba($cyan-ccm, 0.04);
+  }
+  
+  tbody tr:nth-child(even) td {
+    background-color: rgba($cyan-ccm, 0.01);
+  }
+}
+
+// Bloque de desglose financiero (Totales)
+.totals-paper-box {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 2px solid $cyan-dark-border;
+  padding-top: 10px;
+  margin-bottom: 20px;
+
+  .t-row {
+    display: flex;
+    justify-content: space-between;
+    width: 260px;
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-bottom: 4px;
+
+    span {
+      font-weight: 700;
+    }
+
+    strong {
+      color: $text-dark-table;
+    }
+
+    &.t-master {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: $cyan-dark-border;
+      border-top: 1px solid $cyan-dark-border;
+      padding-top: 4px;
+      
+      strong {
+        color: $cyan-dark-border;
+      }
+    }
+  }
+}
+
+// Área de Observaciones de propuesta
+.style-obs {
+  background-color: rgba($cyan-ccm, 0.02) !important;
+  border: 1px solid rgba($cyan-dark-border, 0.4);
+  color: $text-dark-table;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  padding: 12px 14px !important;
+  
+  // --- CONTROL DE DESBORDAMIENTO ESTRICTO ---
+  display: block;            // Fuerza el comportamiento de bloque contenedor
+  width: 100%;               // Asegura que ocupe el ancho disponible sin pasarse
+  box-sizing: border-box;    // Incluye el padding dentro del cálculo del ancho total
+  white-space: pre-wrap;     // Conserva saltos de línea manuales (\n) pero salta automáticamente al llegar al borde
+  word-break: break-word;    // Rompe strings o palabras huérfanas extremadamente largas
+  overflow-wrap: anywhere;   // Segunda capa de seguridad para forzar el quiebre de texto
+}
+
+// Cajas contenedoras de archivos Adjuntos digitales
+.attachment-item-box {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  background-color: #ffffff;
+  border: 1px solid rgba($cyan-dark-border, 0.4);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  
+  &:hover {
+    background-color: rgba($cyan-ccm, 0.06);
+    border-color: $cyan-dark-border;
+  }
+}
+
+.file-icon-container {
+  font-size: 1.4rem;
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.file-details {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: 100%;
+
+  .file-name-text {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: $text-dark-table;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .file-download-action {
+    font-size: 0.68rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
+  }
+}
+
+// Footer y alineaciones del modal
+.modal-footer {
+  background-color: #ffffff !important;
+  border-top: 2px solid $cyan-dark-border;
+  padding: 14px 20px;
+}
+
+.footer-actions-layout {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  
+  .left-box { 
+    display: flex; 
+    align-items: center; 
+  }
+  .right-box { 
+    display: flex; 
+  }
+}
+
+// Botones de salida del modal (Cerrar / Cruz X superior)
+.btn-close-outline {
+  background-color: #ffffff !important;
+  border: 1px solid $cyan-dark-border !important;
+  color: $cyan-dark-border !important;
+  padding: 8px 18px !important;
+  border-radius: 4px !important;
+  font-weight: 700 !important;
+  font-size: 0.72rem !important;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background-color: rgba($cyan-ccm, 0.08) !important;
+    border-color: darken($cyan-dark-border, 5%) !important;
+  }
+}
+
+.btn-close-x {
+  background: transparent !important;
+  border: none !important;
+  color: $cyan-ccm !important;
+  font-size: 1.2rem !important;
+  padding: 0 !important;
+  cursor: pointer;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: transform 0.15s ease;
+
+  &:hover {
+    transform: scale(1.15);
+    color: $cyan-dark-border !important;
+  }
+}
+
+// Botón de descarga de PDF (Fondo blanco, borde e icono Magenta)
+.btn-magenta {
+  background-color: #ffffff !important;
+  color: #d946ef !important; /* Magenta intermedio corporativo */
+  border: 1px solid #b5179e !important; /* Borde magenta oscuro para legibilidad */
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  i { 
+    color: #d946ef !important; 
+  }
+  
+  &:hover {
+    background-color: rgba(#d946ef, 0.08) !important;
+    transform: scale(1.05);
+  }
+}
+
+// --- AJUSTES DE CELDAS SEPARADAS (ESTADO Y ACCIONES) ---
+
+/* Columna Estado: Alineación de texto directa */
+.cell-estado {
+  text-align: center;
+  vertical-align: middle;
+
+  .status-text-only-reg {
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: 0.3px;
+  }
+}
+
+/* Columna Acciones: Forzar contenedor flex centrado en el medio del TD */
+/* Columna Acciones Separada */
+/* Columna Acciones: Clava los ojos a la derecha de forma uniforme */
+.cell-acciones {
+  text-align: right;          /* Alinea el bloque hacia la derecha del td */
+  vertical-align: middle;     /* Centrado vertical nativo de la celda */
+  padding-right: 24px;        /* Margen idéntico al del <th> para que se vea simétrico */
+
+  .buttons-group-container {
+    display: inline-flex;     /* Permite manejar los botones como un conjunto inline */
+    flex-direction: row;      /* Renderiza de izquierda a derecha (PDF primero, Ojo después) */
+    align-items: center;      /* Línea central vertical perfecta entre el PDF y el Ojo */
+    justify-content: flex-end;/* Empuja los componentes al extremo derecho de su espacio */
+    gap: 8px;                 /* Separación exacta de 8px cuando coexisten ambos */
+    min-width: 72px;          /* ¡La clave! Espacio fijo para albergar [PDF + Ojo] sin moverse */
+    
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 32px;
+      width: 32px;
+      border-radius: 5px;
+      padding: 0;
+      box-sizing: border-box;
+      flex-shrink: 0;         /* Evita deformaciones */
+    }
+  }
 }

@@ -181,9 +181,13 @@
           </div>
           
         </div> <div class="name-section mt-4">
-          <label class="form-label-thin">NOMBRE DE LA ORDEN DE COMPRA</label>
+          <label class="form-label-thin">ACTIVIDAD</label>
           <input type="text" class="form-control-thin" [(ngModel)]="nombreOrdenCompra" [disabled]="!puedeEditarItems"
-                 [placeholder]="!puedeEditarItems ? 'SELECCIONE DTE PARA EMPEZAR...' : 'EJ: ADQUISICIÓN DE MATERIALES...'">
+                 [placeholder]="!puedeEditarItems ? 'SELECCIONE DTE PARA EMPEZAR...' : 'EJ: ADQUISICIÓN DE MATERIALES...'"
+                 maxlength="450">
+                <div class="char-counter">
+                <span>{{ (nombreOrdenCompra || '').length }}</span> / 450
+              </div>  
         </div>
 
         <div class="section-header-divider">
@@ -253,7 +257,9 @@
                         [(ngModel)]="observaciones" 
                         [disabled]="!puedeEditarItems" 
                         maxlength="500" 
-                        placeholder="DETALLES ADICIONALES..."></textarea>
+                        placeholder="DETALLES ADICIONALES..."
+                        maxlength="500"
+                        ></textarea>
               <div class="char-counter">
                 <span>{{ (observaciones || '').length }}</span> / 500
               </div>         
