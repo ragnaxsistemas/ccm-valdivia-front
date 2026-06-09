@@ -1,46 +1,80 @@
-.oc-wrapper {
-  padding: 20px;
+$cyan-ccm: #4cb0c0;             
+$cyan-dark-border: #2c8a9a;     
+$text-dark-table: #0f172a;      
 
-  .action-header {
-    display: flex;
-    align-items: center;
-    padding-bottom: 20px;
-    border-bottom: 2px solid #e0f7fa; // Línea cyan suave
-    margin-bottom: 25px;
+.report-title-ccm {
+  color: $cyan-ccm !important; 
+  font-weight: 800;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  i { color: $cyan-ccm !important; }
+}
 
-    .btn-new-oc {
-      // Forzamos el color Cyan
-      background-color: #00bcd4 !important; 
-      color: white !important;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 8px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 6px rgba(0, 188, 212, 0.2);
+.card-filtro-reporte {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 16px;
+  border: 2px solid $cyan-dark-border;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+  max-width: 400px; /* Al ser un solo filtro, lo hacemos angosto y elegante */
+}
 
-      i { font-size: 1.3rem; }
+.filter-group-reg {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 
-      &:hover {
-        background-color: #00acc1 !important;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(0, 188, 212, 0.3);
-      }
+  .filter-label-reg {
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: $cyan-dark-border;
+    letter-spacing: 0.5px;
+  }
 
-      &:disabled {
-        background-color: #b2ebf2 !important;
-        cursor: not-allowed;
+  .select-wrapper-reg {
+    position: relative;
+    width: 100%;
+
+    .select-reg {
+      width: 100%;
+      height: 34px;
+      padding: 0 12px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: $text-dark-table;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      background-color: #f8fafc;
+      outline: none;
+      cursor: pointer;
+      text-transform: uppercase;
+
+      &:focus {
+        border-color: $cyan-ccm;
+        background-color: #ffffff;
       }
     }
   }
+}
 
-  .admin-card {
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-    border: none;
-    background: white;
+/* Tarjetas Analíticas */
+.card-analytics-ccm {
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid $cyan-ccm !important; /* Distintivo lateral */
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08) !important;
+  }
+
+  .fw-extrabold {
+    font-weight: 800;
+  }
+  
+  .text-primary {
+    color: $cyan-dark-border !important;
   }
 }
