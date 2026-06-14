@@ -76,6 +76,13 @@
           <i class="bi bi-x-lg"></i>
         </button>
       </div>
+      
+      @if (solicitudAnulacionActiva) {
+        <div class="alert-anulacion-cyan-magenta">
+          <i class="bi bi-exclamation-octagon-fill"></i> 
+          <strong>{{ ocSeleccionada.observacionAnulacion }}</strong>
+        </div>
+      }
 
       <div class="modal-body-scroll">
         <div class="paper-view-container">
@@ -216,6 +223,10 @@
               </button>
               <button type="button" class="btn-action-oc btn-authorize-auth" (click)="abrirConfirmar(ocSeleccionada, 'autorizar')">
                 <i class="bi bi-check-all"></i> AUTORIZAR ORDEN
+              </button>
+            } @else {
+              <button type="button" class="btn-action-oc btn-return-auth" (click)="solicitarAnulacion(ocSeleccionada)">
+                <i class="bi bi-x-circle"></i> SOLICITAR ANULACIÓN
               </button>
             }
           </div>

@@ -1,0 +1,15 @@
+# 1. Definir el archivo de entrada por defecto
+DirectoryIndex index.html
+
+# 2. Configuración de reescritura para Single Page Application (Angular)
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  
+  # Si el archivo solicitado existe físicamente, búscalo normalmente (chunks, assets)
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  
+  # Si no existe, mándalo al index.html de forma transparente
+  RewriteRule ^(.*)$ index.html [L]
+</IfModule>

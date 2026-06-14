@@ -37,20 +37,20 @@ export const routes: Routes = [
         path: 'anulacion', 
         loadComponent: () => import('./components/anulacion/anulacion.component').then(m => m.AnulacionComponent) 
       },
+       { 
+        path: 'confirmacion', 
+        loadComponent: () => import('./components/confirmacion/confirmacion.component').then(m => m.ConfirmacionComponent) 
+      },
       { 
         path: 'reportes', 
         loadComponent: () => import('./components/reportes/reportes.component').then(m => m.ReportesComponent) 
       },
       { 
         path: 'capacitacion', 
-        loadComponent: () => import('./components/capacitacion/capacitacion.component').then(m => m.CapacitacionComponent) 
+        loadComponent: () => import('./components/documentacion/documentacion.component').then(m => m.DocumentacionComponent) 
       },
 
-
-      { 
-        path: 'confirmacion', 
-        loadComponent: () => import('./components/confirmacion/confirmacion.component').then(m => m.ConfirmacionComponent) 
-      },
+     
 
       // Redirección interna por defecto si entran a /ccm sin ruta específica
       { path: '', redirectTo: 'creacion-oc', pathMatch: 'full' }

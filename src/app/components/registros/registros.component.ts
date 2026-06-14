@@ -21,6 +21,7 @@ export class GestionOcComponent implements OnInit {
   private readonly API_UNIDADES = `${this.API_BASE}/api/v1/unidad-compradora/vld_ccm`;
   private readonly API_ESTADOS = `${this.API_BASE}/api/v1/oc/status-oc/all`;
   private readonly API_GENERAR_DOC_OC = `${this.API_BASE}/api/v1/oc/ordenes-compra/generar-documento-oc`;
+  private readonly API_GET_PENDIENTE_ANULACION = `${this.API_BASE}/api/v1/oc/ordenes-compra/pendiente-anulacion`;
   /***unidades = [
     { id: 1, codigo: 'prochelle', nombre: 'Casa Prochelle' },
     { id: 2, codigo: 'biblioteca', nombre: 'Biblioteca Municipal' },
@@ -28,6 +29,9 @@ export class GestionOcComponent implements OnInit {
     { id: 4, codigo: 'submarino', nombre: 'Submarino' }
   ];***/
   // Variables de datos
+
+  solicitudAnulacionActiva: boolean = false;
+
   unidades: any[] = [];
   estados: any[] = [];
   ordenes: any[] = [];
@@ -157,9 +161,46 @@ export class GestionOcComponent implements OnInit {
   verDetalle(oc: any) {
     this.ocSeleccionada = oc;
     this.listaAdjuntosOC = []; // Limpiamos la lista local del modal
+    this.solicitudAnulacionActiva = false;
 
     const codigoOC = oc.codOrdenCompra || oc.codigoOrdenCompra;
     if (!codigoOC) return;
+
+    // ===================================================================
+    // 🔍 NUEVA VALIDACIÓN: BUSCAR SOLICITUD DE ANULACIÓN ACTIVA
+    // ===================================================================
+    console.log(`🔍 [Ver Detalle] Verificando si la OC ${codigoOC} posee solicitudes de anulación activas...`);
+    
+    // Configuramos los parámetros. Enviamos el estado correspondiente si tu regla de negocio lo exige.
+    let paramsAnulacion = new HttpParams().set('codOrdenCompra', codigoOC);
+
+    this.http.get<any>(this.API_GET_PENDIENTE_ANULACION, { params: paramsAnulacion }).subscribe({
+      next: (res) => {
+        console.log('📦 [Ver Detalle - Anulación] Respuesta cruda del servidor:', res);
+
+        // Evaluamos según la estructura de PendienteAnulacionDTO recibida
+        // Si el endpoint retorna un listado (Page/Array), buscamos el elemento. Si retorna un objeto directo:
+        if (res) {
+          // Si el backend te devuelve un objeto directo mapeado al DTO enviado:
+          const cumpleCondicion = (res.codOrdenCompra === codigoOC || res.codOc === codigoOC) && res.active === true;
+          
+          // Por si el backend responde con una estructura paginada o lista (.content o Array) debido al volumen:
+          const listaDTOs = res.content || (Array.isArray(res) ? res : [res]);
+          const existeMatchActivo = listaDTOs.some((dto: any) => 
+            dto && (dto.codOrdenCompra === codigoOC) && dto.active === true
+          );
+
+          if (cumpleCondicion || existeMatchActivo) {
+            this.solicitudAnulacionActiva = true;
+            this.ocSeleccionada.observacionAnulacion = res.observacionAnulacion || 'Existe una solicitud de anulación activa para esta orden.';
+            console.log(`⚠️ [Ver Detalle - MATCH] La OC ${codigoOC} TIENE una solicitud de anulación activa.`);
+          }
+        }
+      },
+      error: (err) => {
+        console.error('❌ [Ver Detalle - Anulación] Error al consultar estado de anulación:', err);
+      }
+    });
 
     console.log(
       `[Adjuntos Registros] Buscando archivos en servidor para la OC: ${codigoOC}`

@@ -18,15 +18,18 @@ export class AutorizacionComponent implements OnInit {
   private authService = inject(AuthService);
 
   private readonly API_BASE = environment.apiUrl;
-    private readonly API_OC_NEW = `${this.API_BASE}/api/v1/oc/ordenes-compra/new`;
-    private readonly API_OC = `${this.API_BASE}/api/v1/oc/ordenes-compra`;
-    private readonly API_BUSQUEDA_AVANZADA = `${this.API_BASE}/api/v1/oc/ordenes-compra/busqueda-avanzada`;
-    private readonly API_PROV = `${this.API_BASE}/api/v1/oc/proveedor`;
-    private readonly API_DTE = `${this.API_BASE}/api/v1/oc/dte`;
-    private readonly API_PRODUCTO = `${this.API_BASE}/api/v1/oc/producto/all`;
-    private readonly API_UNIDADES = `${this.API_BASE}/api/v1/unidad-compradora/vld_ccm`;
+  private readonly API_OC_NEW = `${this.API_BASE}/api/v1/oc/ordenes-compra/new`;
+  private readonly API_OC = `${this.API_BASE}/api/v1/oc/ordenes-compra`;
+  private readonly API_BUSQUEDA_AVANZADA = `${this.API_BASE}/api/v1/oc/ordenes-compra/busqueda-avanzada`;
+  private readonly API_PROV = `${this.API_BASE}/api/v1/oc/proveedor`;
+  private readonly API_DTE = `${this.API_BASE}/api/v1/oc/dte`;
+  private readonly API_PRODUCTO = `${this.API_BASE}/api/v1/oc/producto/all`;
+  private readonly API_UNIDADES = `${this.API_BASE}/api/v1/unidad-compradora/vld_ccm`;
+  private readonly API_PENDIENTE_ANULACION = `${this.API_BASE}/api/v1/oc/ordenes-compra/pendiente-anulacion`;
+  private readonly API_GET_PENDIENTE_ANULACION = `${this.API_BASE}/api/v1/oc/ordenes-compra/pendiente-anulacion`;
 
-    loading: boolean = false;
+  loading: boolean = false;
+  solicitudAnulacionActiva: boolean = false;
 
   listaPendientes: any[] = [];
   ocSeleccionada: any = null;
@@ -149,9 +152,47 @@ export class AutorizacionComponent implements OnInit {
 verDetalle(oc: any) {
     this.ocSeleccionada = oc;
     this.listaAdjuntosOC = []; // Limpiamos la lista local del modal
+    this.solicitudAnulacionActiva = false; // Reset de la alerta de anulación
     
     const codigoOC = oc.codOrdenCompra || oc.codigoOrdenCompra;
     if (!codigoOC) return;
+
+    // ===================================================================
+    // 🔍 NUEVA VALIDACIÓN: BUSCAR SOLICITUD DE ANULACIÓN ACTIVA
+    // ===================================================================
+    console.log(`🔍 [Ver Detalle] Verificando si la OC ${codigoOC} posee solicitudes de anulación activas...`);
+    
+    // Configuramos los parámetros. Enviamos el estado correspondiente si tu regla de negocio lo exige.
+    let paramsAnulacion = new HttpParams().set('codOrdenCompra', codigoOC);
+
+    this.http.get<any>(this.API_GET_PENDIENTE_ANULACION, { params: paramsAnulacion }).subscribe({
+      next: (res) => {
+        console.log('📦 [Ver Detalle - Anulación] Respuesta cruda del servidor:', res);
+
+        // Evaluamos según la estructura de PendienteAnulacionDTO recibida
+        // Si el endpoint retorna un listado (Page/Array), buscamos el elemento. Si retorna un objeto directo:
+        if (res) {
+          // Si el backend te devuelve un objeto directo mapeado al DTO enviado:
+          const cumpleCondicion = (res.codOrdenCompra === codigoOC || res.codOc === codigoOC) && res.active === true;
+          
+          // Por si el backend responde con una estructura paginada o lista (.content o Array) debido al volumen:
+          const listaDTOs = res.content || (Array.isArray(res) ? res : [res]);
+          const existeMatchActivo = listaDTOs.some((dto: any) => 
+            dto && (dto.codOrdenCompra === codigoOC) && dto.active === true
+          );
+
+          if (cumpleCondicion || existeMatchActivo) {
+            this.solicitudAnulacionActiva = true;
+            this.ocSeleccionada.observacionAnulacion = res.observacionAnulacion || 'Existe una solicitud de anulación activa para esta orden.';
+            console.log(`⚠️ [Ver Detalle - MATCH] La OC ${codigoOC} TIENE una solicitud de anulación activa.`);
+          }
+        }
+      },
+      error: (err) => {
+        console.error('❌ [Ver Detalle - Anulación] Error al consultar estado de anulación:', err);
+      }
+    });
+    // ===================================================================
 
     console.log(`[Adjuntos Auth] Buscando archivos en servidor para la OC: ${codigoOC}`);
     
@@ -160,8 +201,6 @@ verDetalle(oc: any) {
       next: (archivosServidor) => {
         if (archivosServidor && archivosServidor.length > 0) {
           this.listaAdjuntosOC = archivosServidor.map(adj => {
-            
-            // Extraer el ID desde la URL (Ej: "/api/v1/oc/ordenes-compra/download/14")
             let idExtraido: number | undefined = undefined;
             if (adj.urlDescarga) {
               const partes = adj.urlDescarga.split('/');
@@ -170,15 +209,13 @@ verDetalle(oc: any) {
                 idExtraido = parseInt(ultimoSegmento, 10);
               }
             }
-
             return {
               idAdjunto: idExtraido, 
               nombreArchivo: adj.nombreArchivo,
-              urlDescargaCompleta: adj.urlDescarga, // Guardamos la ruta parcial o completa
+              urlDescargaCompleta: adj.urlDescarga,
               isServerFile: true
             };
           });
-          console.log('[Adjuntos Auth] Archivos cargados con éxito en el modal:', this.listaAdjuntosOC);
         }
       },
       error: (err) => {
@@ -361,23 +398,79 @@ verDetalle(oc: any) {
       });
   }
   
+  solicitarAnulacion(oc: any): void {
+    if (!oc) return;
+
+    // Validación de seguridad inversa por si acaso
+    if (this.esSupervisor()) {
+      Swal.fire('Operación no permitida', 'Los supervisores deben gestionar la orden mediante los flujos de autorización o devolución.', 'warning');
+      return;
+    }
+
+    Swal.fire({
+      title: '¿Solicitar Anulación de la Orden?',
+      text: `Esta acción enviará la OC ${oc.codOrdenCompra} a estado pendiente de anulación.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'SÍ, SOLICITAR',
+      cancelButtonText: 'CANCELAR'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        
+        // Extraemos los datos de la sesión activa de manera idéntica al flujo de supervisores
+        const usernameLogueado = localStorage.getItem('sub') || this.usuarioInfo?.sub || 'SISTEMA';
+        
+        const unidadRaw = localStorage.getItem('unidadNegocio');
+        let codUnidadEjecutor = '';
+        if (unidadRaw) {
+          try {
+            const unidadObj = JSON.parse(unidadRaw);
+            codUnidadEjecutor = unidadObj.codigoUnidad || '';
+          } catch (e) {
+            console.error('[Solicitar Anulación] Error al parsear unidadNegocio desde localStorage:', e);
+          }
+        }
+
+        // Construcción del payload estructurado según PendienteAnulacionOrdenCompraRequest del Backend
+        const payload = {
+          codOc: oc.codOrdenCompra,
+          usuarioPendienteAnulacion: usernameLogueado,
+          unidadPendienteAnulacion: codUnidadEjecutor
+        };
+
+        // --- ESCRITURA DE LOGS SOLICITADA ---
+        console.log('🚀 [Solicitar Anulación] Iniciando petición HTTP POST hacia el backend.');
+        console.log(`📌 [Solicitar Anulación] Endpoint destino: ${this.API_PENDIENTE_ANULACION}`);
+        console.log('📦 [Solicitar Anulación] Cuerpo de la solicitud (PendienteAnulacionOrdenCompraRequest):', JSON.stringify(payload, null, 2));
+
+        this.http.post<any>(this.API_PENDIENTE_ANULACION, payload)
+          .subscribe({
+            next: (response) => {
+              // Log de éxito con la respuesta del DTO del backend
+              console.log('✅ [Solicitar Anulación - SUCCESS] Transacción exitosa procesada en el servidor. Respuesta:', response);
+              
+              Swal.fire('Solicitud Enviada', 'La solicitud de anulación ha sido registrada correctamente.', 'success');
+              this.ocSeleccionada = null; // Cierra el modal de manera limpia
+              this.cargarPendientes();      // Refresca la grilla principal
+            },
+            error: (err) => {
+              // Log de falla detallado
+              console.error('❌ [Solicitar Anulación - ERROR] Error crítico al intentar cambiar el estado en el backend:', err);
+              
+              Swal.fire('Error', 'No se pudo procesar la solicitud de anulación en el servidor.', 'error');
+            }
+          });
+      }
+    });
+  }
+
   private mapearAPlantilla(oc: any) {
     console.log("Mapeando OC a plantilla:", oc);
     return {
       codOrdenCompra: oc.codOrdenCompra,
       usernameUsuario: oc.usernameUsuario,
-      //fechaOrdenCompra: oc.fechaOrdenCompra,
-      //usernameUsuario: oc.usernameUsuario,
-      //codUnidad: oc.codUnidad,
-      //rutProveedor: oc.rutProveedor,
-      //codDocumentoTributario: oc.codDocumentoTributario,
-      //codEstadoActualOc: oc.codEstadoActualOc,
-      //nombreOrdenCompra: oc.nombreOrdenCompra,
-      //observaciones: oc.observaciones,
-      //listProductosOrden: oc.listProductosOrden || JSON.stringify(oc.items),
-      //totalNeto: oc.totalNeto,
-      //impuesto: oc.impuesto,
-      //total: oc.total
     };
   }
 

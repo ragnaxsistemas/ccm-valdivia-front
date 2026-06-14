@@ -1,0 +1,197 @@
+// --- 1. VARIABLES Y CONFIGURACIÓN (Estilo CCM Valdivia) ---
+$ccm-cyan: #4cb0c0;
+$ccm-magenta: #e91e63;
+$ccm-dark: #1e293b;
+$text-main: #334155;
+$text-light: #64748b;
+$text-muted: #94a3b8; // <--- ¡Agregada para solucionar el error de compilación!
+$border-light: #e2e8f0;
+$bg-body: #f8fafc;
+$font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+:host {
+  display: block;
+  font-family: $font-family;
+  color: $text-main;
+  background-color: $bg-body;
+  min-height: 70vh;
+}
+
+// --- 2. CONTENEDOR PRINCIPAL ---
+.imsb-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+}
+
+// --- 3. TARJETA DE CONTENIDO ---
+.imsb-card {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  border: 1px solid $border-light;
+  border-top: 4px solid $ccm-cyan; 
+  width: 100%;
+  max-width: 650px;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  }
+}
+
+// --- 4. ENCABEZADO DE LA TARJETA ---
+.imsb-card-header {
+  text-align: center;
+  padding: 35px 25px 20px 25px;
+  background: linear-gradient(to bottom, #fdfdfd, #ffffff);
+  border-bottom: 1px solid rgba($border-light, 0.6);
+
+  .icon-header {
+    font-size: 3.2rem;
+    color: $ccm-cyan; 
+    margin-bottom: 12px;
+    display: inline-block;
+  }
+
+  h2 {
+    margin: 0;
+    color: $ccm-dark;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  p {
+    margin: 6px 0 0 0;
+    color: $text-light;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+}
+
+// --- 5. CUERPO DE LA TARJETA ---
+.imsb-card-body {
+  padding: 30px 35px 40px 35px;
+}
+
+// --- 6. BLOQUE INFORMATIVO (Callout lateral) ---
+.info-box {
+  background-color: rgba($ccm-cyan, 0.04); 
+  border-left: 4px solid $ccm-magenta;     
+  padding: 20px;
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 30px;
+
+  p {
+    margin: 0 0 16px 0;
+    color: $text-main;
+    line-height: 1.6;
+    font-size: 0.92rem;
+
+    strong {
+      color: $ccm-dark;
+      font-weight: 600;
+    }
+  }
+}
+
+// --- 7. LISTA DE DETALLES DEL ARCHIVO ---
+.file-details {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  li {
+    color: $text-light;
+    display: flex;
+    align-items: center;
+    
+    i {
+      margin-right: 8px;
+      color: $ccm-cyan;
+    }
+
+    strong {
+      color: $text-main;
+      font-weight: 600;
+      min-width: 80px; 
+      display: inline-block;
+    }
+  }
+}
+
+// --- 8. ZONA DE ACCIÓN Y BOTÓN ---
+.action-zone {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.btn-imsb-download {
+  background-color: $ccm-cyan; 
+  color: #ffffff;
+  border: none;
+  padding: 12px 28px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  letter-spacing: 0.3px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba($ccm-cyan, 0.15);
+
+  i {
+    font-size: 1.15rem;
+    transition: transform 0.2s ease;
+  }
+
+  &:hover:not([disabled]) {
+    background-color: darken($ccm-cyan, 5%);
+    box-shadow: 0 4px 8px rgba($ccm-cyan, 0.25);
+    
+    i {
+      transform: translateY(1px); 
+    }
+  }
+
+  &:active:not([disabled]) {
+    transform: scale(0.98);
+  }
+
+  // Estado Deshabilitado / Cargando
+  &[disabled] {
+    background-color: $border-light;
+    color: $text-muted;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+}
+
+// --- 9. SPINNER ANIMADO (Mismo estilo que creacion-oc) ---
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(#ffffff, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

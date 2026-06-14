@@ -582,7 +582,7 @@ export class CreacionOcComponent implements OnInit {
 
   get isFormularioCompleto(): boolean {
 
-    const tieneRolValido = this.userRole.includes('SUPERVISOR') || this.userRole.includes('ADMINISTRACION');
+    const tieneRolValido = this.userRole.includes('SUPERVISOR') || this.userRole.includes('ADMINISTRACION') || this.userRole.includes('OPERADOR');
 
     return !!(tieneRolValido &&
       this.ocData?.codOrdenCompra &&

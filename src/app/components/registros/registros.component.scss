@@ -13,14 +13,15 @@ $text-dark-table: #0f172a;
 }
 
 h3 {
-  color: $cyan-ccm !important; 
+  color: $cyan-ccm; 
   font-weight: 800;
   display: flex;
   align-items: center;
   gap: 10px;
   margin-top: 10px;
   text-transform: uppercase;
-  i { color: $cyan-ccm !important; }
+  
+  i { color: $cyan-ccm; }
 }
 
 // --- CONTENEDOR DE FILTROS OPTIMIZADO EN ANCHO ---
@@ -31,10 +32,9 @@ h3 {
   border: 2px solid $cyan-dark-border;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
   width: 100%;
-  max-width: 90%; /* Reducción del contenedor general en un 18-20% para evitar estiramiento tosco */
+  max-width: 90%; 
 }
 
-/* Fila Superior: Distribución lateral precisa */
 .row-filtros-top {
   display: flex;
   flex-wrap: wrap;
@@ -42,7 +42,6 @@ h3 {
   gap: 16px; 
 }
 
-/* Fila Inferior: Separación vertical exacta */
 .row-filtros-bottom {
   display: flex;
   flex-wrap: wrap;
@@ -51,7 +50,6 @@ h3 {
   margin-top: 12px;  
 }
 
-// Estructura interna y acotación del 20% en anchos máximos
 .filter-group-reg {
   display: flex;
   flex-direction: column;
@@ -59,7 +57,6 @@ h3 {
   flex: 1;
   padding: 0 5px;
 
-  // Clases específicas por columna para controlar anchos angostos exactos
   &.group-rut { max-width: 180px; }
   &.group-unidad { max-width: 300px; padding: 0 32px; }
   &.group-folio { max-width: 220px; padding: 0 -15px; }
@@ -77,7 +74,6 @@ h3 {
   }
 }
 
-// Inputs y Selects Estilizados y Angostos
 .input-reg, .select-reg {
   width: 100%;
   height: 32px; 
@@ -91,9 +87,7 @@ h3 {
   outline: none;
   transition: border-color 0.15s ease;
 
-  &:focus {
-    border-color: $cyan-ccm;
-  }
+  &:focus { border-color: $cyan-ccm; }
 }
 
 .select-wrapper-reg {
@@ -128,12 +122,11 @@ h3 {
   .range-separator { font-weight: bold; color: $cyan-ccm; font-size: 0.75rem; }
 }
 
-// Botones de acción alineados
 .actions-group-reg {
   display: flex;
   gap: 6px;
   align-items: center;
-  width: 140px; /* Ancho fijo controlado para que no flote de más */
+  width: 140px; 
 
   button {
     height: 32px; 
@@ -168,7 +161,6 @@ h3 {
     color: $cyan-ccm;
     width: 32px;
     border: 1px solid $cyan-dark-border;
-    padding: 0;
 
     &:hover { 
       background-color: rgba($cyan-ccm, 0.06);
@@ -179,7 +171,7 @@ h3 {
 
 // --- TABLA PRINCIPAL DE REGISTROS MIGRADA ---
 .table-container {
-  background-color: #ffffff !important;
+  background-color: #ffffff;
   border: 2px solid $cyan-dark-border;
   margin-top: 20px;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
@@ -191,49 +183,40 @@ h3 {
   border-spacing: 0;
   background-color: #ffffff;
 
-  thead {
-    background-color: #ffffff !important;
-    tr th {
-      background-color: #ffffff !important;
-      color: $cyan-ccm !important; 
-      padding: 12px 14px;
-      font-weight: 800;
-      text-transform: uppercase;
-      font-size: 0.78rem;
-      border-bottom: 3px solid $cyan-dark-border !important;
-      text-align: center;
-      &.text-end { text-align: right; }
-    }
+  thead tr th {
+    background-color: #ffffff;
+    color: $cyan-ccm; 
+    padding: 12px 14px;
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 0.78rem;
+    border-bottom: 3px solid $cyan-dark-border;
+    text-align: center;
+    
+    &.text-end { text-align: right; }
   }
 
   tbody tr {
-    background-color: rgba($cyan-ccm, 0.06) !important; 
+    background-color: rgba($cyan-ccm, 0.06); 
     transition: background-color 0.15s ease;
 
-    &:nth-child(even) {
-      background-color: rgba($cyan-ccm, 0.01) !important; 
-    }
-
-    &:hover {
-      background-color: rgba($cyan-ccm, 0.12) !important;
-    }
+    &:nth-child(even) { background-color: rgba($cyan-ccm, 0.01); }
+    &:hover { background-color: rgba($cyan-ccm, 0.12); }
 
     td {
       padding: 10px 14px;
       font-size: 0.8rem;
       font-weight: 600;                     
       vertical-align: middle;
-      color: #000000 !important;            
+      color: #000000;            
       border-bottom: 1px solid rgba($cyan-dark-border, 0.15);
       text-align: center;
+
       &.text-end { text-align: right; }
 
-      &.font-bold, 
-      &.text-primary, 
-      span, 
-      strong {
-        color: #000000 !important;          
-        font-weight: 600 !important;        
+      &.font-bold, &.text-primary, span, strong {
+        color: #000000;          
+        font-weight: 600;        
       }
     }
   }
@@ -250,106 +233,50 @@ h3 {
   display: inline-block;
 }
 
-.actions-cell-wrapper {
-  display: flex;
-  align-items: center;      /* Alineación vertical perfecta (línea central) */
-  width: 100%;
-  padding: 0 12px;          /* Espaciado interno opcional para que no choque con los bordes de la celda */
-  box-sizing: border-box;
-}
+// --- COLUMNAS SEPARADAS (ESTADO Y ACCIONES) ---
+.cell-estado {
+  text-align: center;
+  vertical-align: middle;
 
-/* Contenedor del texto del Estado */
-.status-text-container {
-  display: flex;
-  align-items: center;
-  text-align: left;
-  margin-right: auto;       /* ¡Clave! Empuja todo lo que esté a su derecha hacia el extremo opcional */
-  padding-left: 8px;        /* Margen sutil hacia la izquierda para el texto del estado */
-}
-
-/* El texto del estado en sí */
-.status-text-only-reg {
-  font-weight: 600;
-  font-size: 0.85rem;
-  letter-spacing: 0.5px;
-}
-
-/* Contenedor de los botones de acción (íconos) */
-.buttons-group-container {
-  display: flex;
-  align-items: center;      /* Centrado vertical de los botones */
-  gap: 6px;                 /* Separación uniforme entre los íconos de PDF y Ojo */
-  margin-left: 15px;        /* Margen de seguridad para que los estados largos no colisionen */
-  flex-shrink: 0;           /* Evita que los botones se achiquen si el texto es muy largo */
-}
-
-/* Ajuste opcional para los botones si es necesario */
-.buttons-group-container button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 32px;             /* Asegura altura uniforme */
-  width: 32px;              /* Asegura ancho cuadrado para los iconos */
-  border-radius: 4px;
-  padding: 0;
-}
-
-.status-link-pdf-reg {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-width: 120px;
-  font-weight: 800;
-  font-size: 0.72rem;
-  color: #000000 !important;
-  text-decoration: none;
-  text-transform: uppercase;
-  transition: all 0.15s ease;
-
-  i {
-    color: #e74c3c; 
-    font-size: 1rem;
-    transition: transform 0.15s ease;
-  }
-
-  &:hover {
-    color: $cyan-ccm !important; 
-    text-decoration: underline;
-    i { transform: scale(1.1); }
+  .status-text-only-reg {
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: 0.3px;
   }
 }
 
-.loading-overlay-reg {
-  position: fixed;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background-color: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(1px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
+.cell-acciones {
+  text-align: right;          
+  vertical-align: middle;     
+  padding-right: 24px;        
+
+  .buttons-group-container {
+    display: inline-flex;     
+    flex-direction: row;      
+    align-items: center;      
+    justify-content: flex-end;
+    gap: 8px;                 
+    min-width: 72px;          
+    
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 32px;
+      width: 32px;
+      border-radius: 5px;
+      padding: 0;
+      box-sizing: border-box;
+      flex-shrink: 0;         
+    }
+  }
 }
 
-@media print {
-  .no-print { display: none !important; }
-}
-
-// ==========================================================================
-// ESTILOS COMPLEMENTARIOS: MODAL DE VISTA PREVIA (VISTA DE CONTROL DE OC)
-// ==========================================================================
-
-@mixin flex-center-auth {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-// Botón de visualización (Fondo blanco, borde e icono Cyan)
+// --- BOTONES ASOCIADOS A FILAS ---
 .btn-cyan {
-  background-color: #ffffff !important;
-  color: $cyan-ccm !important;
-  border: 1px solid $cyan-dark-border !important;
+  background-color: #ffffff;
+  color: $cyan-ccm;
+  border: 1px solid $cyan-dark-border;
   padding: 6px 12px;
   border-radius: 4px;
   font-size: 0.9rem;
@@ -359,23 +286,43 @@ h3 {
   align-items: center;
   justify-content: center;
 
-  i { 
-    color: $cyan-ccm !important; 
-  }
-  
+  i { color: $cyan-ccm; }
   &:hover {
-    background-color: rgba($cyan-ccm, 0.08) !important;
+    background-color: rgba($cyan-ccm, 0.08);
     transform: scale(1.05);
   }
 }
 
-// Contenedor e interfaz estructural del Modal
+.btn-magenta {
+  background-color: #ffffff;
+  color: #d946ef; 
+  border: 1px solid #b5179e; 
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  i { color: #d946ef; }
+  &:hover {
+    background-color: rgba(#d946ef, 0.08);
+    transform: scale(1.05);
+  }
+}
+
+// --- MODAL DE VISTA PREVIA (SOLO LECTURA) ---
+@mixin flex-center-auth {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .modal-overlay-auth {
   position: fixed;
-  top: 0; 
-  left: 0; 
-  width: 100%; 
-  height: 100%;
+  top: 0; left: 0; width: 100%; height: 100%;
   background-color: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(2px);
   @include flex-center-auth;
@@ -407,7 +354,7 @@ h3 {
   .modal-title-text {
     font-size: 0.95rem;
     font-weight: 800;
-    color: $cyan-ccm !important;
+    color: $cyan-ccm;
   }
 }
 
@@ -418,7 +365,6 @@ h3 {
   background-color: #f8fafc;
 }
 
-// Hoja interna simulada de la Orden de Compra
 .paper-view-container {
   background: #ffffff;
   border: 2px solid $cyan-dark-border;
@@ -441,24 +387,22 @@ h3 {
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
   margin-bottom: 20px;
-  width: 100%; // Asegura que la grilla no mida más que el modal
+  width: 100%; 
 
   .info-block {
     display: flex;
-    align-items: flex-start; // Alinea arriba por si el texto toma múltiples líneas
+    align-items: flex-start; 
     border-bottom: 1px solid rgba($cyan-dark-border, 0.2);
     padding-bottom: 6px;
     font-size: 0.8rem;
-    min-width: 0; // <--- CRÍTICO: Permite que los elementos flex internos se puedan achicar
+    min-width: 0; 
     width: 100%;
 
-    &.col-span-2 { 
-      grid-column: span 2; 
-    }
+    &.col-span-2 { grid-column: span 2; }
 
     .lbl { 
       width: 140px; 
-      min-width: 140px; // <--- Fija la etiqueta para que no se aplaste con el texto largo
+      min-width: 140px; 
       font-weight: 700; 
       color: #64748b; 
     }
@@ -466,27 +410,24 @@ h3 {
     .val { 
       color: $text-dark-table; 
       font-weight: 600;
-      flex-grow: 1; // Toma todo el espacio restante limpio
-      
-      // --- REGULADORES DE DESBORDAMIENTO ESTRICTO ---
-      white-space: normal;       // Permite saltos de línea naturales
-      word-break: break-word;    // Rompe palabras excesivamente largas si es necesario
-      word-wrap: break-word;     // Compatibilidad para quiebre seguro de texto
-      overflow-wrap: anywhere;   // Fuerza al texto a respetarse dentro del bloque
-      min-width: 0;              // Evita que el contenedor asuma el ancho nativo del string largo
+      flex-grow: 1; 
+      white-space: normal;       
+      word-break: break-word;    
+      word-wrap: break-word;     
+      overflow-wrap: anywhere;   
+      min-width: 0;              
     }
   }
 }
 
-// Tabla interna simplificada de artículos dentro de la OC
 .table-inner-paper {
   width: 100%;
   margin-bottom: 20px;
   border-collapse: collapse;
   
   thead tr th {
-    background-color: #ffffff !important;
-    color: $cyan-ccm !important;
+    background-color: #ffffff;
+    color: $cyan-ccm;
     font-size: 0.68rem;
     padding: 8px 10px;
     border: 1px solid $cyan-dark-border;
@@ -498,16 +439,13 @@ h3 {
     padding: 8px 10px;
     font-size: 0.75rem;
     border: 1px solid rgba($cyan-dark-border, 0.2);
-    color: $text-dark-table !important;
+    color: $text-dark-table;
     background-color: rgba($cyan-ccm, 0.04);
   }
   
-  tbody tr:nth-child(even) td {
-    background-color: rgba($cyan-ccm, 0.01);
-  }
+  tbody tr:nth-child(even) td { background-color: rgba($cyan-ccm, 0.01); }
 }
 
-// Bloque de desglose financiero (Totales)
 .totals-paper-box {
   display: flex;
   justify-content: flex-end;
@@ -523,13 +461,8 @@ h3 {
     color: #64748b;
     margin-bottom: 4px;
 
-    span {
-      font-weight: 700;
-    }
-
-    strong {
-      color: $text-dark-table;
-    }
+    span { font-weight: 700; }
+    strong { color: $text-dark-table; }
 
     &.t-master {
       font-size: 0.9rem;
@@ -538,32 +471,26 @@ h3 {
       border-top: 1px solid $cyan-dark-border;
       padding-top: 4px;
       
-      strong {
-        color: $cyan-dark-border;
-      }
+      strong { color: $cyan-dark-border; }
     }
   }
 }
 
-// Área de Observaciones de propuesta
 .style-obs {
-  background-color: rgba($cyan-ccm, 0.02) !important;
+  background-color: rgba($cyan-ccm, 0.02);
   border: 1px solid rgba($cyan-dark-border, 0.4);
   color: $text-dark-table;
   font-size: 0.78rem;
   line-height: 1.5;
-  padding: 12px 14px !important;
-  
-  // --- CONTROL DE DESBORDAMIENTO ESTRICTO ---
-  display: block;            // Fuerza el comportamiento de bloque contenedor
-  width: 100%;               // Asegura que ocupe el ancho disponible sin pasarse
-  box-sizing: border-box;    // Incluye el padding dentro del cálculo del ancho total
-  white-space: pre-wrap;     // Conserva saltos de línea manuales (\n) pero salta automáticamente al llegar al borde
-  word-break: break-word;    // Rompe strings o palabras huérfanas extremadamente largas
-  overflow-wrap: anywhere;   // Segunda capa de seguridad para forzar el quiebre de texto
+  padding: 12px 14px;
+  display: block;            
+  width: 100%;               
+  box-sizing: border-box;    
+  white-space: pre-wrap;     
+  word-break: break-word;    
+  overflow-wrap: anywhere;   
 }
 
-// Cajas contenedoras de archivos Adjuntos digitales
 .attachment-item-box {
   display: flex;
   align-items: center;
@@ -612,9 +539,8 @@ h3 {
   }
 }
 
-// Footer y alineaciones del modal
 .modal-footer {
-  background-color: #ffffff !important;
+  background-color: #ffffff;
   border-top: 2px solid $cyan-dark-border;
   padding: 14px 20px;
 }
@@ -625,116 +551,82 @@ h3 {
   align-items: center;
   width: 100%;
   
-  .left-box { 
-    display: flex; 
-    align-items: center; 
-  }
-  .right-box { 
-    display: flex; 
-  }
+  .left-box { display: flex; align-items: center; }
+  .right-box { display: flex; }
 }
 
-// Botones de salida del modal (Cerrar / Cruz X superior)
 .btn-close-outline {
-  background-color: #ffffff !important;
-  border: 1px solid $cyan-dark-border !important;
-  color: $cyan-dark-border !important;
-  padding: 8px 18px !important;
-  border-radius: 4px !important;
-  font-weight: 700 !important;
-  font-size: 0.72rem !important;
+  background-color: #ffffff;
+  border: 1px solid $cyan-dark-border;
+  color: $cyan-dark-border;
+  padding: 8px 18px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.72rem;
   text-transform: uppercase;
   cursor: pointer;
   transition: all 0.15s ease;
 
   &:hover {
-    background-color: rgba($cyan-ccm, 0.08) !important;
-    border-color: darken($cyan-dark-border, 5%) !important;
+    background-color: rgba($cyan-ccm, 0.08);
+    border-color: darken($cyan-dark-border, 5%);
   }
 }
 
 .btn-close-x {
-  background: transparent !important;
-  border: none !important;
-  color: $cyan-ccm !important;
-  font-size: 1.2rem !important;
-  padding: 0 !important;
-  cursor: pointer;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  transition: transform 0.15s ease;
-
-  &:hover {
-    transform: scale(1.15);
-    color: $cyan-dark-border !important;
-  }
-}
-
-// Botón de descarga de PDF (Fondo blanco, borde e icono Magenta)
-.btn-magenta {
-  background-color: #ffffff !important;
-  color: #d946ef !important; /* Magenta intermedio corporativo */
-  border: 1px solid #b5179e !important; /* Borde magenta oscuro para legibilidad */
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
+  background: transparent;
+  border: none;
+  color: $cyan-ccm;
+  font-size: 1.2rem;
+  padding: 0;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  transition: transform 0.15s ease;
 
-  i { 
-    color: #d946ef !important; 
-  }
-  
   &:hover {
-    background-color: rgba(#d946ef, 0.08) !important;
-    transform: scale(1.05);
+    transform: scale(1.15);
+    color: $cyan-dark-border;
   }
 }
 
-// --- AJUSTES DE CELDAS SEPARADAS (ESTADO Y ACCIONES) ---
+.alert-anulacion-cyan-magenta {
+  background-color: #e1f5fe; // Fondo Cyan claro muy suave y limpio (estilo día)
+  color: #b90062;           // Magenta más tenue/oscuro (rematado para excelente legibilidad sobre cyan)
+  border-left: 5px solid #00bcd4; // Borde izquierdo Cyan intenso para destacar el tipo de alerta
+  padding: 14px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: left;         // Alineado a la izquierda para leer cómodamente párrafos de observaciones
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  animation: fadeInDown 0.3s ease-out;
 
-/* Columna Estado: Alineación de texto directa */
-.cell-estado {
-  text-align: center;
-  vertical-align: middle;
+  i {
+    font-size: 1.25rem;
+    color: #00bcd4;         // Icono en color Cyan destacado
+  }
 
-  .status-text-only-reg {
-    font-weight: 700;
-    font-size: 0.78rem;
+  strong {
+    font-weight: 600;
     letter-spacing: 0.3px;
   }
 }
 
-/* Columna Acciones: Forzar contenedor flex centrado en el medio del TD */
-/* Columna Acciones Separada */
-/* Columna Acciones: Clava los ojos a la derecha de forma uniforme */
-.cell-acciones {
-  text-align: right;          /* Alinea el bloque hacia la derecha del td */
-  vertical-align: middle;     /* Centrado vertical nativo de la celda */
-  padding-right: 24px;        /* Margen idéntico al del <th> para que se vea simétrico */
-
-  .buttons-group-container {
-    display: inline-flex;     /* Permite manejar los botones como un conjunto inline */
-    flex-direction: row;      /* Renderiza de izquierda a derecha (PDF primero, Ojo después) */
-    align-items: center;      /* Línea central vertical perfecta entre el PDF y el Ojo */
-    justify-content: flex-end;/* Empuja los componentes al extremo derecho de su espacio */
-    gap: 8px;                 /* Separación exacta de 8px cuando coexisten ambos */
-    min-width: 72px;          /* ¡La clave! Espacio fijo para albergar [PDF + Ojo] sin moverse */
-    
-    button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      height: 32px;
-      width: 32px;
-      border-radius: 5px;
-      padding: 0;
-      box-sizing: border-box;
-      flex-shrink: 0;         /* Evita deformaciones */
-    }
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media print {
+  .no-print { display: none !important; }
 }

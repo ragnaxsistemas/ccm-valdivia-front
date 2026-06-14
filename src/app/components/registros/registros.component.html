@@ -139,6 +139,13 @@
         </button>
       </div>
 
+      @if (solicitudAnulacionActiva) {
+        <div class="alert-anulacion-cyan-magenta">
+          <i class="bi bi-exclamation-octagon-fill"></i> 
+          <strong>{{ ocSeleccionada.observacionAnulacion }}</strong>
+        </div>
+      }
+      
       <div class="modal-body-scroll">
         <div class="paper-view-container">
           
