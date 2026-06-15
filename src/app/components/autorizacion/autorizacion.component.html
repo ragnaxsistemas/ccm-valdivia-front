@@ -1,14 +1,14 @@
 <div class="container-fluid mt-3">
   <h3 class="mustard-text mb-4">
-    <i class="bi bi-shield-check"></i> AUTORIZACIÓN DE ÓRDENES
+    <i class="bi bi-shield-check"></i> AUTORIZACIÓN DE ÓRDENES DE COMPRA
   </h3>
 
   <div class="card-filtro-auth no-print mb-4">
     <div class="filter-group-auth">
-      <label class="filter-label-auth">FILTRAR POR UNIDAD COMPRADORA</label>
+      <label class="filter-label-auth">FILTRAR POR UNIDAD REQUIRIENTE</label>
       <div class="select-wrapper-auth">
         <select [(ngModel)]="unidadSeleccionada" (change)="cargarPendientes()" class="select-unidad-auth">
-          <option value="">TODAS LAS UNIDADES COMPRADORAS</option>
+          <option value="">TODAS LAS UNIDADES REQUIRIENTES</option>
           @for (u of unidades; track u.codigoUnidad) {
             <option [value]="u.codigoUnidad">
               {{ u.nombreUnidad | uppercase }}
@@ -26,7 +26,7 @@
           <th>CÓDIGO</th>
           <th>FECHA</th>
           <th>USUARIO CREADOR</th>
-          <th>UNIDAD</th>
+          <th>UNIDAD REQUIRIENTE</th>
           <th class="text-end">TOTAL</th>
           <th class="text-center">ACCIONES</th>
         </tr>
@@ -88,12 +88,12 @@
         <div class="paper-view-container">
           
           <!-- SECCIÓN I: ANTECEDENTES GENERALES -->
-          <div class="section-title-auth">I. ANTECEDENTES GENERALES</div>
+          <div class="section-title-auth">ANTECEDENTES GENERALES</div>
           <div class="grid-info-auth">
             <div class="info-block"><span class="lbl">FOLIO OC:</span><span class="val fw-bold text-primary">{{ ocSeleccionada.codOrdenCompra }}</span></div>
             <div class="info-block"><span class="lbl">Fecha Emisión:</span><span class="val">{{ ocSeleccionada.fechaOrdenCompra | date:'dd/MM/yyyy HH:mm' }}</span></div>
             <div class="info-block"><span class="lbl">Tipo DTE:</span><span class="val text-success">{{ (ocSeleccionada.nombreDocumentoTributario || ocSeleccionada.dteSeleccionado?.nombreDocumentoTributario || '—') | uppercase }}</span></div>
-            <div class="info-block"><span class="lbl">Unidad Compradora:</span><span class="val">{{ (ocSeleccionada.nombreUnidad || ocSeleccionada.nombreUnidadCompradora || '—') | uppercase }}</span></div>
+            <div class="info-block"><span class="lbl">Unidad Requiriente:</span><span class="val">{{ (ocSeleccionada.nombreUnidad || ocSeleccionada.nombreUnidadCompradora || '—') | uppercase }}</span></div>
             <div class="info-block"><span class="lbl">Creado por:</span><span class="val">{{ ocSeleccionada.nombreUsuarioCreador | uppercase}} {{ ocSeleccionada.apellidoUsuarioCreador | uppercase}}</span></div>
             <div class="info-block"><span class="lbl">Solicitante:</span><span class="val">{{ ocSeleccionada.nombreUsuarioSolicitante | uppercase }} {{ ocSeleccionada.apellidoUsuarioSolicitante | uppercase }}</span></div>
             
@@ -102,7 +102,7 @@
           </div>
 
           <!-- SECCIÓN II: DATOS DEL PROVEEDOR Y GIRO -->
-          <div class="section-title-auth">II. DATOS DEL PROVEEDOR, GIRO Y UBICACIÓN</div>
+          <div class="section-title-auth">DATOS DEL PROVEEDOR</div>
           <div class="grid-info-auth">
             <div class="info-block"><span class="lbl">Razón Social:</span><span class="val">{{ ocSeleccionada.nombreProveedor | uppercase }}</span></div>
             <div class="info-block"><span class="lbl">RUT Proveedor:</span><span class="val">{{ ocSeleccionada.rutProveedor }}</span></div>
@@ -112,16 +112,16 @@
             <div class="info-block col-span-2"><span class="lbl">Giro Código / Actividad:</span><span class="val text-warning">{{ (ocSeleccionada.codGiroSeleccionado || '') }} - {{ (ocSeleccionada.giroProveedor || ocSeleccionada.nombreGiroSii || '—') | uppercase }}</span></div>
           </div>
 
-          <!-- SECCIÓN III: DESGLOSE DE PRODUCTOS / SERVICIOS -->
-          <div class="section-title-auth">III. DESGLOSE DE PRODUCTOS / SERVICIOS</div>
+          <!-- SECCIÓN : PRODUCTOS / SERVICIOS -->
+          <div class="section-title-auth">PRODUCTOS / SERVICIOS</div>
           <table class="table-inner-paper">
             <thead>
               <tr>
                 <th>N°</th>
-                <th>Descripción Artículo</th>
+                <th>Descripción</th>
                 <th class="text-end">Valor Unit.</th>
                 <th class="text-center">Cant.</th>
-                <th class="text-end">Total línea</th>
+                <th class="text-end">Total</th>
               </tr>
             </thead>
             <tbody>
@@ -138,7 +138,7 @@
           </table>
 
           <!-- NUEVA SECCIÓN IV: TOTALES FINANCIEROS -->
-          <div class="section-title-auth">IV. RESUMEN FINANCIERO</div>
+          
             <div class="totals-paper-box">
               <div>
                 <div class="t-row">
@@ -177,13 +177,13 @@
             </div>
 
           <!-- SECCIÓN V: OBSERVACIONES DE LA PROPUESTA -->
-          <div class="section-title-auth">V. OBSERVACIONES DE LA PROPUESTA</div>
+          <div class="section-title-auth">OBSERVACIONES</div>
           <div class="p-2 mb-3 bg-dark text-light rounded small italic style-obs">
             {{ ocSeleccionada.observaciones || 'Sin observaciones registradas por el creador.' }}
           </div>
 
           <!-- SECCIÓN VI: ADJUNTOS DIGITALES DE RESPALDO -->
-          <div class="section-title-auth">VI. ADJUNTOS DIGITALES DE RESPALDO</div>
+          <div class="section-title-auth">DOCUMENTOS ADJUNTOS</div>
           <div class="row g-2">
             <!-- Corregido: Se enlaza directamente con listaAdjuntosOC cargado asíncronamente en verDetalle() -->
             @if (listaAdjuntosOC && listaAdjuntosOC.length > 0) {
@@ -222,7 +222,7 @@
                 <i class="bi bi-arrow-left-right"></i> DEVOLVER
               </button>
               <button type="button" class="btn-action-oc btn-authorize-auth" (click)="abrirConfirmar(ocSeleccionada, 'autorizar')">
-                <i class="bi bi-check-all"></i> AUTORIZAR ORDEN
+                <i class="bi bi-check-all"></i> AUTORIZAR
               </button>
             } @else {
               <button type="button" class="btn-action-oc btn-return-auth" (click)="solicitarAnulacion(ocSeleccionada)">

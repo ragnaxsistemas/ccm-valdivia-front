@@ -246,7 +246,7 @@ $ccm-text-dark: #333;
   }
 }
 
-// 🔄 REGISTRO DE SELECTORES HOMOLOGADOS (Giro y Unidad Compradora)
+// 🔄 REGISTRO DE SELECTORES HOMOLOGADOS (Giro y Unidad Requiriente)
 select.select-giro-custom,
 select.select-unidad-custom { 
   width: 100% !important;
@@ -1168,4 +1168,101 @@ select.select-unidad-custom {
 .counter-maxed {
   color: #b5179e !important; // Magenta corporativo para advertir el tope
   font-weight: 800;
+}
+
+.name-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  width: 100%;
+}
+
+// Estilo adaptado para el textarea que emula ser un input adaptativo
+.textarea-auto-grow {
+  width: 100% !important;
+  height: 38px; // Altura base para la primera línea
+  padding: 10px 12px !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 6px !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  color: #1e293b !important;
+  background-color: white !important;
+  box-sizing: border-box !important;
+  outline: none !important;
+  font-family: inherit;
+  resize: none !important; // Desactiva que el usuario lo arrastre manualmente
+  overflow-y: hidden !important; // Oculta barras verticales mientras crece de forma elástica
+  line-height: 1.4 !important;
+  display: block;
+
+  &:focus {
+    border-color: #4cb0c0 !important;
+    box-shadow: 0 0 0 3px rgba(76, 176, 192, 0.08) !important;
+  }
+
+  &:disabled {
+    background-color: #f8fafc !important;
+    color: #64748b !important;
+    border-color: #e2e8f0 !important;
+    cursor: not-allowed;
+  }
+}
+
+// Contador inferior ordenado
+.char-counter {
+  align-self: flex-end;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-family: monospace;
+  margin-top: 4px;
+}
+
+/* Estilos para el nuevo textarea expansible dentro de la tabla */
+.textarea-product-grow {
+  width: 100%;
+  border: none;
+  background: transparent;
+  resize: none;
+  overflow: hidden;
+  font-size: 1.1em; /* Incrementa la fuente un 10% */
+  line-height: 1.4;
+  padding: 6px;
+  vertical-align: middle;
+  display: block;
+  font-family: inherit;
+  
+  &:focus {
+    outline: none;
+    background-color: #f8fbfd;
+  }
+}
+
+/* Contenedor y Badge del contador de líneas de impresión */
+.cell-line-counter {
+  vertical-align: middle;
+  background-color: #fafafa;
+  
+  .badge-lines {
+    display: inline-block;
+    padding: 3px 7px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #555;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    font-family: monospace;
+  }
+
+  .badge-lines-warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+  }
+}
+
+/* Alineación vertical para las celdas de la tabla con áreas de texto */
+.custom-table-thin tbody tr td {
+  vertical-align: middle;
 }

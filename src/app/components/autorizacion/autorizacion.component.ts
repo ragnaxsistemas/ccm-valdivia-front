@@ -334,7 +334,7 @@ verDetalle(oc: any) {
     this.http.post(`${this.API_OC}/autorizar`, body)
       .subscribe({
         next: () => {
-          Swal.fire('Éxito', 'La orden ha sido autorizada correctamente.', 'success');
+          Swal.fire('AUTORIZADA', 'La orden de compra ha sido autorizada correctamente.', 'success');
           this.ocSeleccionada = null;
           this.cargarPendientes(); // Recarga la grilla de pendientes en la bandeja
         },

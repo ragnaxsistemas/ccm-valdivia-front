@@ -201,13 +201,13 @@ export class ConfirmacionComponent implements OnInit {
     }
 
     Swal.fire({
-      title: '¿Confirmar Recepción de OC?',
-      text: 'Al confirmar, la orden pasará al estado final de gestión con despacho definitivo.',
+      title: '¿Confirmar Orden de Compra?',
+      text: 'Al confirmar, la orden de compra  será emitida y enviada directamente al proveedor.',
       icon: 'question',
       showCancelButton: true,
       confirmButtonColor: '#26c2d1', // Color cyan corporativo
       cancelButtonColor: '#6c757d',
-      confirmButtonText: 'SÍ, CONFIRMAR',
+      confirmButtonText: 'SÍ, CONFIRMAR Y ENVIAR',
       cancelButtonText: 'CANCELAR'
     }).then((result) => {
       if (result.isConfirmed) {
@@ -247,7 +247,7 @@ export class ConfirmacionComponent implements OnInit {
 
     this.http.post(`${this.API_OC}/confirmar`, body).subscribe({
       next: () => {
-        Swal.fire('Confirmada', 'La orden ha sido confirmada con éxito.', 'success');
+        Swal.fire('Confirmada', 'La orden de compra ha sido emitida y enviada al proveedor exitosamente.', 'success');
         this.ocSeleccionada = null;
         this.cargarOrdenesAutorizadas(); // Refresca la grilla reactivamente
       },

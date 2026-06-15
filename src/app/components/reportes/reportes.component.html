@@ -1,20 +1,18 @@
 <div class="container-fluid mt-3">
   
   <h3 class="report-title-ccm mb-4">
-    <i class="bi bi-journal-check"></i> PANEL CENTRAL DE REPORTES Y AUDITORÍA
+    <i class="bi bi-journal-check"></i> REPORTES
   </h3>
 
   <div class="card-filtro-reporte mb-4" style="max-width: 650px;">
     <div class="filter-box-layout">
       <div class="filter-group-reg w-100">
-        <label class="filter-label-reg">SELECCIONE EL TIPO DE REPORTE ANALÍTICO</label>
+        <label class="filter-label-reg">SELECCIONE</label>
         <div class="select-wrapper-reg">
           <select [(ngModel)]="reporteSeleccionado" class="select-reg" (change)="onReporteChange()" style="height: 38px; font-size: 0.82rem;">
             <option value="">-- SELECCIONE UNA OPCIÓN --</option>
-            <option value="GASTO_UNIDAD">1. TOTAL CONSOLIDADO</option>
-            <option value="EFICIENCIA_TIEMPOS">2. TOTAL AUTORIZADO</option>
-            <option value="PROVEEDORES_CRITICOS">3. TOTAL ANULADO</option>
-            <option value="SIN_RESPALDO">4. HISTÓRICO</option>
+            <option value="GASTO_UNIDAD">TOTAL CONSOLIDADO</option>
+            <option value="SIN_RESPALDO">HISTÓRICO</option>
           </select>
         </div>
       </div>
@@ -31,10 +29,8 @@
           <div class="select-wrapper-reg">
             <select [(ngModel)]="filtrosGasto.mesesAtras" class="select-reg">
               <option [value]="null">HISTÓRICO COMPLETO</option>
-              <option [value]="0">ESTE MES CALENDARIO</option>
-              <option [value]="1">ÚLTIMO MES (MES ANTERIOR)</option>
-              <option [value]="2">HACE 2 MESES ATRÁS</option>
-              <option [value]="3">HACE 3 MESES ATRÁS</option>
+              <option [value]="0">MES ACTUAL</option>
+              <option [value]="1">MES ANTERIOR</option>
             </select>
           </div>
         </div>
@@ -52,7 +48,7 @@
               <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start border-bottom pb-2 mb-3">
                   <div>
-                    <span class="badge bg-secondary text-uppercase mb-1" style="font-size: 0.65rem;">Unidad Compradora</span>
+                    <span class="badge bg-secondary text-uppercase mb-1" style="font-size: 0.65rem;">Unidad Requiriente</span>
                     <h5 class="fw-bold text-dark m-0">ID UNIDAD: #{{ item.codigoUnidad }}</h5>
                   </div>
                   <span class="badge bg-info text-dark fw-bold px-2 py-1" style="font-size: 0.75rem;">
@@ -81,96 +77,6 @@
     }
   }
 
-  @if (reporteSeleccionado === 'EFICIENCIA_TIEMPOS') {
-    <div class="card-filtro-reporte mb-4" style="max-width: 450px; background-color: #f8fafc;">
-      <div class="d-flex align-items-end gap-3">
-        <div class="filter-group-reg flex-grow-1">
-          <label class="filter-label-reg">FILTRAR POR ID UNIDAD (OPCIONAL)</label>
-          <input type="text" [(ngModel)]="filtrosEficiencia.unidad" placeholder="Ej: 3" class="form-control form-control-sm" style="height: 34px; font-size: 0.78rem; font-weight: 700;">
-        </div>
-        <button class="btn btn-sm btn-primary px-4" style="background-color: #2c8a9a; border: none; height: 34px; font-weight: 700; font-size: 0.75rem;" (click)="cargarReporteEficiencia()">
-          <i class="bi bi-clock-history"></i> CALCULAR
-        </button>
-      </div>
-    </div>
-
-    @if (datosEficiencia.length > 0 && !loading) {
-      <div class="table-responsive shadow-sm p-3 bg-white rounded border">
-        <table class="table align-middle" style="font-size: 0.8rem;">
-          <thead class="table-light">
-            <tr>
-              <th>ID OC</th>
-              <th>FOLIO SISTEMA</th>
-              <th>UNIDAD ASOCIADA</th>
-              <th>FECHA CREACIÓN</th>
-              <th>FECHA AUTORIZACIÓN</th>
-              <th class="text-center text-danger fw-bold">DEMORA APROBACIÓN</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of datosEficiencia; track $index) {
-              <tr>
-                <td>{{ row.id_orden_compra }}</td>
-                <td class="fw-bold text-secondary">{{ row.codigo_orden_compra }}</td>
-                <td><span class="badge bg-light text-dark border">Unidad #{{ row.id_unidad }}</span></td>
-                <td>{{ row.fecha_creacion | date:'dd/MM/yyyy HH:mm' }}</td>
-                <td>{{ row.fecha_autorizacion | date:'dd/MM/yyyy HH:mm' }}</td>
-                <td class="text-center fw-bold text-danger fs-6">{{ row.horas_en_autorizar }} hrs</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    }
-  }
-
-  @if (reporteSeleccionado === 'PROVEEDORES_CRITICOS') {
-    <div class="card-filtro-reporte mb-4" style="max-width: 450px; background-color: #f8fafc;">
-      <div class="d-flex align-items-end gap-3">
-        <div class="filter-group-reg flex-grow-1">
-          <label class="filter-label-reg">LÍMITE DEL RANKING</label>
-          <div class="select-wrapper-reg">
-            <select [(ngModel)]="filtrosProveedores.limite" class="select-reg">
-              <option [value]="5">TOP 5 PROVEEDORES</option>
-              <option [value]="10">TOP 10 PROVEEDORES</option>
-              <option [value]="25">TOP 25 PROVEEDORES</option>
-            </select>
-          </div>
-        </div>
-        <button class="btn btn-sm btn-primary px-4" style="background-color: #2c8a9a; border: none; height: 34px; font-weight: 700; font-size: 0.75rem;" (click)="cargarReporteProveedores()">
-          <i class="bi bi-graph-up-arrow"></i> ANALIZAR
-        </button>
-      </div>
-    </div>
-
-    @if (datosProveedores.length > 0 && !loading) {
-      <div class="table-responsive shadow-sm p-3 bg-white rounded border">
-        <table class="table align-middle" style="font-size: 0.8rem;">
-          <thead class="table-light">
-            <tr>
-              <th>RUT PROVEEDOR</th>
-              <th>RAZÓN SOCIAL / NOMBRE</th>
-              <th class="text-center text-success">OCs EMITIDAS</th>
-              <th class="text-center text-danger">OCs ANULADAS</th>
-              <th class="text-end fw-bold">MONTO ADJUDICADO BRUTO</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of datosProveedores; track $index) {
-              <tr>
-                <td class="fw-bold text-secondary">{{ row.rut_proveedor }}</td>
-                <td class="text-uppercase fw-semibold">{{ row.nombre_proveedor }}</td>
-                <td class="text-center text-success fw-bold">{{ row.ordenes_exitosas }}</td>
-                <td class="text-center text-danger fw-bold">{{ row.ordenes_anuladas }}</td>
-                <td class="text-end fw-bold text-primary" style="color: #2c8a9a !important;">$ {{ row.monto_total_adjudicado | number:'1.0-0' }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    }
-  }
-
   @if (reporteSeleccionado === 'SIN_RESPALDO') {
     @if (datosSinRespaldo.length > 0 && !loading) {
       <div class="alert alert-danger d-flex align-items-center mb-4 p-3 shadow-sm" role="alert border-start border-4 border-danger">
@@ -186,7 +92,7 @@
           <thead class="table-dark">
             <tr>
               <th>CÓDIGO DE COMPRA</th>
-              <th>UNIDAD COMPRADORA</th>
+              <th>UNIDAD REQUIRIENTE</th>
               <th>FECHA EMISIÓN</th>
               <th>ESTADO ACTUAL OC</th>
               <th class="text-end text-warning">MONTO BRUTO COMPROMETIDO</th>

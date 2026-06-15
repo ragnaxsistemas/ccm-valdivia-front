@@ -21,6 +21,8 @@ export class DocumentacionComponent implements OnInit {
   
   // Signal para controlar el aviso visual de conexión
   cargando = signal<boolean>(false);
+  contactoEmail = signal<string>('julio.i.cornejo.g@gmail.com');
+  contactoWsp = signal<string>('+56993003452');
 
   ngOnInit(): void {
     // Capturamos las propiedades estáticas definidas en app.routes.ts

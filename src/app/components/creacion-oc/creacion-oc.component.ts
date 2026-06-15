@@ -4,11 +4,12 @@ import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { environment } from "../../../environments/environment";
 import { Subject, debounceTime, distinctUntilChanged, switchMap, of, catchError } from 'rxjs';
+import { AutoGrowDirective } from '../../shared/directives/auto-grow.directive';
 
 @Component({
   selector: 'app-creacion-oc',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AutoGrowDirective],
   templateUrl: './creacion-oc.component.html',
   styleUrls: ['./creacion-oc.component.scss']
 })
@@ -26,6 +27,7 @@ export class CreacionOcComponent implements OnInit {
   private readonly API_COMUNA = `${this.API_BASE}/api/v1/comuna`;
   private readonly API_UNIDADES = `${this.API_BASE}/api/v1/unidad-compradora/vld_ccm`;
 
+  protected readonly Math = Math;
   // Estado Principal de la OC
   ocData: any = null;
   loading: boolean = false;
@@ -187,7 +189,7 @@ export class CreacionOcComponent implements OnInit {
   }
 
   inicializarTabla() {
-    this.items = Array.from({ length: 5 }, () => ({
+    this.items = Array.from({ length: 1 }, () => ({
       codigoProducto: '', descripcionProducto: '', valorProducto: 0, cantidad: 1, total: 0
     }));
   }
@@ -272,7 +274,7 @@ export class CreacionOcComponent implements OnInit {
       }
     }
 
-    // 2. Resolver Unidad de Negocio / Unidad Compradora
+    // 2. Resolver Unidad de Negocio / Unidad Requiriente
     const codUnidadBD = borrador.codUnidad || borrador.unidad || unidadExec.codigoUnidad || null;
     const idUnidadBD = borrador.idUnidadCompradora || borrador.idUnidad || borrador.unidadId || unidadExec.idUnidad || null;
     const fecha =  this.obtenerFechaActual();
@@ -338,7 +340,7 @@ export class CreacionOcComponent implements OnInit {
           ...p,
           total: (p.valorProducto || 0) * (p.cantidad || 0)
         }));
-        while (this.items.length < 5) {
+        while (this.items.length < 1) {
           this.items.push({ codigoProducto: '', descripcionProducto: '', valorProducto: 0, cantidad: 1, total: 0 });
         }
       } catch (e) {
@@ -511,6 +513,36 @@ export class CreacionOcComponent implements OnInit {
     return !!this.dteSeleccionado;
   }
 
+  get totalLineasDocumento(): number {
+    // 1. Actividad: Mínimo 1 línea. Límite de bloque a 125 caracteres.
+    const textoActividad = this.nombreOrdenCompra || '';
+    const lineasActividad = textoActividad.length <= 125 ? 1 : Math.ceil(textoActividad.length / 125);
+
+    // 2. Tabla de Productos: Cada una de las filas asegura mínimo 1 línea. Límite a 50 caracteres.
+    const lineasProductos = this.items.reduce((acc, item) => {
+      const desc = item.descripcionProducto || '';
+      const lineasFila = desc.length <= 50 ? 1 : Math.ceil(desc.length / 50);
+      return acc + lineasFila;
+    }, 0);
+
+    // 3. Observaciones: Mínimo 1 línea. Límite a 90 caracteres.
+    const textoObs = this.observaciones || '';
+    const lineasObservaciones = textoObs.length <= 90 ? 1 : Math.ceil(textoObs.length / 90);
+
+    // Total estructurado base de impresión
+    return lineasActividad + lineasProductos + lineasObservaciones;
+  }
+
+  filtrarEscrituraLineas(event: KeyboardEvent): void {
+    const teclasPermitidas = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab'];
+    
+    // Si ya estamos en el límite de 15 líneas, bloquear cualquier entrada que no sea navegación/borrado
+    if (this.totalLineasDocumento >= 15 && !teclasPermitidas.includes(event.key)) {
+      event.preventDefault();
+      this.mostrarNotificacion('Se ha alcanzado el límite máximo de 15 líneas de impresión permitidas para este documento.', 'error');
+    }
+  }
+
   getProductosFiltrados(termino: string) {
     if (!termino || termino.length < 1) return [];
     const busqueda = termino.toLowerCase();
@@ -543,12 +575,12 @@ export class CreacionOcComponent implements OnInit {
 
   get puedeAgregarFila(): boolean {
     const todasConDescripcion = this.items.every(item => item.descripcionProducto && item.descripcionProducto.trim() !== '');
-    return this.items.length >= 5 && todasConDescripcion;
+    return this.items.length >= 1 && todasConDescripcion;
   }
 
   eliminarFila(index: number) {
     this.items.splice(index, 1);
-    if (this.items.length < 5) {
+    if (this.items.length < 1) {
       this.items.push({ codigoProducto: '', descripcionProducto: '', valorProducto: 0, cantidad: 0, total: 0 });
     }
     this.calcularTotales();
@@ -716,7 +748,7 @@ export class CreacionOcComponent implements OnInit {
       let camposFaltantes: string[] = [];
       
       if (!this.dteSeleccionado) camposFaltantes.push('Documento Tributario (DTE)');
-      if (!this.codUnidadCompradoraSeleccionada) camposFaltantes.push('Unidad Compradora');
+      if (!this.codUnidadCompradoraSeleccionada) camposFaltantes.push('Unidad Requiriente');
       if (!this.proveedorSeleccionado) camposFaltantes.push('Proveedor');
 
       this.mostrarNotificacion(`Para guardar el borrador debe seleccionar los siguientes campos obligatorios: ${camposFaltantes.join(', ')}.`, 'error');
