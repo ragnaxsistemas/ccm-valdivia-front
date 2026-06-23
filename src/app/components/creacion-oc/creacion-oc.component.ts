@@ -163,7 +163,7 @@ export class CreacionOcComponent implements OnInit {
   }
 
   cargarProveedores() {
-    this.http.get<any[]>(`${this.API_PROV}/all`)
+    this.http.get<any[]>(`${this.API_PROV}/activos`)
       .subscribe((res) => this.proveedores = res || []);
   }
 

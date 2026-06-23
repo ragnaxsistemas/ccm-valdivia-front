@@ -44,10 +44,6 @@
                 <button class="btn-cyan" (click)="verDetalle(oc)" title="Ver detalle/Validar">
                   <i class="bi bi-eye-fill"></i>
                 </button>
-                @if (esSupervisor()) {
-                  <button class="btn-cyan" (click)="abrirConfirmar(oc, 'autorizar')"> <i class="bi bi-check"></i> </button>
-                  <button class="btn-cyan" (click)="abrirConfirmar(oc, 'devolver')"> <i class="bi bi-arrow-left-right"></i> </button>
-                }
               </div>
             </td>
           </tr>
@@ -217,17 +213,20 @@
           </div>
           
           <div class="right-box">
-            @if (esSupervisor()) {
+            
               <button type="button" class="btn-action-oc btn-return-auth" (click)="abrirConfirmar(ocSeleccionada, 'devolver')">
                 <i class="bi bi-arrow-left-right"></i> DEVOLVER
               </button>
-              <button type="button" class="btn-action-oc btn-authorize-auth" (click)="abrirConfirmar(ocSeleccionada, 'autorizar')">
+              
+              @if (esSupervisor()) {
+                <button type="button" class="btn-action-oc btn-authorize-auth" (click)="abrirConfirmar(ocSeleccionada, 'autorizar')">
                 <i class="bi bi-check-all"></i> AUTORIZAR
               </button>
-            } @else {
-              <button type="button" class="btn-action-oc btn-return-auth" (click)="solicitarAnulacion(ocSeleccionada)">
+              } 
+              @else {
+             <!-- <button type="button" class="btn-action-oc btn-return-auth" (click)="solicitarAnulacion(ocSeleccionada)">
                 <i class="bi bi-x-circle"></i> SOLICITAR ANULACIÓN
-              </button>
+              </button>-->
             }
           </div>
         </div>

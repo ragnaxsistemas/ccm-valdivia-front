@@ -564,3 +564,39 @@ $text-white-gray: #f1f5f9;      // Letras claras auxiliares
     color: #0d6efd;
   }
 }
+
+.alert-anulacion-cyan-magenta {
+  background-color: #e1f5fe; // Fondo Cyan claro muy suave y limpio (estilo día)
+  color: #b90062;           // Magenta más tenue/oscuro (rematado para excelente legibilidad sobre cyan)
+  border-left: 5px solid #00bcd4; // Borde izquierdo Cyan intenso para destacar el tipo de alerta
+  padding: 14px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: left;         // Alineado a la izquierda para leer cómodamente párrafos de observaciones
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  animation: fadeInDown 0.3s ease-out;
+
+  i {
+    font-size: 1.25rem;
+    color: #00bcd4;         // Icono en color Cyan destacado
+  }
+
+  strong {
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

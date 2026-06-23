@@ -1,103 +1,371 @@
-$magenta: #d81b60;
-$cyan: #45b1c1;
+// --- CONFIGURACIÓN DE COLORES CORPORATIVOS (VALDIVIA CCM) ---
+$ccm-cyan: #4cb0c0;
+$ccm-magenta: #e91e63;
+$ccm-dark: #1e293b;
+$text-main: #334155;     // Gris Oscuro Principal
+$text-light: #475569;    // Modificado: Gris más oscuro para etiquetas de formulario
+$border-light: #cbd5e1;
+$bg-body: #f8fafc;
 
-.admin-wrapper {
-  height: calc(100vh - 120px); 
-  display: flex;
-  flex-direction: column;
-  overflow: hidden; 
+// Colores de Estados
+$bg-active: #e6f4ea;
+$text-active: #137333;
+$bg-inactive: #fce8e6;
+$text-inactive: #c5221f;
 
-  .admin-content-scroll {
-    flex: 1;
-    overflow-y: auto;
-    padding: 20px;
-    padding-bottom: 80px;
-
-    /* CONTENEDOR CENTRADO */
-    .container-fluid, .container-limit {
-        max-width: 1100px; /* Un poco más de aire para las columnas */
-        margin: 0 auto;
-    }
-    
-    &::-webkit-scrollbar { width: 8px; }
-    &::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
-  }
-}
-
-.admin-card {
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  margin-bottom: 25px;
-
-  .card-header-custom {
-    background: #f4f4f4;
-    padding: 8px 15px;
-    border-bottom: 1px solid #ccc;
-    .label-bold { font-weight: 800; font-size: 0.65rem; color: #666; text-transform: uppercase; }
-  }
-  .card-body { padding: 20px; } /* Más padding interno para respirar */
-}
-
-/* LABELS PEQUEÑAS (Esto es lo que faltaba en la captura) */
-.form-label-thin { 
-    font-weight: 700; 
-    font-size: 0.65rem; 
-    color: #888; 
-    text-transform: uppercase; 
-    margin-bottom: 4px; 
-    display: block; 
-}
-
-/* INPUTS COMPACTOS */
-.form-control-custom {
+:host {
   display: block;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 4px 10px;
+  background-color: $bg-body;
+  min-height: 100vh;
+}
+
+// --- CONTENEDOR MAESTRO ---
+.oc-main-container {
+  max-width: 1200px; 
+  margin: 0 auto;
+  padding: 30px 20px 100px 20px;
+}
+
+.cyan-text-val {
+  color: $ccm-cyan;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 1.4rem;
+  letter-spacing: 0.5px;
+}
+
+.text-magenta-val {
+  color: $ccm-magenta !important;
+}
+
+// --- LIENZOS TIPO TARJETA ---
+.card-filtro-valdivia {
+  position: relative;
+  background: #ffffff;
+  border-radius: 6px;
+  border: 1px solid $border-light;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
   width: 100%;
-  font-size: 0.8rem;
-  height: 32px; /* Altura controlada */
-  color: #333;
-  
-  &:focus { 
-    border-color: $magenta; 
-    outline: none; 
-    box-shadow: 0 0 0 2px rgba($magenta, 0.1); 
+
+  .card-header-valdivia {
+    background: #e2e8f0; // Modificado: Fondo de cabecera un poco más marcado
+    padding: 10px 16px;
+    border-bottom: 1px solid $border-light;
+
+    .label-bold-val {
+      font-weight: 800;
+      font-size: 0.75rem;
+      color: $text-main; // Modificado: Título superior de la tarjeta más oscuro
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
   }
 
-  &::placeholder { color: #ccc; font-size: 0.75rem; }
+  .card-body-valdivia {
+    padding: 20px;
+  }
 }
 
-/* Select múltiple y Caja de etiquetas */
-select.form-control-custom[multiple], 
-.selected-giros-box {
-    height: 120px !important; /* Forzamos altura para que no herede los 32px */
-    min-height: 120px;
+// --- MARCA DE AGUA CORPORATIVA EXTREMADAMENTE CLARA (0.007 OPACIDAD) ---
+.card-tabla-proveedores {
+  position: relative;
+  z-index: 1;
+
+  &::before {
+    content: "CCM VALDIVIA";
+    position: absolute;
+    top: 55%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-10deg);
+    font-size: 6.5rem;
+    font-weight: 900;
+    letter-spacing: 10px;
+    // Opacidad al mínimo absoluto (0.7%) para que sea una sombra imperceptible de fondo
+    color: rgba($ccm-cyan, 0.007); 
+    pointer-events: none; 
+    z-index: -1;          
+  }
 }
 
-/* BOTÓN CON SEPARACIÓN */
-.btn-save-custom {
-  background: $cyan; 
-  color: white; 
-  border: none; 
-  padding: 8px 30px;
-  border-radius: 4px; 
-  font-weight: 700; 
-  font-size: 0.75rem;
-  margin-top: 35px; /* Separación de seguridad */
-  cursor: pointer;
-  
-  &:hover { background: darken($cyan, 8%); }
+// --- LABELS E INPUTS HERMÉTICOS ---
+.filter-label-val {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: $text-light; // Aplica gris oscuro Slate-600 para excelente lectura
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  display: block;
+  letter-spacing: 0.3px;
 }
 
-/* TABLA CENTRADA Y COMPACTA */
-.table-responsive {
-    border-radius: 4px;
+.input-val, .select-val {
+  box-sizing: border-box !important; 
+  width: 100% !important;
+  height: 32px;
+  background-color: #4100;
+  color: $ccm-dark;
+  border: 1px solid $border-light;
+  padding: 0 10px; 
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  outline: none;
+  transition: all 0.15s ease;
+
+  &:focus {
+    border-color: $ccm-cyan;
+    box-shadow: 0 0 0 2px rgba($ccm-cyan, 0.1);
+  }
+
+  &[readonly] {
+    background-color: #f8fafc;
+    color: #94a3b8;
+    border-color: $border-light;
+    cursor: not-allowed;
+  }
 }
 
-.custom-table-admin {
+.key-field-status {
+  border-color: rgba($ccm-magenta, 0.4) !important;
+  color: $ccm-dark;
+  font-weight: 700;
+}
+
+.select-wrapper-val {
+  position: relative;
   width: 100%;
-  th { background: #f8f9fa; font-size: 0.65rem; color: #999; padding: 10px; text-transform: uppercase; border-bottom: 2px solid #eee; }
-  td { padding: 10px; border-bottom: 1px solid #eee; vertical-align: middle; font-size: 0.8rem; }
+
+  &::after {
+    content: '\F285';
+    font-family: 'bootstrap-icons';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.7rem;
+    color: $ccm-cyan;
+    pointer-events: none;
+  }
+
+  .select-val {
+    appearance: none;
+    padding-right: 30px;
+  }
+}
+
+// --- MULTI-SELECT Y CONTENEDORES ---
+.select-multiple-val, .selected-giros-container-val {
+  box-sizing: border-box !important; 
+  width: 100% !important;
+  height: 120px !important;
+  min-height: 120px;
+  background-color: #ffffff;
+  border: 1px solid $border-light;
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  outline: none;
+  overflow-y: auto;
+}
+
+.select-multiple-val option {
+  padding: 4px 8px;
+  border-radius: 3px;
+  margin-bottom: 2px;
+  color: $text-main;
+
+  &:checked {
+    background-color: rgba($ccm-cyan, 0.15) !important;
+    color: $ccm-dark;
+  }
+}
+
+.selected-giros-container-val {
+  background-color: #fafafa;
+}
+
+.giro-tag-badge {
+  display: inline-flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid rgba($ccm-magenta, 0.3);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+
+  .code-tag { color: $ccm-magenta; font-weight: 800; margin-right: 5px; }
+  .name-tag { color: $text-main; }
+
+  .remove-icon {
+    margin-left: 6px;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: color 0.1s ease;
+    &:hover { color: $ccm-magenta; }
+  }
+}
+
+// --- BUSCADOR ---
+.search-wrapper-val {
+  position: relative;
+  width: 320px;
+
+  .search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: $ccm-cyan;
+    font-size: 0.75rem;
+  }
+
+  .search-input {
+    padding-left: 30px;
+    font-size: 0.75rem;
+  }
+}
+
+// --- ACCIONES Y BOTONERA ---
+.contenedor-acciones-form {
+  margin-top: 24px; 
+  padding-top: 14px;
+  border-top: 1px dashed rgba($border-light, 0.7); 
+}
+
+.btn-val {
+  height: 34px;
+  padding: 0 24px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.1s ease;
+
+  &-primary {
+    background-color: $ccm-cyan;
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba($ccm-cyan, 0.15);
+    &:hover { background-color: darken($ccm-cyan, 5%); }
+  }
+
+  &-secondary {
+    background-color: #ffffff;
+    color: $text-main;
+    border: 1px solid $border-light;
+    &:hover { background-color: #f1f5f9; }
+  }
+}
+
+// --- BADGES DE ESTADO ---
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  border-radius: 50px;
+  letter-spacing: 0.3px;
+}
+
+.badge-active-val {
+  background-color: $bg-active;
+  color: $text-active;
+}
+
+.badge-inactive-val {
+  background-color: $bg-inactive;
+  color: $text-inactive;
+}
+
+// --- TABLA DE REGISTROS ---
+.table-container-val {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.custom-table-val {
+  width: 100%;
+  border-collapse: collapse;
+  background: transparent; 
+
+  thead tr th {
+    background-color: #f1f5f9; // Modificado: Cabecera un tono más oscuro
+    color: $ccm-dark;        // Modificado: Letra de cabecera oscura de alta calidad
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    padding: 12px;
+    border-bottom: 2px solid $ccm-cyan;
+    letter-spacing: 0.5px;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    background: transparent; 
+    transition: background-color 0.1s ease;
+
+    &:hover { background-color: rgba($ccm-cyan, 0.02); }
+
+    td {
+      padding: 12px;
+      font-size: 0.78rem;
+      color: $ccm-dark;
+      vertical-align: middle;
+    }
+  }
+}
+
+.provider-main-title {
+  font-weight: 700;
+  color: $ccm-dark;
+  font-size: 0.82rem;
+}
+
+.provider-sub-info {
+  font-size: 0.7rem;
+  color: #57606f; // Un gris más oscuro para la sub-información
+  display: flex;
+  gap: 10px;
+}
+
+.giros-scroll-cell {
+  max-height: 80px;
+  overflow-y: auto;
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-thumb { background: rgba($ccm-cyan, 0.3); border-radius: 2px; }
+}
+
+.giro-item-line {
+  font-size: 0.7rem;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  .bullet-cyan { color: $ccm-cyan; font-weight: bold; margin-right: 3px; }
+}
+
+.btn-table-action-edit {
+  background: #ffffff;
+  color: $ccm-cyan;
+  border: 1px solid rgba($ccm-cyan, 0.4);
+  padding: 4px 10px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+
+  &:hover {
+    background: $ccm-cyan;
+    color: #ffffff;
+  }
 }

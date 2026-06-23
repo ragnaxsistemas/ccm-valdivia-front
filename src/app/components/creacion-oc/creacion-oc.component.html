@@ -182,35 +182,39 @@
           
         </div> 
         <div class="name-section mt-4">
-        <div class="d-flex justify-content-between align-items-center">
-          <span class="badge" [ngClass]="totalLineasDocumento >= 15 ? 'bg-danger' : 'bg-secondary'">
-            ADVERTENCIA: Cantidad máxima de filas a utilizar entre los items 'Actividad', grilla de 'Producto/Servicio' y 'Observaciones' es de 15.
-          </span>
-          <br> 
-          <span class="badge" [ngClass]="totalLineasDocumento >= 15 ? 'bg-danger' : 'bg-secondary'">
-            Utilizadas actualmente {{ totalLineasDocumento }} de 15
-          </span>
-          <label class="form-label-thin">ACTIVIDAD</label>
-          <!-- Contador global flotante opcional para avisar al usuario -->
-          
-        </div>
-        <textarea class="form-control-thin textarea-auto-grow" 
-            appAutoGrow
-            [(ngModel)]="nombreOrdenCompra" 
-            [disabled]="!puedeEditarItems"
-            [placeholder]="!puedeEditarItems ? 'SELECCIONE TIPO DOCUMENTO TRIBUTARIO (DTE) PARA EMPEZAR...' : 'EJ: ADQUISICIÓN DE MATERIALES...'"
-            maxlength="200"
-            rows="1"
-            (keydown)="filtrarEscrituraLineas($event)"
-            (keydown.enter)="$event.preventDefault()">
-        </textarea>
+          <!-- Nueva estructura del cuadro de advertencia magenta -->
+          <div class="alert-lines-cyan mb-3">
+            <div class="alert-content">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              <div>
+                <p class="alert-title">ADVERTENCIA: Cantidad máxima de filas a utilizar entre los items 'Actividad', grilla de 'Producto/Servicio' y 'Observaciones' es de 15.</p>
+                <p class="alert-subtitle">Utilizadas actualmente <strong>{{ totalLineasDocumento }}</strong> de 15</p>
+              </div>
+            </div>
+          </div>
 
-        <div class="char-counter">
-          <span>{{ (nombreOrdenCompra || '').length }}</span> / 200 caracteres
-        </div>  
-      </div>
+          <!-- Label de Actividad Homologado -->
+          <label class="form-label-thin">ACTIVIDAD</label>
+          
+          <textarea class="form-control-thin textarea-auto-grow" 
+              appAutoGrow
+              [(ngModel)]="nombreOrdenCompra" 
+              [disabled]="!puedeEditarItems"
+              [placeholder]="!puedeEditarItems ? 'SELECCIONE TIPO DOCUMENTO TRIBUTARIO (DTE) PARA EMPEZAR...' : 'EJ: ADQUISICIÓN DE MATERIALES...'"
+              maxlength="200"
+              rows="1"
+              (keydown)="filtrarEscrituraLineas($event)"
+              (keydown.enter)="$event.preventDefault()">
+          </textarea>
+
+          <div class="char-counter">
+            <span>{{ (nombreOrdenCompra || '').length }}</span> / 200 caracteres
+          </div>  
+        </div>
         
+      
         <div class="oc-products-section mt-4">
+          <label class="form-label-thin">PRODUCTO / SERVICIO</label>
           <table class="table table-bordered custom-table-thin">
             <thead>
               <tr>

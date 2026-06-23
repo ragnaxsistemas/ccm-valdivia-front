@@ -23,10 +23,12 @@ export class AnulacionComponent implements OnInit {
   private readonly API_OC = `${this.API_BASE}/api/v1/oc/ordenes-compra`;
   private readonly API_BUSQUEDA_AVANZADA = `${this.API_BASE}/api/v1/oc/ordenes-compra/busqueda-avanzada`;
   private readonly API_UNIDADES = `${this.API_BASE}/api/v1/unidad-compradora/vld_ccm`;
+  private readonly API_GET_PENDIENTE_ANULACION = `${this.API_BASE}/api/v1/oc/ordenes-compra/pendiente-anulacion`;
 
   listaAutorizadas: any[] = [];
   ocSeleccionada: any = null;
   loading: boolean = false;
+  solicitudAnulacionActiva: boolean = false;
 
   unidades: any[] = [];
   unidadSeleccionada: string = '';
@@ -42,7 +44,7 @@ export class AnulacionComponent implements OnInit {
     this.usuarioInfo = this.authService.user();
     this.obtenerRolDesdeStorage(); // <-- Captura infalible del Rol de Sesión
     this.cargarUnidades();
-    this.cargarOrdenesAutorizadas();
+    this.cargarOrdenesConfirmadas();
   }
 
   /**
@@ -80,11 +82,11 @@ export class AnulacionComponent implements OnInit {
     });
   }
 
-  cargarOrdenesAutorizadas() {
+  cargarOrdenesConfirmadas() {
     this.loading = true;
 
     let params = new HttpParams()
-      .set('codEstadoOc', 'autorizado') 
+      .set('codEstadoOc', 'confirmada') 
       .set('page', '0')                             
       .set('size', '10')
       .set('sort', 'idOrdenCompra,desc');
@@ -114,9 +116,46 @@ export class AnulacionComponent implements OnInit {
   verDetalle(oc: any) {
     this.ocSeleccionada = oc;
     this.listaAdjuntosOC = []; // Limpiamos la bandeja del modal
-    
+    this.solicitudAnulacionActiva = false; // Reset de la alerta de anulación
+
     const codigoOC = oc.codOrdenCompra || oc.codigoOrdenCompra;
     if (!codigoOC) return;
+
+     // ===================================================================
+    // 🔍 NUEVA VALIDACIÓN: BUSCAR SOLICITUD DE ANULACIÓN ACTIVA
+    // ===================================================================
+    console.log(`🔍 [Ver Detalle] Verificando si la OC ${codigoOC} posee solicitudes de anulación activas...`);
+    
+    // Configuramos los parámetros. Enviamos el estado correspondiente si tu regla de negocio lo exige.
+    let paramsAnulacion = new HttpParams().set('codOrdenCompra', codigoOC);
+
+    this.http.get<any>(this.API_GET_PENDIENTE_ANULACION, { params: paramsAnulacion }).subscribe({
+      next: (res) => {
+        console.log('📦 [Ver Detalle - Anulación] Respuesta cruda del servidor:', res);
+
+        // Evaluamos según la estructura de PendienteAnulacionDTO recibida
+        // Si el endpoint retorna un listado (Page/Array), buscamos el elemento. Si retorna un objeto directo:
+        if (res) {
+          // Si el backend te devuelve un objeto directo mapeado al DTO enviado:
+          const cumpleCondicion = (res.codOrdenCompra === codigoOC || res.codOc === codigoOC) && res.active === true;
+          
+          // Por si el backend responde con una estructura paginada o lista (.content o Array) debido al volumen:
+          const listaDTOs = res.content || (Array.isArray(res) ? res : [res]);
+          const existeMatchActivo = listaDTOs.some((dto: any) => 
+            dto && (dto.codOrdenCompra === codigoOC) && dto.active === true
+          );
+
+          if (cumpleCondicion || existeMatchActivo) {
+            this.solicitudAnulacionActiva = true;
+            this.ocSeleccionada.observacionAnulacion = res.observacionAnulacion || 'Existe una solicitud de anulación activa para esta orden.';
+            console.log(`⚠️ [Ver Detalle - MATCH] La OC ${codigoOC} TIENE una solicitud de anulación activa.`);
+          }
+        }
+      },
+      error: (err) => {
+        console.error('❌ [Ver Detalle - Anulación] Error al consultar estado de anulación:', err);
+      }
+    });
 
     console.log(`[Adjuntos Anulación] Buscando archivos en servidor para la OC: ${codigoOC}`);
     
@@ -158,47 +197,75 @@ export class AnulacionComponent implements OnInit {
   /**
    * Modificado: Cambia de estado a revisión despachando usuarioExec y unidadExec
    */
-  devolver() {
-    if (!this.ocSeleccionada || !this.esSupervisor()) {
-      Swal.fire('Acceso Denegado', 'No tienes permisos de supervisor para devolver órdenes.', 'error');
-      return;
+  solicitarAnulacion(oc: any): void {
+      if (!oc) return;
+  
+      // Validación de seguridad inversa por si acaso
+      if (this.esSupervisor()) {
+        Swal.fire('Operación no permitida', 'Los supervisores deben gestionar la orden mediante los flujos de autorización o devolución.', 'warning');
+        return;
+      }
+  
+      Swal.fire({
+        title: '¿Solicitar Anulación de la Orden?',
+        text: `Esta acción enviará la OC ${oc.codOrdenCompra} a estado pendiente de anulación.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'SÍ, SOLICITAR',
+        cancelButtonText: 'CANCELAR'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          
+          // Extraemos los datos de la sesión activa de manera idéntica al flujo de supervisores
+          const usernameLogueado = localStorage.getItem('sub') || this.usuarioInfo?.sub || 'SISTEMA';
+          
+          const unidadRaw = localStorage.getItem('unidadNegocio');
+          let codUnidadEjecutor = '';
+          if (unidadRaw) {
+            try {
+              const unidadObj = JSON.parse(unidadRaw);
+              codUnidadEjecutor = unidadObj.codigoUnidad || '';
+            } catch (e) {
+              console.error('[Solicitar Anulación] Error al parsear unidadNegocio desde localStorage:', e);
+            }
+          }
+  
+          // Construcción del payload estructurado según PendienteAnulacionOrdenCompraRequest del Backend
+          const payload = {
+            codOc: oc.codOrdenCompra,
+            usuarioPendienteAnulacion: usernameLogueado,
+            unidadPendienteAnulacion: codUnidadEjecutor
+          };
+  
+          // --- ESCRITURA DE LOGS SOLICITADA ---
+          console.log('🚀 [Solicitar Anulación] Iniciando petición HTTP POST hacia el backend.');
+          console.log(`📌 [Solicitar Anulación] Endpoint destino: ${this.API_GET_PENDIENTE_ANULACION}`);
+          console.log('📦 [Solicitar Anulación] Cuerpo de la solicitud (PendienteAnulacionOrdenCompraRequest):', JSON.stringify(payload, null, 2));
+  
+          this.http.post<any>(this.API_GET_PENDIENTE_ANULACION, payload)
+            .subscribe({
+              next: (response) => {
+                // Log de éxito con la respuesta del DTO del backend
+                console.log('✅ [Solicitar Anulación - SUCCESS] Transacción exitosa procesada en el servidor. Respuesta:', response);
+                
+                Swal.fire('Solicitud Enviada', 'La solicitud de anulación ha sido registrada correctamente.', 'success');
+                this.ocSeleccionada = null; // Cierra el modal de manera limpia
+                this.cargarOrdenesConfirmadas();      // Refresca la grilla principal
+              },
+              error: (err) => {
+                // Log de falla detallado
+                console.error('❌ [Solicitar Anulación - ERROR] Error crítico al intentar cambiar el estado en el backend:', err);
+                
+                Swal.fire('Error', 'No se pudo procesar la solicitud de anulación en el servidor.', 'error');
+              }
+            });
+        }
+      });
     }
 
-    const usernameLogueado = localStorage.getItem('sub') || this.usuarioInfo?.sub || 'SISTEMA';
-
-    // EXTRACTOR DEL CÓDIGO DE UNIDAD DEL EJECUTOR (Desde localStorage)
-    const unidadRaw = localStorage.getItem('unidadNegocio');
-    let codUnidadEjecutor = '';
-    if (unidadRaw) {
-      try {
-        const unidadObj = JSON.parse(unidadRaw);
-        codUnidadEjecutor = unidadObj.codigoUnidad || '';
-      } catch (e) {
-        console.error('[Devolver Anulación] Error al parsear unidadNegocio:', e);
-      }
-    }
-
-    const body = {
-      codOc: this.ocSeleccionada.codOrdenCompra,
-      usuarioExec: usernameLogueado,
-      unidadExec: codUnidadEjecutor,
-      plantillaDTO: this.mapearAPlantilla(this.ocSeleccionada)
-    };
-
-    console.log("Payload para devolución (Bandeja Anulación):", body);
-
-    this.http.post(`${this.API_OC}/devolver`, body).subscribe({
-      next: () => {
-        Swal.fire('Devuelta', 'La orden fue devuelta a revisión con éxito.', 'info');
-        this.ocSeleccionada = null;
-        this.cargarOrdenesAutorizadas();
-      },
-      error: (err) => {
-        console.error('[Devolver Anulación - ERROR]', err);
-        Swal.fire('Error', 'No se pudo procesar la devolución en el servidor.', 'error');
-      }
-    });
-  }
+  
 
   /**
    * Modificado: Ejecuta la anulación definitiva enviando usuarioExec y unidadExec en la raíz
@@ -236,7 +303,7 @@ export class AnulacionComponent implements OnInit {
       next: () => {
         Swal.fire('Anulada', 'La orden ha sido anulada con éxito.', 'success');
         this.ocSeleccionada = null;
-        this.cargarOrdenesAutorizadas();
+        this.cargarOrdenesConfirmadas();
       },
       error: (err) => {
         console.error('[Anular - ERROR]', err);
@@ -287,10 +354,10 @@ export class AnulacionComponent implements OnInit {
       return;
     }
 
-    if (accion === 'devolver') {
+    /***if (accion === 'devolver') {
       this.devolver();
       return;
-    }
+    }***/
 
     Swal.fire({
       title: '¿Anular Orden de Compra?',

@@ -1,14 +1,14 @@
 <div class="container-fluid mt-3">
   <h3 class="cyan-text mb-4">
-    <i class="bi bi-x-circle-fill"></i> ANULACIÓN DE ÓRDENES AUTORIZADAS
+    <i class="bi bi-x-circle-fill"></i> ANULACIÓN DE ÓRDENES DE COMPRA
   </h3>
 
   <div class="card-filtro-auth no-print mb-4">
     <div class="filter-group-auth">
       <label class="filter-label-auth">FILTRAR POR UNIDAD REQUIRIENTE</label>
       <div class="select-wrapper-auth">
-        <select [(ngModel)]="unidadSeleccionada" (change)="cargarOrdenesAutorizadas()" class="select-unidad-auth">
-          <option value="">TODAS LAS UNIDADES COMPRADORAS</option>
+        <select [(ngModel)]="unidadSeleccionada" (change)="cargarOrdenesConfirmadas()" class="select-unidad-auth">
+          <option value="">TODAS LAS UNIDADES REQUIRIENTES</option>
           @for (u of unidades; track u.codigoUnidad) {
             <option [value]="u.codigoUnidad">
               {{ u.nombreUnidad | uppercase }}
@@ -26,7 +26,7 @@
           <th>CÓDIGO</th>
           <th>FECHA</th>
           <th>USUARIO CREADOR</th>
-          <th>UNIDAD</th>
+          <th>UNIDAD REQUIRIENTE</th>
           <th class="text-end">TOTAL</th>
           <th class="text-center">ACCIONES</th>
         </tr>
@@ -72,6 +72,13 @@
         </button>
       </div>
 
+       @if (solicitudAnulacionActiva) {
+        <div class="alert-anulacion-cyan-magenta">
+          <i class="bi bi-exclamation-octagon-fill"></i> 
+          <strong>{{ ocSeleccionada.observacionAnulacion }}</strong>
+        </div>
+      }
+      
       <div class="modal-body-scroll">
         <div class="paper-view-container">
           
@@ -199,12 +206,15 @@
           
           <div class="right-box">
             @if (esSupervisor()) {
-              <button type="button" class="btn-action-oc btn-return-auth" (click)="abrirConfirmar(ocSeleccionada, 'devolver')">
+              <!--<button type="button" class="btn-action-oc btn-return-auth" (click)="abrirConfirmar(ocSeleccionada, 'devolver')">
                 <i class="bi bi-arrow-left-right"></i> DEVOLVER
-              </button>
-              
+              </button>-->
               <button type="button" class="btn-action-oc btn-magenta-auth" (click)="abrirConfirmar(ocSeleccionada, 'anular')">
                 <i class="bi bi-x-circle"></i> ANULAR ORDEN DE COMPRA
+              </button>
+             } @else {
+              <button type="button" class="btn-action-oc btn-return-auth" (click)="solicitarAnulacion(ocSeleccionada)">
+                <i class="bi bi-x-circle"></i> SOLICITAR ANULACIÓN
               </button>
             }
           </div>

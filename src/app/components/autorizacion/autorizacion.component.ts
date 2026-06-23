@@ -35,7 +35,7 @@ export class AutorizacionComponent implements OnInit {
   ocSeleccionada: any = null;
   listaAdjuntosOC: any[] = [];
 
-  // 🔄 NUEVAS VARIABLES PARA UNIDADES COMPRADORAS
+  // 🔄 NUEVAS VARIABLES PARA UNIDADES REQUIRIENTES
   unidades: any[] = [];
   unidadSeleccionada: string = '';
 
@@ -267,11 +267,7 @@ verDetalle(oc: any) {
   }
 
   abrirConfirmar(oc: any, accion: string) {
-    if (!this.esSupervisor()) {
-      Swal.fire('No autorizado', 'Acceso restringido a Supervisores', 'warning');
-      return;
-    }
-
+    
     this.ocSeleccionada = oc;
     const esAutorizar = accion === 'autorizar';
 
@@ -347,10 +343,10 @@ verDetalle(oc: any) {
 
   devolver() {
     // 1. Validar que exista una OC seleccionada y que el usuario sea Supervisor
-    if (!this.ocSeleccionada || !this.esSupervisor()) {
-      Swal.fire('Acceso Denegado', 'No tienes permisos de supervisor para devolver órdenes.', 'error');
-      return;
-    }
+    //if (!this.ocSeleccionada || !this.esSupervisor()) {
+    //  Swal.fire('Acceso Denegado', 'No tienes permisos de supervisor para devolver órdenes.', 'error');
+    //  return;
+    //}
 
     console.log("Usuario en sesión para devolución:", this.usuarioInfo);
 
@@ -398,7 +394,7 @@ verDetalle(oc: any) {
       });
   }
   
-  solicitarAnulacion(oc: any): void {
+  /***solicitarAnulacion(oc: any): void {
     if (!oc) return;
 
     // Validación de seguridad inversa por si acaso
@@ -464,7 +460,7 @@ verDetalle(oc: any) {
           });
       }
     });
-  }
+  }***/
 
   private mapearAPlantilla(oc: any) {
     console.log("Mapeando OC a plantilla:", oc);

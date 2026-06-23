@@ -1,138 +1,195 @@
-<div class="admin-wrapper">
-  <div class="admin-header text-center mt-3"> 
-    <h1 class="title-thin"><i class="bi bi-person-badge me-2"></i>Gestión de Proveedores</h1>
-</div>
+<div class="oc-main-container">
+  
+  <div class="action-header mb-4">
+    <h3 class="cyan-text-val">
+      <i class="bi bi-person-badge-fill me-2"></i> GESTIÓN DE PROVEEDORES
+    </h3>
+  </div>
 
-  <div class="admin-content-scroll">
-
-    <div class="container-limit"> <div class="admin-card mb-4">
-      <div class="card-header-custom">
-        <span class="label-bold">{{ editMode ? 'Modificar Proveedor' : 'Crear Nuevo Proveedor' }}</span>
-      </div>
-      <div class="card-body">
-        <div class="row g-3">
-          <div class="col-md-3">
-            <label class="form-label-thin">RUT (Identificador)</label>
-            <input type="text" class="form-control-custom" [(ngModel)]="proveedorForm.rutProveedor" [readonly]="editMode" placeholder="12.345.678-9">
-          </div>
-          <div class="col-md-5">
-            <label class="form-label-thin">Razón Social</label>
-            <input type="text" class="form-control-custom" [(ngModel)]="proveedorForm.razonSocialProveedor">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label-thin">Nombre Fantasía</label>
-            <input type="text" class="form-control-custom" [(ngModel)]="proveedorForm.nombreProveedor">
-          </div>
-
-          <div class="col-md-12">
-            <label class="form-label-thin">Dirección</label>
-            <input type="text" class="form-control-custom" [(ngModel)]="proveedorForm.direccion">
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label-thin">Giros Comerciales (Ctrl + Click)</label>
-            <select class="form-control-custom" multiple [(ngModel)]="idsGirosSeleccionados" (change)="onGiroChange()" style="height: 120px;">
-              @for (g of giros; track g.codigoGiroSii) {
-                <option [value]="g.codigoGiroSii">{{ g.codigoGiroSii }} - {{ g.nombreGiroSii }}</option>
-              }
+  <div class="card-filtro-valdivia mb-4">
+    <div class="card-header-valdivia">
+      <span class="label-bold-val">
+        {{ editMode ? 'MODIFICAR FIELMENTE PROVEEDOR ACTUAL' : 'REGISTRAR NUEVO PROVEEDOR EN SISTEMA' }}
+      </span>
+    </div>
+    
+    <div class="card-body-valdivia">
+      <div class="row g-3">
+        
+        <div class="col-md-3">
+          <label class="filter-label-val">RUT (IDENTIFICADOR)</label>
+          <input type="text" class="input-val text-uppercase" [(ngModel)]="proveedorForm.rutProveedor" [readonly]="editMode" placeholder="EJ. 12.345.678-9">
+        </div>
+        <div class="col-md-4">
+          <label class="filter-label-val">RAZÓN SOCIAL</label>
+          <input type="text" class="input-val text-uppercase" [(ngModel)]="proveedorForm.razonSocialProveedor" placeholder="EJ. INVERSIONES VALDIVIA SPA">
+        </div>
+        <div class="col-md-3">
+          <label class="filter-label-val">NOMBRE FANTASÍA</label>
+          <input type="text" class="input-val text-uppercase" [(ngModel)]="proveedorForm.nombreProveedor" placeholder="EJ. COMERCIAL VALDIVIA">
+        </div>
+        <div class="col-md-2">
+          <label class="filter-label-val text-magenta-val">ESTADO OPERATIVO</label>
+          <div class="select-wrapper-val">
+            <select class="select-val key-field-status" [(ngModel)]="proveedorForm.activo">
+              <option [ngValue]="true">ACTIVO</option>
+              <option [ngValue]="false">INACTIVO</option>
             </select>
           </div>
-          <div class="col-md-6">
-            <label class="form-label-thin text-magenta">Giros Seleccionados ({{ proveedorForm.listaGiros?.length || 0 }})</label>
-            <div class="selected-giros-box">
-              <div class="d-flex flex-wrap gap-2">
-                @for (item of proveedorForm.listaGiros; track item.codigoGiroSii) {
-                  <div class="giro-tag">
-                    <span class="badge-code">{{ item.codigoGiroSii }}</span>
-                    <span class="badge-name">{{ item.nombreGiroSii }}</span>
-                    <i class="bi bi-x-circle-fill ms-1" (click)="quitarGiro(item.codigoGiroSii)" style="cursor:pointer; color: #ccc;"></i>
-                  </div>
-                }
-              </div>
+        </div>
+
+        <div class="col-md-12">
+          <label class="filter-label-val">DIRECCIÓN COMERCIAL</label>
+          <input type="text" class="input-val text-uppercase" [(ngModel)]="proveedorForm.direccion" placeholder="EJ. AV. PRAT #123">
+        </div>
+
+        <div class="col-md-6">
+          <label class="filter-label-val">GIROS COMERCIALES DISPONIBLES (CTRL + CLICK)</label>
+          <select class="select-multiple-val" multiple [(ngModel)]="idsGirosSeleccionados" (change)="onGiroChange()">
+            @for (g of giros; track g.codigoGiroSii) {
+              <option [value]="g.codigoGiroSii">[{{ g.codigoGiroSii }}] - {{ g.nombreGiroSii | uppercase }}</option>
+            }
+          </select>
+        </div>
+        
+        <div class="col-md-6">
+          <label class="filter-label-val text-magenta-val">GIROS SELECCIONADOS ({{ proveedorForm.listaGiros?.length || 0 }})</label>
+          <div class="selected-giros-container-val">
+            <div class="d-flex flex-wrap gap-2">
+              @for (item of proveedorForm.listaGiros; track item.codigoGiroSii) {
+                <div class="giro-tag-badge">
+                  <span class="code-tag">{{ item.codigoGiroSii }}</span>
+                  <span class="name-tag">{{ item.nombreGiroSii | uppercase }}</span>
+                  <i class="bi bi-x-circle-fill remove-icon" (click)="quitarGiro(item.codigoGiroSii)"></i>
+                </div>
+              } @empty {
+                <span class="text-muted small italic p-2">Ningún giro asociado actualmente.</span>
+              }
             </div>
           </div>
+        </div>
 
-          <div class="col-md-4">
-            <label class="form-label-thin">Correo Electrónico</label>
-            <input type="email" class="form-control-custom" [(ngModel)]="proveedorForm.emailProveedor">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label-thin">Teléfono de Contacto</label>
-            <input type="text" class="form-control-custom" [(ngModel)]="proveedorForm.telefonoContactoProveedor">
-          </div>
-          <div class="col-md-2">
-            <label class="form-label-thin">Región</label>
-            <select class="form-control-custom" [(ngModel)]="proveedorForm.codigoRegion" (change)="onRegionChange()">
-              <option [value]="null">Seleccione...</option>
+        <div class="col-md-4">
+          <label class="filter-label-val">CORREO ELECTRÓNICO</label>
+          <input type="email" class="input-val" [(ngModel)]="proveedorForm.emailProveedor" placeholder="EJ. contacto@empresa.cl">
+        </div>
+        <div class="col-md-4">
+          <label class="filter-label-val">TELÉFONO CONTACTO</label>
+          <input type="text" class="input-val" [(ngModel)]="proveedorForm.telefonoContactoProveedor" placeholder="EJ. +56912345678">
+        </div>
+        <div class="col-md-2">
+          <label class="filter-label-val">REGIÓN</label>
+          <div class="select-wrapper-val">
+            <select class="select-val" [(ngModel)]="proveedorForm.codigoRegion" (change)="onRegionChange()">
+              <option [value]="null">SELECCIONE...</option>
               @for (reg of regiones; track reg.codigoRegion) {
-                <option [value]="reg.codigoRegion">{{ reg.nombreRegion }}</option>
+                <option [value]="reg.codigoRegion">{{ reg.nombreRegion | uppercase }}</option>
               }
             </select>
           </div>
-          <div class="col-md-2">
-            <label class="form-label-thin">Comuna</label>
-            <select class="form-control-custom" [(ngModel)]="proveedorForm.codComuna" [disabled]="loadingComunas">
+        </div>
+        <div class="col-md-2">
+          <label class="filter-label-val">COMUNA</label>
+          <div class="select-wrapper-val">
+            <select class="select-val" [(ngModel)]="proveedorForm.codComuna" [disabled]="loadingComunas">
+              <option [value]="null">SELECCIONE...</option>
               @for (com of comunas; track com.codComuna) {
-                <option [value]="com.codComuna">{{ com.nombreComuna }}</option>
+                <option [value]="com.codComuna">{{ com.nombreComuna | uppercase }}</option>
               }
             </select>
           </div>
+        </div>
 
-          <div class="col-12 d-flex justify-content-end mt-2">
-            <button class="btn-save-custom px-5" (click)="submitForm()">
-              {{ editMode ? 'ACTUALIZAR PROVEEDOR' : 'GUARDAR PROVEEDOR' }}
+        <div class="col-12 text-end">
+          <div class="contenedor-acciones-form d-flex justify-content-end gap-2">
+            @if (editMode) {
+              <button class="btn-val btn-val-secondary" (click)="cancelarEdicion()">
+                <i class="bi bi-x-lg"></i> CANCELAR
+              </button>
+            }
+            <button class="btn-val btn-val-primary" (click)="submitForm()" [disabled]="loading">
+              <i class="bi bi-cloud-arrow-up-fill"></i> {{ editMode ? 'ACTUALIZAR PROVEEDOR' : 'GUARDAR PROVEEDOR' }}
             </button>
           </div>
         </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="card-filtro-valdivia card-tabla-proveedores">
+    <div class="card-header-valdivia d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <span class="label-bold-val">LISTADO HISTÓRICO DE PROVEEDORES REGISTRADOS</span>
+      
+      <div class="search-wrapper-val">
+        <i class="bi bi-search search-icon"></i>
+        <input type="text" class="input-val search-input" placeholder="Buscar por RUT, Razón Social o Fantasía..." [(ngModel)]="filtroBusqueda">
       </div>
     </div>
 
-    <div class="admin-card">
-      <div class="card-header-custom d-flex justify-content-between align-items-center">
-        <span class="label-bold">LISTADO DE PROVEEDORES</span>
-        <div class="search-box">
-          <i class="bi bi-search"></i>
-          <input type="text" placeholder="Buscar..." class="search-input" [(ngModel)]="filtroBusqueda">
-        </div>
-      </div>
-      <div class="table-responsive">
-        <table class="table custom-table-admin mb-0">
-          <thead>
+    <div class="table-container-val">
+      <table class="table custom-table-val mb-0">
+        <thead>
+          <tr>
+            <th width="140">RUT</th>
+            <th>DATOS DEL PROVEEDOR</th>
+            <th>GIROS ASOCIADOS</th>
+            <th width="100" class="text-center">ESTADO</th>
+            <th width="110" class="text-center">ACCIONES</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of proveedoresFiltrados; track p.rutProveedor) {
             <tr>
-              <th width="150">RUT</th>
-              <th>PROVEEDOR</th>
-              <th>GIRO PRINCIPAL</th>
-              <th width="100" class="text-center">ACCIÓN</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (p of proveedoresFiltrados; track p.rutProveedor) {
-              <tr>
-                <td class="text-magenta fw-bold">{{ p.rutProveedor }}</td>
-                <td>
-                  <div class="val-black">{{ p.nombreProveedor }}</div>
-                  <div class="text-muted small">{{ p.emailProveedor }}</div>
-                </td>
-                <td class="small">
-                    <div class="giros-list-cell">
-                        @for (giro of p.listaGiros; track giro.codigoGiroSii) {
-                        <div class="giro-item-text">
-                            <span class="fw-bold text-magenta">•</span> {{ giro.nombreGiroSii }}
-                        </div>
-                        } @empty {
-                        <span class="text-muted italic">Sin giros registrados</span>
-                        }
+              <td class="text-magenta-val text-center fw-bold text-nowrap">{{ p.rutProveedor }}</td>
+              <td>
+                <div class="provider-main-title">{{ p.nombreProveedor | uppercase }}</div>
+                @if (p.razonSocialProveedor && p.razonSocialProveedor !== p.nombreProveedor) {
+                  <div class="text-muted small text-uppercase mb-1">{{ p.razonSocialProveedor }}</div>
+                }
+                <div class="provider-sub-info">
+                  <span><i class="bi bi-envelope me-1"></i>{{ p.emailProveedor || 'Sin correo' }}</span>
+                  @if (p.telefonoContactoProveedor) {
+                    <span class="ms-3"><i class="bi bi-telephone me-1"></i>{{ p.telefonoContactoProveedor }}</span>
+                  }
+                </div>
+              </td>
+              <td>
+                <div class="giros-scroll-cell">
+                  @for (giro of p.listaGiros; track giro.codigoGiroSii) {
+                    <div class="giro-item-line">
+                      <span class="bullet-cyan">•</span>
+                      <small class="text-muted fw-bold">[{{ giro.codigoGiroSii }}]</small> 
+                      <span class="giro-text">{{ giro.nombreGiroSii | uppercase }}</span>
                     </div>
-                </td>
-                <td class="text-center">
-                  <button class="btn-modify-action" (click)="seleccionarParaModificar(p)">Modificar</button>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </div>
+                  } @empty {
+                    <span class="text-muted small italic">Sin giros comerciales registrados.</span>
+                  }
+                </div>
+              </td>
+              <td class="text-center text-nowrap">
+                @if (p.activo) {
+                  <span class="status-badge badge-active-val"><i class="bi bi-check-circle-fill me-1"></i> ACTIVO</span>
+                } @else {
+                  <span class="status-badge badge-inactive-val"><i class="bi bi-x-circle-fill me-1"></i> INACTIVO</span>
+                }
+              </td>
+              <td class="text-center">
+                <button class="btn-table-action-edit" (click)="seleccionarParaModificar(p)" title="Editar Ficha">
+                  <i class="bi bi-pencil-square"></i> MODIFICAR
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="text-center py-4 text-muted">
+                <i class="bi bi-exclamation-circle-fill me-2"></i> No se encontraron registros de proveedores en el sistema.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
     </div>
   </div>
+
 </div>
