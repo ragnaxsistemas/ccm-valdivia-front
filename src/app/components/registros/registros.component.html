@@ -39,6 +39,7 @@
           <button class="btn-search-reg" (click)="buscar()">
             <i class="bi bi-search"></i> BUSCAR
           </button>
+          
           <button class="btn-clear-reg" (click)="limpiarFiltros()" title="Limpiar Filtros">
             <i class="bi bi-eraser"></i>
           </button>
@@ -71,6 +72,8 @@
 
     </div>
   </div>
+
+  
 
   <!-- TABLA PRINCIPAL DE REGISTROS -->
   <div class="table-container shadow-sm p-3 rounded">
@@ -122,6 +125,61 @@
     </tbody>
   </table>
 </div>
+
+@if (totalPaginas > 1) {
+    <div class="ccm-pagination-container no-print">
+      
+      <!-- Lado Izquierdo: Contador Informativo Compacto -->
+      <div class="ccm-pagination-info">
+        MOSTRANDO PÁGINA <strong>{{ paginaActual + 1 }}</strong> DE <strong>{{ totalPaginas }}</strong> 
+        <span class="ccm-separator">|</span> TOTAL DE REGISTROS: <strong>{{ totalElementos }}</strong>
+      </div>
+      
+      <!-- Lado Derecho: Botones de Acción Estilizados -->
+      <div class="ccm-pagination-actions">
+        <button 
+          class="btn-ccm-pag" 
+          [disabled]="paginaActual === 0" 
+          (click)="paginaAnterior()">
+          <i class="bi bi-chevron-left"></i> ANTERIOR
+        </button>
+        
+        <button 
+          class="btn-ccm-pag" 
+          [disabled]="paginaActual >= totalPaginas - 1" 
+          (click)="paginaSiguiente()">
+          SIGUIENTE <i class="bi bi-chevron-right"></i>
+        </button>
+
+        <button class="btn-excel-reg" (click)="exportarAExcel()" title="Exportar toda la búsqueda a Excel">
+            <i class="bi bi-file-earmark-excel-fill"></i> DESCARGAR BUSQUEDA
+          </button>
+      </div>
+      
+    </div>
+  }
+  
+
+  <!-- =================================================================== -->
+  <!-- ⏳ MODAL DE CARGA PARA EXPORTACIÓN DE EXCEL                          -->
+  <!-- =================================================================== -->
+  @if (exportandoExcel) {
+  <div class="modal-overlay-auth no-print" style="z-index: 2000;">
+    <div class="modal-window-auth" style="max-width: 400px; padding: 30px; text-align: center; align-items: center;">
+      
+      <!-- Spinner Animado con CSS Puro -->
+      <div class="ccm-excel-spinner mb-4"></div>
+      
+      <h5 class="font-bold mb-2" style="color: #2c8a9a; letter-spacing: 0.3px; font-size: 1rem;">
+        EXPORTANDO BUSQUEDA
+      </h5>
+      <p class="text-muted small px-2 mb-0">
+        Por favor espere, estamos procesando y preparando el archivo Excel con los resultados de la búsqueda solicitada...
+      </p>
+
+    </div>
+  </div>
+}
 
 <!-- =================================================================== -->
 <!-- MODAL DE VISTA PREVIA (SOLO LECTURA) CON ESTILOS ORIGINALES        -->

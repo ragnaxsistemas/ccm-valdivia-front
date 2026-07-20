@@ -18,7 +18,14 @@
         
         <div class="col-md-3">
           <label class="filter-label-val">RUT (IDENTIFICADOR)</label>
-          <input type="text" class="input-val text-uppercase" [(ngModel)]="proveedorForm.rutProveedor" [readonly]="editMode" placeholder="EJ. 12.345.678-9">
+          <input 
+            type="text" 
+            class="input-val text-uppercase" 
+            [ngModel]="proveedorForm.rutProveedor"
+            (input)="onRutInput($event)"
+            [readonly]="editMode" 
+            placeholder="EJ. 12.345.678-9"
+            maxlength="12">
         </div>
         <div class="col-md-4">
           <label class="filter-label-val">RAZÓN SOCIAL</label>

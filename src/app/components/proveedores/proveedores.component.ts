@@ -107,7 +107,76 @@ export class ProveedoresComponent implements OnInit {
       }));
   }
 
+  // --- NUEVOS MÉTODOS PARA RUT (FORMATEO Y VALIDACIÓN) ---
+  
+  onRutInput(event: any) {
+    let valor = event.target.value.replace(/[^0-9kK]/g, '').toUpperCase();
+    
+    if (valor.length === 0) {
+      this.proveedorForm.rutProveedor = '';
+      return;
+    }
+
+    let cuerpo = valor.slice(0, -1);
+    let dv = valor.slice(-1);
+
+    // Formatear con puntos y guion a medida que escribe
+    let cuerpoFormateado = '';
+    while (cuerpo.length > 3) {
+      cuerpoFormateado = '.' + cuerpo.slice(-3) + cuerpoFormateado;
+      cuerpo = cuerpo.slice(0, -3);
+    }
+    cuerpoFormateado = cuerpo + cuerpoFormateado;
+
+    this.proveedorForm.rutProveedor = cuerpoFormateado + '-' + dv;
+  }
+
+  validarRutChileno(rut: string): boolean {
+    if (!rut) return false;
+    // Limpiar el rut para dejar sólo números y K
+    const rutLimpio = rut.replace(/[^0-9kK]/g, '').toUpperCase();
+    if (rutLimpio.length < 8) return false;
+
+    const cuerpo = rutLimpio.slice(0, -1);
+    const dv = rutLimpio.slice(-1);
+
+    let suma = 0;
+    let multiplo = 2;
+
+    for (let i = cuerpo.length - 1; i >= 0; i--) {
+      suma += multiplo * parseInt(cuerpo.charAt(i), 10);
+      multiplo = multiplo < 7 ? multiplo + 1 : 2;
+    }
+
+    const dvEsperado = 11 - (suma % 11);
+    let dvCalc = dvEsperado === 11 ? '0' : dvEsperado === 10 ? 'K' : String(dvEsperado);
+
+    return dv === dvCalc;
+  }
+
+  // Intercepta y prepara el objeto JSON antes de ser enviado al backend
+  prepararDatosEnvio() {
+    // 1. Asegurar que el RUT vaya con puntos y guion por si acaso
+    if (this.proveedorForm.rutProveedor) {
+      this.proveedorForm.rutProveedor = this.proveedorForm.rutProveedor.trim().toUpperCase();
+    }
+
+    // 2. Transformar a MAYÚSCULAS todos los campos de texto String
+    if (this.proveedorForm.nombreProveedor) this.proveedorForm.nombreProveedor = this.proveedorForm.nombreProveedor.trim().toUpperCase();
+    if (this.proveedorForm.razonSocialProveedor) this.proveedorForm.razonSocialProveedor = this.proveedorForm.razonSocialProveedor.trim().toUpperCase();
+    if (this.proveedorForm.direccion) this.proveedorForm.direccion = this.proveedorForm.direccion.trim().toUpperCase();
+    if (this.proveedorForm.emailProveedor) this.proveedorForm.emailProveedor = this.proveedorForm.emailProveedor.trim().toUpperCase();
+    if (this.proveedorForm.telefonoContactoProveedor) this.proveedorForm.telefonoContactoProveedor = this.proveedorForm.telefonoContactoProveedor.trim().toUpperCase();
+  }
+
   submitForm() {
+    // Validar el RUT antes de procesar cualquier acción
+    if (!this.validarRutChileno(this.proveedorForm.rutProveedor)) {
+      alert("El RUT ingresado no es válido. Por favor, verifíquelo.");
+      return;
+    }
+
+    this.prepararDatosEnvio();
     this.editMode ? this.actualizar() : this.guardar();
   }
 
@@ -121,6 +190,8 @@ export class ProveedoresComponent implements OnInit {
   }
 
   actualizar() {
+    // Nota: Dejamos el endpoint con el rut limpio tal como lo tenías originalmente 
+    // o puedes cambiar `${rutLimpio}` por `${this.proveedorForm.rutProveedor}` si tu Backend ahora espera puntos y guion en la URL.
     const rutLimpio = this.proveedorForm.rutProveedor.replace(/[.-]/g, "");
     this.http.put(`${this.API_OC_PROV}/${rutLimpio}`, this.proveedorForm).subscribe({
       next: () => {
@@ -162,7 +233,7 @@ export class ProveedoresComponent implements OnInit {
 
   get proveedoresFiltrados() {
     const f = this.filtroBusqueda.toLowerCase().trim();
-    if (!f) return this.proveedores; // Si no hay filtro, muestra todo lo que llegó del API
+    if (!f) return this.proveedores;
 
     return this.proveedores.filter(p => 
         p.nombreProveedor?.toLowerCase().includes(f) ||

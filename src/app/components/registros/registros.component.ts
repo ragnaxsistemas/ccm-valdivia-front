@@ -18,6 +18,7 @@ export class GestionOcComponent implements OnInit {
 
   private readonly API_BASE = environment.apiUrl;
   private readonly API_BUSQUEDA_AVANZADA = `${this.API_BASE}/api/v1/oc/ordenes-compra/busqueda-avanzada`;
+  private readonly API_EXCEL_DESCARGA = `${this.API_BASE}/api/v1/oc/ordenes-compra/exportar-excel`;
   private readonly API_UNIDADES = `${this.API_BASE}/api/v1/unidad-compradora/vld_ccm`;
   private readonly API_ESTADOS = `${this.API_BASE}/api/v1/oc/status-oc/all`;
   private readonly API_GENERAR_DOC_OC = `${this.API_BASE}/api/v1/oc/ordenes-compra/generar-documento-oc`;
@@ -37,6 +38,13 @@ export class GestionOcComponent implements OnInit {
   ordenes: any[] = [];
   loading: boolean = false;
 
+  paginaActual: number = 0;
+  totalPaginas: number = 0;
+  totalElementos: number = 0;
+  tamanoPagina: number = 10;
+
+  exportandoExcel: boolean = false;
+
   ocSeleccionada: any = null;
   listaAdjuntosOC: any[] = [];
 
@@ -53,7 +61,7 @@ export class GestionOcComponent implements OnInit {
   ngOnInit() {
     this.cargarUnidades();
     this.cargarEstados(); // <-- Faltaba llamar a los estados
-    this.buscar();
+    this.buscar(0);
   }
 
   // Método para obtener el código de empresa de forma segura
@@ -95,48 +103,123 @@ export class GestionOcComponent implements OnInit {
     });
   }
 
-  buscar() {
-    console.log("Iniciando búsqueda con filtros:", this.filtros);
-    this.loading = true;
-    let params = new HttpParams();
+  buscar(page: number = 0) {
+  this.paginaActual = page;
+  console.log(`Iniciando búsqueda con filtros en la página ${this.paginaActual}:`, this.filtros);
+  this.loading = true;
+  let params = new HttpParams();
 
-    if (this.filtros.rutProveedor)
-      params = params.set("rut", this.filtros.rutProveedor);
-    if (this.filtros.unidad) params = params.set("unidad", this.filtros.unidad);
-    if (this.filtros.folioDesde)
-      params = params.set("desde", this.filtros.folioDesde);
-    if (this.filtros.folioHasta)
-      params = params.set("hasta", this.filtros.folioHasta);
-    if (this.filtros.estado)
-      params = params.set("codEstadoOc", this.filtros.estado);
+  // 1. Parámetros de paginación obligatorios para Spring Data
+  params = params.set('page', this.paginaActual.toString());
+  params = params.set('size', this.tamanoPagina.toString());
 
-    // Formatear y agregar fechas si existen
-    if (this.filtros.fechaInicio) {
-      params = params.set("fechaInicioStr", this.filtros.fechaInicio);
+  // 2. Filtros básicos de texto, selección y fechas
+  if (this.filtros.rutProveedor) params = params.set('rut', this.filtros.rutProveedor);
+  if (this.filtros.unidad) params = params.set('unidad', this.filtros.unidad);
+  if (this.filtros.estado) params = params.set('codEstadoOc', this.filtros.estado);
+  if (this.filtros.fechaInicio) params = params.set('fechaInicioStr', this.filtros.fechaInicio);
+  if (this.filtros.fechaFin) params = params.set('fechaFinStr', this.filtros.fechaFin);
+
+  // ===================================================================
+  // 🧼 LIMPIEZA DE FOLIOS ANTES DE ENVIAR (Ej: "OC-000016" -> "16")
+  // ===================================================================
+  if (this.filtros.folioDesde) {
+    const folioDesdeLimpio = this.filtros.folioDesde.replace(/\D/g, '').replace(/^0+/, '');
+    if (folioDesdeLimpio) {
+      params = params.set('desde', folioDesdeLimpio);
     }
-
-    if (this.filtros.fechaFin) {
-      params = params.set("fechaFinStr", this.filtros.fechaFin);
-    }
-
-    console.log(
-      "Busqueda Avanzada Endpoint completo:",
-      `${this.API_BUSQUEDA_AVANZADA}?${params.toString()}`
-    );
-
-    this.http.get<any>(`${this.API_BUSQUEDA_AVANZADA}`, { params }).subscribe({
-      next: (res) => {
-        this.ordenes = res.content || res || [];
-        this.ordenes.forEach((oc) => {
-          console.log(
-            `OC: ${oc.codOrdenCompra} - EstadoID: ${oc.codEstadoActualOc} - Texto: ${oc.estadoActualOc}`
-          );
-        });
-        this.loading = false;
-      },
-      error: () => (this.loading = false),
-    });
   }
+
+  if (this.filtros.folioHasta) {
+    const folioHastaLimpio = this.filtros.folioHasta.replace(/\D/g, '').replace(/^0+/, '');
+    if (folioHastaLimpio) {
+      params = params.set('hasta', folioHastaLimpio);
+    }
+  }
+
+  console.log('Busqueda Avanzada Endpoint completo con paginación:', `${this.API_BUSQUEDA_AVANZADA}?${params.toString()}`);
+
+  // 3. Petición HTTP única al Backend
+  this.http.get<any>(`${this.API_BUSQUEDA_AVANZADA}`, { params }).subscribe({
+    next: (res) => {
+      // Extraemos la lista de las 10 OCs correspondientes a la página actual
+      this.ordenes = res.content || res || [];
+      
+      // Mapeamos los metadatos de paginación devueltos por el backend (gracias al countQuery)
+      this.totalPaginas = res.totalPages || 0;
+      this.totalElementos = res.totalElements || 0;
+
+      // Imprime en consola las Órdenes de Compra que se están mostrando en este instante
+      console.log(`📦 Mostrando ${this.ordenes.length} registros en la página actual (Total en BD: ${this.totalElementos})`);
+      this.ordenes.forEach((oc) => {
+        console.log(`-> Mostrando OC: ${oc.codOrdenCompra} | EstadoID: ${oc.codEstadoActualOc} | Texto: ${oc.estadoActualOc}`);
+      });
+
+      this.loading = false;
+    },
+    error: () => (this.loading = false)
+  });
+}
+
+  paginaAnterior() {
+    if (this.paginaActual > 0) {
+      this.buscar(this.paginaActual - 1);
+    }
+  }
+
+  paginaSiguiente() {
+    if (this.paginaActual < this.totalPaginas - 1) {
+      this.buscar(this.paginaActual + 1);
+    }
+  }
+
+  exportarAExcel() {
+  console.log('Iniciando exportación a Excel con filtros actuales:', this.filtros);
+  this.exportandoExcel = true;
+  
+  let params = new HttpParams();
+
+  // Mapeamos los mismos filtros que el método buscar()
+  if (this.filtros.rutProveedor) params = params.set('rut', this.filtros.rutProveedor);
+  if (this.filtros.unidad) params = params.set('unidad', this.filtros.unidad);
+  if (this.filtros.estado) params = params.set('codEstadoOc', this.filtros.estado);
+  if (this.filtros.fechaInicio) params = params.set('fechaInicioStr', this.filtros.fechaInicio);
+  if (this.filtros.fechaFin) params = params.set('fechaFinStr', this.filtros.fechaFin);
+
+  // Limpieza de folios (idéntico a buscar)
+  if (this.filtros.folioDesde) {
+    const desdeLimpio = this.filtros.folioDesde.replace(/\D/g, '').replace(/^0+/, '');
+    if (desdeLimpio) params = params.set('desde', desdeLimpio);
+  }
+  if (this.filtros.folioHasta) {
+    const folioHastaLimpio = this.filtros.folioHasta.replace(/\D/g, '').replace(/^0+/, '');
+    if (folioHastaLimpio) params = params.set('hasta', folioHastaLimpio);
+  }
+
+  // Realizamos la petición HTTP indicando que esperamos un archivo binario (responseType: 'blob')
+  this.http.get(`${this.API_EXCEL_DESCARGA}`, { params, responseType: 'blob' }).subscribe({
+    next: (blob: Blob) => {
+      // Creamos un link oculto en el navegador para forzar la descarga del archivo generado
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Reporte_Ordenes_Compra_CCM_${new Date().toISOString().slice(0,10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Limpieza del DOM
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      
+      this.exportandoExcel = false;
+    },
+    error: (err) => {
+      console.error('Error al exportar el archivo Excel:', err);
+      this.exportandoExcel = false;
+      alert('Ocurrió un error al intentar generar el archivo de reporte.');
+    }
+  });
+}
 
   getEstadoClass(estado: string): string {
     const st = estado?.toLowerCase();
@@ -415,6 +498,6 @@ export class GestionOcComponent implements OnInit {
       fechaInicio: "",
       fechaFin: "",
     };
-    this.buscar();
+    this.buscar(0);
   }
 }
